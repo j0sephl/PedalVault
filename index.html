@@ -4,6 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guitar Pedal Parts Inventory</title>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, push } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
+        
+        // 🔥 REPLACE THIS WITH YOUR FIREBASE CONFIG 🔥
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDQOCldBoTD42K6mz9Laa_O6AHO1ILA9n0",
+  authDomain: "guitar-part-inventory.firebaseapp.com",
+  databaseURL: "https://guitar-part-inventory-default-rtdb.firebaseio.com",
+  projectId: "guitar-part-inventory",
+  storageBucket: "guitar-part-inventory.firebasestorage.app",
+  messagingSenderId: "1010558780021",
+  appId: "1:1010558780021:web:e713c02b1f2461ff75ae3c",
+  measurementId: "G-NE9QZBLYM1"
+};
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Make Firebase functions globally available
+        window.firebaseDB = {
+            database,
+            ref,
+            set,
+            get,
+            onValue
+        };
+        
+        // Initialize the app after Firebase is ready
+        window.addEventListener('load', () => {
+            if (window.initializeInventory) {
+                window.initializeInventory();
+            }
+        });
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -32,6 +72,7 @@
             color: white;
             padding: 30px 20px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -42,6 +83,30 @@
         .header p {
             opacity: 0.9;
             font-size: 14px;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00b894;
+        }
+
+        .sync-indicator.offline {
+            background: #e17055;
         }
 
         .content {
@@ -55,6 +120,7 @@
             margin-bottom: 25px;
             text-align: center;
             border: 2px solid #e9ecef;
+            position: relative;
         }
 
         .part-name {
@@ -234,16 +300,6 @@
             background: rgba(0, 184, 148, 0.1);
         }
 
-        .part-info {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            position: relative;
-        }
-
         .reorder-btn {
             position: absolute;
             top: 15px;
@@ -361,13 +417,21 @@
         .notification.show {
             transform: translateX(0);
         }
+
+        .notification.error {
+            background: #e17055;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="sync-status">
+                <div class="sync-indicator" id="syncIndicator"></div>
+                <span id="syncStatus">Connecting...</span>
+            </div>
             <h1>🎸 Guitar Pedal Parts</h1>
-            <p>NFC Inventory System</p>
+            <p>NFC Inventory System - Cloud Synced</p>
         </div>
 
         <div class="content">
@@ -392,14 +456,14 @@
 
             <div class="inventory-list">
                 <h3 style="margin-bottom: 15px; color: #2d3436;">All Parts</h3>
-                <div id="inventoryItems"></div>
+                <div id="inventoryItems">Loading inventory...</div>
             </div>
 
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
         </div>
     </div>
 
-    <!-- Add Part Modal -->
+    <!-- Modals (same as before) -->
     <div class="modal" id="addPartModal">
         <div class="modal-content">
             <h2>Add New Part</h2>
@@ -414,7 +478,6 @@
         </div>
     </div>
 
-    <!-- Edit Part Modal -->
     <div class="modal" id="editPartModal">
         <div class="modal-content">
             <h2>Edit Part</h2>
@@ -429,7 +492,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal" id="deletePartModal">
         <div class="modal-content">
             <h2>Delete Part</h2>
@@ -441,7 +503,6 @@
         </div>
     </div>
 
-    <!-- Notification -->
     <div class="notification" id="notification"></div>
 
     <script>
@@ -449,14 +510,78 @@
         let currentPartId = null;
         let editingPartId = null;
         let deletingPartId = null;
+        let isOnline = false;
 
-        // Initialize with some sample data
-        function initializeInventory() {
+        // Firebase save function
+        async function saveInventory() {
+            if (!window.firebaseDB) {
+                console.log('Firebase not ready, falling back to localStorage');
+                localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+                return;
+            }
+
+            try {
+                const inventoryRef = window.firebaseDB.ref(window.firebaseDB.database, 'inventory');
+                await window.firebaseDB.set(inventoryRef, inventory);
+                updateSyncStatus(true, 'Synced');
+                console.log('Inventory synced to Firebase');
+            } catch (error) {
+                console.error('Firebase sync failed:', error);
+                updateSyncStatus(false, 'Offline');
+                // Fallback to localStorage
+                localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+                showNotification('Sync failed - saved locally', 'error');
+            }
+        }
+
+        // Initialize inventory with Firebase
+        async function initializeInventory() {
+            if (!window.firebaseDB) {
+                console.log('Firebase not ready, using localStorage');
+                initializeLocalInventory();
+                return;
+            }
+
+            try {
+                updateSyncStatus(false, 'Loading...');
+                const inventoryRef = window.firebaseDB.ref(window.firebaseDB.database, 'inventory');
+                const snapshot = await window.firebaseDB.get(inventoryRef);
+                
+                if (snapshot.exists()) {
+                    inventory = snapshot.val();
+                    console.log('Loaded inventory from Firebase');
+                } else {
+                    // Initialize with sample data
+                    inventory = {
+                        'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
+                        'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
+                        'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
+                        'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
+                        'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
+                        'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
+                    };
+                    await saveInventory();
+                }
+                
+                setupRealtimeSync();
+                updateSyncStatus(true, 'Online');
+                
+            } catch (error) {
+                console.error('Failed to load from Firebase:', error);
+                updateSyncStatus(false, 'Offline');
+                initializeLocalInventory();
+            }
+            
+            displayInventory();
+            checkUrlForPart();
+        }
+
+        // Fallback to localStorage
+        function initializeLocalInventory() {
             const savedInventory = localStorage.getItem('guitarPedalInventory');
             if (savedInventory) {
                 inventory = JSON.parse(savedInventory);
             } else {
-                // Sample data
                 inventory = {
                     'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
                     'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
@@ -465,19 +590,69 @@
                     'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
                     'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
                 };
-                saveInventory();
             }
-            displayInventory();
-            checkUrlForPart();
         }
 
-        function saveInventory() {
-            localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+        // Setup real-time synchronization
+        function setupRealtimeSync() {
+            if (!window.firebaseDB) return;
+            
+            const inventoryRef = window.firebaseDB.ref(window.firebaseDB.database, 'inventory');
+            window.firebaseDB.onValue(inventoryRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const newInventory = snapshot.val();
+                    
+                    // Only update if data actually changed
+                    if (JSON.stringify(newInventory) !== JSON.stringify(inventory)) {
+                        inventory = newInventory;
+                        displayInventory();
+                        
+                        // Update current part display if one is selected
+                        if (currentPartId && inventory[currentPartId]) {
+                            document.getElementById('currentStock').textContent = inventory[currentPartId].quantity;
+                            
+                            // Update low stock warning
+                            const lowStockWarning = document.getElementById('lowStockWarning');
+                            if (inventory[currentPartId].quantity < 5) {
+                                lowStockWarning.style.display = 'block';
+                            } else {
+                                lowStockWarning.style.display = 'none';
+                            }
+                        }
+                        
+                        console.log('Inventory updated from Firebase');
+                    }
+                }
+                updateSyncStatus(true, 'Synced');
+            }, (error) => {
+                console.error('Firebase sync error:', error);
+                updateSyncStatus(false, 'Error');
+            });
         }
 
+        function updateSyncStatus(online, status) {
+            isOnline = online;
+            const indicator = document.getElementById('syncIndicator');
+            const statusText = document.getElementById('syncStatus');
+            
+            if (online) {
+                indicator.classList.remove('offline');
+                statusText.textContent = status;
+            } else {
+                indicator.classList.add('offline');
+                statusText.textContent = status;
+            }
+        }
+
+        // Rest of your functions remain the same
         function displayInventory() {
             const container = document.getElementById('inventoryItems');
             container.innerHTML = '';
+
+            if (Object.keys(inventory).length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">No parts in inventory</p>';
+                return;
+            }
 
             Object.entries(inventory).forEach(([id, part]) => {
                 const item = document.createElement('div');
@@ -563,6 +738,35 @@
             displayInventory();
         }
 
+        function quickRemoveOne(partId) {
+            const part = inventory[partId];
+            if (part.quantity > 0) {
+                part.quantity -= 1;
+                document.getElementById('currentStock').textContent = part.quantity;
+                saveInventory();
+                displayInventory();
+                showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
+            } else {
+                showNotification(`No ${part.name} in stock!`, 'error');
+            }
+        }
+
+        function checkUrlForPart() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const partId = urlParams.get('part');
+            const quickRemove = urlParams.get('remove');
+            
+            if (partId && inventory[partId]) {
+                selectPart(partId);
+                
+                // Auto-remove 1 if 'remove=1' parameter is present
+                if (quickRemove === '1') {
+                    quickRemoveOne(partId);
+                }
+            }
+        }
+
+        // Modal functions (keeping them the same)
         function showAddPartModal() {
             document.getElementById('addPartModal').style.display = 'block';
         }
@@ -571,83 +775,8 @@
             document.getElementById('addPartModal').style.display = 'none';
             document.getElementById('newPartName').value = '';
             document.getElementById('newPartQuantity').value = '';
+            document.getElementById('newPartUrl').value = '';
             document.getElementById('newPartId').value = '';
-        }
-
-        function showEditPartModal(partId) {
-            editingPartId = partId;
-            const part = inventory[partId];
-            
-            document.getElementById('editPartName').value = part.name;
-            document.getElementById('editPartQuantity').value = part.quantity;
-            document.getElementById('editPartUrl').value = part.purchaseUrl || '';
-            document.getElementById('editPartId').value = partId;
-            document.getElementById('editPartModal').style.display = 'block';
-        }
-
-        function hideEditPartModal() {
-            document.getElementById('editPartModal').style.display = 'none';
-            editingPartId = null;
-        }
-
-        function saveEditPart() {
-            if (!editingPartId) return;
-            
-            const newName = document.getElementById('editPartName').value.trim();
-            const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
-            const newUrl = document.getElementById('editPartUrl').value.trim();
-            
-            if (!newName) {
-                showNotification('Please enter a part name', 'error');
-                return;
-            }
-            
-            inventory[editingPartId].name = newName;
-            inventory[editingPartId].quantity = newQuantity;
-            inventory[editingPartId].purchaseUrl = newUrl;
-            
-            // Update current selection if this part is selected
-            if (currentPartId === editingPartId) {
-                selectPart(editingPartId); // Refresh the display
-            }
-            
-            saveInventory();
-            displayInventory();
-            hideEditPartModal();
-            showNotification(`Updated ${newName}`);
-        }
-
-        function showDeletePartModal(partId) {
-            deletingPartId = partId;
-            const part = inventory[partId];
-            document.getElementById('deletePartMessage').textContent = 
-                `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-            document.getElementById('deletePartModal').style.display = 'block';
-        }
-
-        function hideDeletePartModal() {
-            document.getElementById('deletePartModal').style.display = 'none';
-            deletingPartId = null;
-        }
-
-        function confirmDeletePart() {
-            if (!deletingPartId) return;
-            
-            const partName = inventory[deletingPartId].name;
-            
-            // Clear current selection if we're deleting the selected part
-            if (currentPartId === deletingPartId) {
-                currentPartId = null;
-                document.getElementById('currentPart').style.display = 'none';
-                document.getElementById('controls').style.display = 'none';
-                document.getElementById('actionButtons').style.display = 'none';
-            }
-            
-            delete inventory[deletingPartId];
-            saveInventory();
-            displayInventory();
-            hideDeletePartModal();
-            showNotification(`Deleted ${partName}`);
         }
 
         function addNewPart() {
@@ -677,74 +806,9 @@
             showNotification(`Added ${name} to inventory`);
         }
 
-        function openPurchaseLink(partId) {
+        function showEditPartModal(partId) {
+            editingPartId = partId;
             const part = inventory[partId];
-            if (part.purchaseUrl) {
-                window.open(part.purchaseUrl, '_blank');
-            } else {
-                showNotification('No purchase URL set for this part', 'error');
-            }
-        }
-
-        function hideAddPartModal() {
-            document.getElementById('addPartModal').style.display = 'none';
-            document.getElementById('newPartName').value = '';
-            document.getElementById('newPartQuantity').value = '';
-            document.getElementById('newPartUrl').value = '';
-            document.getElementById('newPartId').value = '';
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-            notification.classList.add('show');
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        function checkUrlForPart() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const partId = urlParams.get('part');
-            const quickRemove = urlParams.get('remove');
-            
-            if (partId && inventory[partId]) {
-                selectPart(partId);
-                
-                // Auto-remove 1 if 'remove=1' parameter is present
-                if (quickRemove === '1') {
-                    quickRemoveOne(partId);
-                }
-            }
-        }
-
-        function quickRemoveOne(partId) {
-            const part = inventory[partId];
-            if (part.quantity > 0) {
-                part.quantity -= 1;
-                document.getElementById('currentStock').textContent = part.quantity;
-                saveInventory();
-                displayInventory();
-                showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
-            } else {
-                showNotification(`No ${part.name} in stock!`, 'error');
-            }
-        }
-
-        // Handle Enter key in quantity input
-        document.addEventListener('DOMContentLoaded', function() {
-            const quantityInput = document.getElementById('quantityInput');
-            quantityInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    adjustStock('add');
-                }
-            });
-        });
-
-        // Initialize the app
-        initializeInventory();
-    </script>
-</body>
-</html>
+            document.getElementById('editPartName').value = part.name;
+            document.getElementById('editPartQuantity').value = part.quantity

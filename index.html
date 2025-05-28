@@ -151,10 +151,24 @@
             align-items: center;
             padding: 12px 0;
             border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .inventory-item:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
         }
 
         .inventory-item:last-child {
             border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .item-name {
@@ -173,6 +187,43 @@
 
         .low-stock {
             background: #e17055;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .action-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .edit-icon {
+            color: #667eea;
+        }
+
+        .edit-icon:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .delete-icon {
+            color: #e17055;
+        }
+
+        .delete-icon:hover {
+            background: rgba(225, 112, 85, 0.1);
         }
 
         .add-part-btn {
@@ -300,12 +351,40 @@
         </div>
     </div>
 
+    <!-- Edit Part Modal -->
+    <div class="modal" id="editPartModal">
+        <div class="modal-content">
+            <h2>Edit Part</h2>
+            <input type="text" id="editPartName" placeholder="Part name">
+            <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
+            <input type="text" id="editPartId" placeholder="NFC Tag ID" readonly style="background: #f8f9fa;">
+            <div class="modal-buttons">
+                <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
+                <button class="btn" onclick="hideEditPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deletePartModal">
+        <div class="modal-content">
+            <h2>Delete Part</h2>
+            <p id="deletePartMessage" style="margin-bottom: 20px; color: #666;"></p>
+            <div class="modal-buttons">
+                <button class="btn btn-remove" onclick="confirmDeletePart()" style="flex: 1;">Delete</button>
+                <button class="btn" onclick="hideDeletePartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification -->
     <div class="notification" id="notification"></div>
 
     <script>
         let inventory = {};
         let currentPartId = null;
+        let editingPartId = null;
+        let deletingPartId = null;
 
         // Initialize with some sample data
         function initializeInventory() {
@@ -343,11 +422,16 @@
                 const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
                 
                 item.innerHTML = `
-                    <span class="item-name">${part.name}</span>
-                    <span class="${quantityClass}">${part.quantity}</span>
+                    <div class="item-info" onclick="selectPart('${id}')">
+                        <span class="item-name">${part.name}</span>
+                        <span class="${quantityClass}">${part.quantity}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">✏️</button>
+                        <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">🗑️</button>
+                    </div>
                 `;
                 
-                item.onclick = () => selectPart(id);
                 container.appendChild(item);
             });
         }
@@ -406,6 +490,80 @@
             document.getElementById('newPartName').value = '';
             document.getElementById('newPartQuantity').value = '';
             document.getElementById('newPartId').value = '';
+        }
+
+        function showEditPartModal(partId) {
+            editingPartId = partId;
+            const part = inventory[partId];
+            
+            document.getElementById('editPartName').value = part.name;
+            document.getElementById('editPartQuantity').value = part.quantity;
+            document.getElementById('editPartId').value = partId;
+            document.getElementById('editPartModal').style.display = 'block';
+        }
+
+        function hideEditPartModal() {
+            document.getElementById('editPartModal').style.display = 'none';
+            editingPartId = null;
+        }
+
+        function saveEditPart() {
+            if (!editingPartId) return;
+            
+            const newName = document.getElementById('editPartName').value.trim();
+            const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
+            
+            if (!newName) {
+                showNotification('Please enter a part name', 'error');
+                return;
+            }
+            
+            inventory[editingPartId].name = newName;
+            inventory[editingPartId].quantity = newQuantity;
+            
+            // Update current selection if this part is selected
+            if (currentPartId === editingPartId) {
+                document.getElementById('partName').textContent = newName;
+                document.getElementById('currentStock').textContent = newQuantity;
+            }
+            
+            saveInventory();
+            displayInventory();
+            hideEditPartModal();
+            showNotification(`Updated ${newName}`);
+        }
+
+        function showDeletePartModal(partId) {
+            deletingPartId = partId;
+            const part = inventory[partId];
+            document.getElementById('deletePartMessage').textContent = 
+                `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
+            document.getElementById('deletePartModal').style.display = 'block';
+        }
+
+        function hideDeletePartModal() {
+            document.getElementById('deletePartModal').style.display = 'none';
+            deletingPartId = null;
+        }
+
+        function confirmDeletePart() {
+            if (!deletingPartId) return;
+            
+            const partName = inventory[deletingPartId].name;
+            
+            // Clear current selection if we're deleting the selected part
+            if (currentPartId === deletingPartId) {
+                currentPartId = null;
+                document.getElementById('currentPart').style.display = 'none';
+                document.getElementById('controls').style.display = 'none';
+                document.getElementById('actionButtons').style.display = 'none';
+            }
+            
+            delete inventory[deletingPartId];
+            saveInventory();
+            displayInventory();
+            hideDeletePartModal();
+            showNotification(`Deleted ${partName}`);
         }
 
         function addNewPart() {

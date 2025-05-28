@@ -1,584 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guitar Pedal Parts Inventory</title>
-    
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-        import { getDatabase, ref, set, get, onValue, push } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
-        
-        // 🔥 REPLACE THIS WITH YOUR FIREBASE CONFIG 🔥
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDQOCldBoTD42K6mz9Laa_O6AHO1ILA9n0",
-  authDomain: "guitar-part-inventory.firebaseapp.com",
-  databaseURL: "https://guitar-part-inventory-default-rtdb.firebaseio.com",
-  projectId: "guitar-part-inventory",
-  storageBucket: "guitar-part-inventory.firebasestorage.app",
-  messagingSenderId: "1010558780021",
-  appId: "1:1010558780021:web:e713c02b1f2461ff75ae3c",
-  measurementId: "G-NE9QZBLYM1"
-};
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        
-        // Make Firebase functions globally available
-        window.firebaseDB = {
-            database,
-            ref,
-            set,
-            get,
-            onValue
-        };
-        
-        // Initialize the app after Firebase is ready
-        window.addEventListener('load', () => {
-            if (window.initializeInventory) {
-                window.initializeInventory();
-            }
-        });
-    </script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .sync-status {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .sync-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #00b894;
-        }
-
-        .sync-indicator.offline {
-            background: #e17055;
-        }
-
-        .content {
-            padding: 30px 20px;
-        }
-
-        .part-info {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            position: relative;
-        }
-
-        .part-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: #2d3436;
-            margin-bottom: 10px;
-        }
-
-        .current-stock {
-            font-size: 32px;
-            font-weight: 700;
-            color: #00b894;
-            margin: 15px 0;
-        }
-
-        .stock-label {
-            color: #636e72;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .quantity-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            font-size: 18px;
-            text-align: center;
-            background: #fff;
-        }
-
-        .quantity-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add {
-            background: #00b894;
-            color: white;
-        }
-
-        .btn-add:hover {
-            background: #00a085;
-            transform: translateY(-2px);
-        }
-
-        .btn-remove {
-            background: #e17055;
-            color: white;
-        }
-
-        .btn-remove:hover {
-            background: #d63031;
-            transform: translateY(-2px);
-        }
-
-        .inventory-list {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .inventory-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .inventory-item:hover {
-            background-color: rgba(102, 126, 234, 0.05);
-            border-radius: 8px;
-        }
-
-        .inventory-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-info {
-            flex: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .item-name {
-            font-weight: 500;
-            color: #2d3436;
-        }
-
-        .item-quantity {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .low-stock {
-            background: #e17055;
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 8px;
-            margin-left: 15px;
-        }
-
-        .action-icon {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            font-size: 14px;
-        }
-
-        .edit-icon {
-            color: #667eea;
-        }
-
-        .edit-icon:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .delete-icon {
-            color: #e17055;
-        }
-
-        .delete-icon:hover {
-            background: rgba(225, 112, 85, 0.1);
-        }
-
-        .shop-icon {
-            color: #00b894;
-        }
-
-        .shop-icon:hover {
-            background: rgba(0, 184, 148, 0.1);
-        }
-
-        .reorder-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #00b894;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-
-        .reorder-btn:hover {
-            background: #00a085;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
-        }
-
-        .low-stock-warning {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        .add-part-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .add-part-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal h2 {
-            margin-bottom: 20px;
-            color: #2d3436;
-        }
-
-        .modal input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #00b894;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background: #e17055;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guitar Parts Inventory</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    .part {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .part:last-child {
+      border-bottom: none;
+    }
+    button {
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="sync-status">
-                <div class="sync-indicator" id="syncIndicator"></div>
-                <span id="syncStatus">Connecting...</span>
-            </div>
-            <h1>🎸 Guitar Pedal Parts</h1>
-            <p>NFC Inventory System - Cloud Synced</p>
-        </div>
+  <div class="container">
+    <h1>🎸 Guitar Parts Inventory</h1>
+    <div id="status">Connecting to Firebase...</div>
+    <div id="inventory"></div>
+  </div>
 
-        <div class="content">
-            <div class="part-info" id="currentPart" style="display: none;">
-                <div class="part-name" id="partName">Select a Part</div>
-                <div class="current-stock" id="currentStock">0</div>
-                <div class="stock-label">Current Stock</div>
-                <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
-                <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
-                    ⚠️ Low stock! Consider reordering soon.
-                </div>
-            </div>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import { getDatabase, ref, get, set, onValue } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js';
 
-            <div class="controls" id="controls" style="display: none;">
-                <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
-            </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQOCldBoTD42K6mz9Laa_O6AHO1ILA9n0",
+      authDomain: "guitar-part-inventory.firebaseapp.com",
+      databaseURL: "https://guitar-part-inventory-default-rtdb.firebaseio.com",
+      projectId: "guitar-part-inventory",
+      storageBucket: "guitar-part-inventory.appspot.com",
+      messagingSenderId: "1010558780021",
+      appId: "1:1010558780021:web:e713c02b1f2461ff75ae3c",
+      measurementId: "G-NE9QZBLYM1"
+    };
 
-            <div class="action-buttons" id="actionButtons" style="display: none;">
-                <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
-                <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
-            </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const invRef = ref(db, 'inventory');
 
-            <div class="inventory-list">
-                <h3 style="margin-bottom: 15px; color: #2d3436;">All Parts</h3>
-                <div id="inventoryItems">Loading inventory...</div>
-            </div>
+    const statusDiv = document.getElementById('status');
+    const inventoryDiv = document.getElementById('inventory');
 
-            <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
-        </div>
-    </div>
-
-    <!-- Modals (same as before) -->
-    <div class="modal" id="addPartModal">
-        <div class="modal-content">
-            <h2>Add New Part</h2>
-            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
-            <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
-            <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
-            <div class="modal-buttons">
-                <button class="btn btn-add" onclick="addNewPart()" style="flex: 1;">Add Part</button>
-                <button class="btn" onclick="hideAddPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="editPartModal">
-        <div class="modal-content">
-            <h2>Edit Part</h2>
-            <input type="text" id="editPartName" placeholder="Part name">
-            <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
-            <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="editPartId" placeholder="NFC Tag ID" readonly style="background: #f8f9fa;">
-            <div class="modal-buttons">
-                <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
-                <button class="btn" onclick="hideEditPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="deletePartModal">
-        <div class="modal-content">
-            <h2>Delete Part</h2>
-            <p id="deletePartMessage" style="margin-bottom: 20px; color: #666;"></p>
-            <div class="modal-buttons">
-                <button class="btn btn-remove" onclick="confirmDeletePart()" style="flex: 1;">Delete</button>
-                <button class="btn" onclick="hideDeletePartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="notification" id="notification"></div>
-
-    <script>
-// ... (your existing code remains up to this line)
-
-function showEditPartModal(partId) {
-    editingPartId = partId;
-    const part = inventory[partId];
-
-    document.getElementById('editPartName').value = part.name;
-    document.getElementById('editPartQuantity').value = part.quantity;
-    document.getElementById('editPartUrl').value = part.purchaseUrl || '';
-    document.getElementById('editPartId').value = partId;
-
-    document.getElementById('editPartModal').style.display = 'block';
-}
-
-function hideEditPartModal() {
-    document.getElementById('editPartModal').style.display = 'none';
-}
-
-function saveEditPart() {
-    if (!editingPartId) return;
-
-    const name = document.getElementById('editPartName').value.trim();
-    const quantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
-    const purchaseUrl = document.getElementById('editPartUrl').value.trim();
-
-    inventory[editingPartId].name = name;
-    inventory[editingPartId].quantity = quantity;
-    inventory[editingPartId].purchaseUrl = purchaseUrl;
-
-    saveInventory();
-    displayInventory();
-    hideEditPartModal();
-    showNotification(`Saved changes for ${name}`);
-}
-
-function showDeletePartModal(partId) {
-    deletingPartId = partId;
-    const part = inventory[partId];
-    document.getElementById('deletePartMessage').textContent = `Are you sure you want to delete "${part.name}" from inventory?`;
-    document.getElementById('deletePartModal').style.display = 'block';
-}
-
-function hideDeletePartModal() {
-    document.getElementById('deletePartModal').style.display = 'none';
-}
-
-function confirmDeletePart() {
-    if (!deletingPartId) return;
-
-    const deletedName = inventory[deletingPartId].name;
-    delete inventory[deletingPartId];
-    saveInventory();
-    displayInventory();
-    hideDeletePartModal();
-    showNotification(`Deleted ${deletedName} from inventory`);
-}
-
-function showNotification(message, type = 'success') {
-    const note = document.getElementById('notification');
-    note.textContent = message;
-    note.className = 'notification show';
-    if (type === 'error') {
-        note.classList.add('error');
-    } else {
-        note.classList.remove('error');
+    function renderInventory(data) {
+      inventoryDiv.innerHTML = '';
+      Object.entries(data).forEach(([id, part]) => {
+        const div = document.createElement('div');
+        div.className = 'part';
+        div.innerHTML = `
+          <span>${part.name} — Qty: ${part.quantity}</span>
+          <button onclick="removePart('${id}')">Use 1</button>
+        `;
+        inventoryDiv.appendChild(div);
+      });
     }
 
-    setTimeout(() => {
-        note.classList.remove('show');
-    }, 3000);
-}
+    // Global removePart so buttons work
+    window.removePart = async function (id) {
+      const snapshot = await get(invRef);
+      if (!snapshot.exists()) return;
+      const inv = snapshot.val();
+      if (!inv[id] || inv[id].quantity <= 0) return alert('Out of stock');
+      inv[id].quantity -= 1;
+      await set(invRef, inv);
+    }
 
-// Expose inventory initializer to the global scope
-window.initializeInventory = initializeInventory;
-</script>
-
+    // Real-time updates
+    onValue(invRef, (snapshot) => {
+      if (snapshot.exists()) {
+        renderInventory(snapshot.val());
+        statusDiv.textContent = 'Synced with Firebase ✅';
+      } else {
+        statusDiv.textContent = 'No inventory data found';
+      }
+    }, (error) => {
+      console.error(error);
+      statusDiv.textContent = 'Firebase sync error ❌';
+    });
+  </script>
+</body>
+</html>

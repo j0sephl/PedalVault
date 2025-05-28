@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Pedal Parts Inventory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .part-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .part-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3436;
+            margin-bottom: 10px;
+        }
+
+        .current-stock {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00b894;
+            margin: 15px 0;
+        }
+
+        .stock-label {
+            color: #636e72;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .quantity-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 18px;
+            text-align: center;
+            background: #fff;
+        }
+
+        .quantity-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #00a085;
+            transform: translateY(-2px);
+        }
+
+        .btn-remove {
+            background: #e17055;
+            color: white;
+        }
+
+        .btn-remove:hover {
+            background: #d63031;
+            transform: translateY(-2px);
+        }
+
+        .inventory-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .inventory-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            font-weight: 500;
+            color: #2d3436;
+        }
+
+        .item-quantity {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .low-stock {
+            background: #e17055;
+        }
+
+        .add-part-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .add-part-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #2d3436;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00b894;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎸 Guitar Pedal Parts</h1>
+            <p>NFC Inventory System</p>
+        </div>
+
+        <div class="content">
+            <div class="part-info" id="currentPart" style="display: none;">
+                <div class="part-name" id="partName">Select a Part</div>
+                <div class="current-stock" id="currentStock">0</div>
+                <div class="stock-label">Current Stock</div>
+            </div>
+
+            <div class="controls" id="controls" style="display: none;">
+                <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
+            </div>
+
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
+                <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
+            </div>
+
+            <div class="inventory-list">
+                <h3 style="margin-bottom: 15px; color: #2d3436;">All Parts</h3>
+                <div id="inventoryItems"></div>
+            </div>
+
+            <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
+        </div>
+    </div>
+
+    <!-- Add Part Modal -->
+    <div class="modal" id="addPartModal">
+        <div class="modal-content">
+            <h2>Add New Part</h2>
+            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
+            <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
+            <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
+            <div class="modal-buttons">
+                <button class="btn btn-add" onclick="addNewPart()" style="flex: 1;">Add Part</button>
+                <button class="btn" onclick="hideAddPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let inventory = {};
+        let currentPartId = null;
+
+        // Initialize with some sample data
+        function initializeInventory() {
+            const savedInventory = localStorage.getItem('guitarPedalInventory');
+            if (savedInventory) {
+                inventory = JSON.parse(savedInventory);
+            } else {
+                // Sample data
+                inventory = {
+                    'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
+                    'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
+                    'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
+                    'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
+                    'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
+                    'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
+                };
+                saveInventory();
+            }
+            displayInventory();
+            checkUrlForPart();
+        }
+
+        function saveInventory() {
+            localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+        }
+
+        function displayInventory() {
+            const container = document.getElementById('inventoryItems');
+            container.innerHTML = '';
+
+            Object.entries(inventory).forEach(([id, part]) => {
+                const item = document.createElement('div');
+                item.className = 'inventory-item';
+                
+                const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
+                
+                item.innerHTML = `
+                    <span class="item-name">${part.name}</span>
+                    <span class="${quantityClass}">${part.quantity}</span>
+                `;
+                
+                item.onclick = () => selectPart(id);
+                container.appendChild(item);
+            });
+        }
+
+        function selectPart(partId) {
+            currentPartId = partId;
+            const part = inventory[partId];
+            
+            document.getElementById('partName').textContent = part.name;
+            document.getElementById('currentStock').textContent = part.quantity;
+            
+            document.getElementById('currentPart').style.display = 'block';
+            document.getElementById('controls').style.display = 'flex';
+            document.getElementById('actionButtons').style.display = 'flex';
+            
+            document.getElementById('quantityInput').focus();
+        }
+
+        function adjustStock(action) {
+            if (!currentPartId) return;
+            
+            const quantity = parseInt(document.getElementById('quantityInput').value);
+            if (!quantity || quantity < 1) {
+                showNotification('Please enter a valid quantity', 'error');
+                return;
+            }
+
+            const part = inventory[currentPartId];
+            
+            if (action === 'add') {
+                part.quantity += quantity;
+                showNotification(`Added ${quantity} ${part.name}(s)`);
+            } else if (action === 'remove') {
+                if (part.quantity >= quantity) {
+                    part.quantity -= quantity;
+                    showNotification(`Removed ${quantity} ${part.name}(s)`);
+                } else {
+                    showNotification('Not enough stock to remove', 'error');
+                    return;
+                }
+            }
+
+            document.getElementById('currentStock').textContent = part.quantity;
+            document.getElementById('quantityInput').value = '';
+            
+            saveInventory();
+            displayInventory();
+        }
+
+        function showAddPartModal() {
+            document.getElementById('addPartModal').style.display = 'block';
+        }
+
+        function hideAddPartModal() {
+            document.getElementById('addPartModal').style.display = 'none';
+            document.getElementById('newPartName').value = '';
+            document.getElementById('newPartQuantity').value = '';
+            document.getElementById('newPartId').value = '';
+        }
+
+        function addNewPart() {
+            const name = document.getElementById('newPartName').value.trim();
+            const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
+            let id = document.getElementById('newPartId').value.trim();
+            
+            if (!name) {
+                showNotification('Please enter a part name', 'error');
+                return;
+            }
+            
+            if (!id) {
+                id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            }
+            
+            if (inventory[id]) {
+                showNotification('Part ID already exists', 'error');
+                return;
+            }
+            
+            inventory[id] = { name, quantity };
+            saveInventory();
+            displayInventory();
+            hideAddPartModal();
+            showNotification(`Added ${name} to inventory`);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function checkUrlForPart() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const partId = urlParams.get('part');
+            if (partId && inventory[partId]) {
+                selectPart(partId);
+            }
+        }
+
+        // Handle Enter key in quantity input
+        document.addEventListener('DOMContentLoaded', function() {
+            const quantityInput = document.getElementById('quantityInput');
+            quantityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    adjustStock('add');
+                }
+            });
+        });
+
+        // Initialize the app
+        initializeInventory();
+    </script>
+</body>
+</html>

@@ -55,6 +55,7 @@
             margin-bottom: 25px;
             text-align: center;
             border: 2px solid #e9ecef;
+            position: relative;
         }
 
         .part-name {
@@ -143,6 +144,32 @@
             padding: 20px;
             max-height: 300px;
             overflow-y: auto;
+        }
+
+        .inventory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .inventory-header h3 {
+            color: #2d3436;
+            margin: 0;
+        }
+
+        .sort-dropdown {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .sort-dropdown:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .inventory-item {
@@ -234,16 +261,6 @@
             background: rgba(0, 184, 148, 0.1);
         }
 
-        .part-info {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            position: relative;
-        }
-
         .reorder-btn {
             position: absolute;
             top: 15px;
@@ -303,7 +320,6 @@
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        /* NEW: Sync buttons styling */
         .sync-buttons {
             display: flex;
             gap: 10px;
@@ -433,13 +449,21 @@
             </div>
 
             <div class="inventory-list">
-                <h3 style="margin-bottom: 15px; color: #2d3436;">All Parts</h3>
+                <div class="inventory-header">
+                    <h3>All Parts</h3>
+                    <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
+                        <option value="name-asc">Name A-Z</option>
+                        <option value="name-desc">Name Z-A</option>
+                        <option value="quantity-asc">Quantity Low-High</option>
+                        <option value="quantity-desc">Quantity High-Low</option>
+                        <option value="stock-status">Low Stock First</option>
+                    </select>
+                </div>
                 <div id="inventoryItems"></div>
             </div>
 
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
             
-            <!-- NEW: Sync buttons -->
             <div class="sync-buttons">
                 <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
                 <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
@@ -498,6 +522,7 @@
         let currentPartId = null;
         let editingPartId = null;
         let deletingPartId = null;
+        let currentSortOrder = 'name-asc';
 
         // Initialize with some sample data
         function initializeInventory() {
@@ -524,7 +549,6 @@
             localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
         }
 
-        // NEW: Export function
         function exportInventory() {
             const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
             const filename = `guitar-pedal-inventory-${timestamp}.json`;
@@ -542,7 +566,6 @@
             showNotification(`Exported inventory to ${filename}`);
         }
 
-        // NEW: Import function
         function importInventory(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -552,13 +575,11 @@
                 try {
                     const importedData = JSON.parse(e.target.result);
                     
-                    // Validate the data structure
                     if (typeof importedData === 'object' && importedData !== null) {
                         inventory = importedData;
                         saveInventory();
                         displayInventory();
                         
-                        // Clear current selection since parts may have changed
                         currentPartId = null;
                         document.getElementById('currentPart').style.display = 'none';
                         document.getElementById('controls').style.display = 'none';
@@ -574,15 +595,46 @@
             };
             reader.readAsText(file);
             
-            // Clear the file input so the same file can be imported again if needed
             event.target.value = '';
+        }
+
+        function getSortedInventoryEntries() {
+            const entries = Object.entries(inventory);
+            
+            switch (currentSortOrder) {
+                case 'name-asc':
+                    return entries.sort((a, b) => a[1].name.localeCompare(b[1].name));
+                case 'name-desc':
+                    return entries.sort((a, b) => b[1].name.localeCompare(a[1].name));
+                case 'quantity-asc':
+                    return entries.sort((a, b) => a[1].quantity - b[1].quantity);
+                case 'quantity-desc':
+                    return entries.sort((a, b) => b[1].quantity - a[1].quantity);
+                case 'stock-status':
+                    return entries.sort((a, b) => {
+                        const aLowStock = a[1].quantity < 5;
+                        const bLowStock = b[1].quantity < 5;
+                        if (aLowStock && !bLowStock) return -1;
+                        if (!aLowStock && bLowStock) return 1;
+                        return a[1].name.localeCompare(b[1].name);
+                    });
+                default:
+                    return entries;
+            }
+        }
+
+        function changeSortOrder() {
+            currentSortOrder = document.getElementById('sortDropdown').value;
+            displayInventory();
         }
 
         function displayInventory() {
             const container = document.getElementById('inventoryItems');
             container.innerHTML = '';
 
-            Object.entries(inventory).forEach(([id, part]) => {
+            const sortedEntries = getSortedInventoryEntries();
+
+            sortedEntries.forEach(([id, part]) => {
                 const item = document.createElement('div');
                 item.className = 'inventory-item';
                 
@@ -611,7 +663,6 @@
             document.getElementById('partName').textContent = part.name;
             document.getElementById('currentStock').textContent = part.quantity;
             
-            // Show/hide reorder button and low stock warning
             const reorderLink = document.getElementById('reorderLink');
             const lowStockWarning = document.getElementById('lowStockWarning');
             
@@ -674,6 +725,7 @@
             document.getElementById('addPartModal').style.display = 'none';
             document.getElementById('newPartName').value = '';
             document.getElementById('newPartQuantity').value = '';
+            document.getElementById('newPartUrl').value = '';
             document.getElementById('newPartId').value = '';
         }
 
@@ -709,9 +761,8 @@
             inventory[editingPartId].quantity = newQuantity;
             inventory[editingPartId].purchaseUrl = newUrl;
             
-            // Update current selection if this part is selected
             if (currentPartId === editingPartId) {
-                selectPart(editingPartId); // Refresh the display
+                selectPart(editingPartId);
             }
             
             saveInventory();
@@ -738,7 +789,6 @@
             
             const partName = inventory[deletingPartId].name;
             
-            // Clear current selection if we're deleting the selected part
             if (currentPartId === deletingPartId) {
                 currentPartId = null;
                 document.getElementById('currentPart').style.display = 'none';
@@ -789,14 +839,6 @@
             }
         }
 
-        function hideAddPartModal() {
-            document.getElementById('addPartModal').style.display = 'none';
-            document.getElementById('newPartName').value = '';
-            document.getElementById('newPartQuantity').value = '';
-            document.getElementById('newPartUrl').value = '';
-            document.getElementById('newPartId').value = '';
-        }
-
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -816,7 +858,6 @@
             if (partId && inventory[partId]) {
                 selectPart(partId);
                 
-                // Auto-remove 1 if 'remove=1' parameter is present
                 if (quickRemove === '1') {
                     quickRemoveOne(partId);
                 }
@@ -836,7 +877,6 @@
             }
         }
 
-        // Handle Enter key in quantity input
         document.addEventListener('DOMContentLoaded', function() {
             const quantityInput = document.getElementById('quantityInput');
             quantityInput.addEventListener('keypress', function(e) {
@@ -846,7 +886,6 @@
             });
         });
 
-        // Initialize the app
         initializeInventory();
     </script>
 </body>

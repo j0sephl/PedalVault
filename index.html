@@ -6,48 +6,74 @@
   <title>Guitar Parts Inventory</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f0f0f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
       margin: 0;
-      padding: 2rem;
     }
     .container {
       max-width: 600px;
       margin: auto;
-      background: white;
+      background: #fff;
       padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
     h1 {
       text-align: center;
+      color: #2d3436;
+    }
+    .status {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #636e72;
     }
     .part {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem 0;
+      align-items: center;
+      padding: 12px 0;
       border-bottom: 1px solid #ddd;
     }
     .part:last-child {
       border-bottom: none;
     }
+    .part-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .part-name {
+      font-weight: bold;
+      color: #2d3436;
+    }
+    .part-link {
+      font-size: 0.85rem;
+      color: #0984e3;
+      text-decoration: none;
+    }
+    .buttons {
+      display: flex;
+      gap: 6px;
+    }
     button {
-      background: #0070f3;
+      background: #00b894;
       color: white;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
       cursor: pointer;
+      font-size: 0.85rem;
     }
-    button:disabled {
-      background: #ccc;
+    button.delete {
+      background: #e17055;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎸 Guitar Parts Inventory</h1>
-    <div id="status">Connecting to Firebase...</div>
+    <div id="status" class="status">Connecting to Firebase...</div>
     <div id="inventory"></div>
   </div>
 
@@ -78,15 +104,40 @@
       Object.entries(data).forEach(([id, part]) => {
         const div = document.createElement('div');
         div.className = 'part';
-        div.innerHTML = `
-          <span>${part.name} — Qty: ${part.quantity}</span>
-          <button onclick="removePart('${id}')">Use 1</button>
-        `;
+
+        const info = document.createElement('div');
+        info.className = 'part-info';
+        info.innerHTML = `<span class="part-name">${part.name} — Qty: ${part.quantity}</span>`;
+        if (part.purchaseUrl) {
+          const link = document.createElement('a');
+          link.href = part.purchaseUrl;
+          link.className = 'part-link';
+          link.target = '_blank';
+          link.textContent = 'Buy again';
+          info.appendChild(link);
+        }
+
+        const buttons = document.createElement('div');
+        buttons.className = 'buttons';
+
+        const useButton = document.createElement('button');
+        useButton.textContent = 'Use 1';
+        useButton.onclick = () => removePart(id);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete';
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = () => deletePart(id);
+
+        buttons.appendChild(useButton);
+        buttons.appendChild(deleteButton);
+
+        div.appendChild(info);
+        div.appendChild(buttons);
         inventoryDiv.appendChild(div);
       });
     }
 
-    // Global removePart so buttons work
     window.removePart = async function (id) {
       const snapshot = await get(invRef);
       if (!snapshot.exists()) return;
@@ -96,7 +147,14 @@
       await set(invRef, inv);
     }
 
-    // Real-time updates
+    window.deletePart = async function (id) {
+      const snapshot = await get(invRef);
+      if (!snapshot.exists()) return;
+      const inv = snapshot.val();
+      delete inv[id];
+      await set(invRef, inv);
+    }
+
     onValue(invRef, (snapshot) => {
       if (snapshot.exists()) {
         renderInventory(snapshot.val());

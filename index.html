@@ -226,6 +226,64 @@
             background: rgba(225, 112, 85, 0.1);
         }
 
+        .shop-icon {
+            color: #00b894;
+        }
+
+        .shop-icon:hover {
+            background: rgba(0, 184, 148, 0.1);
+        }
+
+        .part-info {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            position: relative;
+        }
+
+        .reorder-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .reorder-btn:hover {
+            background: #00a085;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+        }
+
+        .low-stock-warning {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
         .add-part-btn {
             width: 100%;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -317,6 +375,10 @@
                 <div class="part-name" id="partName">Select a Part</div>
                 <div class="current-stock" id="currentStock">0</div>
                 <div class="stock-label">Current Stock</div>
+                <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
+                <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
+                    ⚠️ Low stock! Consider reordering soon.
+                </div>
             </div>
 
             <div class="controls" id="controls" style="display: none;">
@@ -343,6 +405,7 @@
             <h2>Add New Part</h2>
             <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
             <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
+            <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
             <div class="modal-buttons">
                 <button class="btn btn-add" onclick="addNewPart()" style="flex: 1;">Add Part</button>
@@ -357,6 +420,7 @@
             <h2>Edit Part</h2>
             <input type="text" id="editPartName" placeholder="Part name">
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
+            <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="editPartId" placeholder="NFC Tag ID" readonly style="background: #f8f9fa;">
             <div class="modal-buttons">
                 <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
@@ -427,6 +491,7 @@
                         <span class="${quantityClass}">${part.quantity}</span>
                     </div>
                     <div class="item-actions">
+                        <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Reorder part">🛒</button>
                         <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">✏️</button>
                         <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">🗑️</button>
                     </div>
@@ -442,6 +507,23 @@
             
             document.getElementById('partName').textContent = part.name;
             document.getElementById('currentStock').textContent = part.quantity;
+            
+            // Show/hide reorder button and low stock warning
+            const reorderLink = document.getElementById('reorderLink');
+            const lowStockWarning = document.getElementById('lowStockWarning');
+            
+            if (part.purchaseUrl) {
+                reorderLink.href = part.purchaseUrl;
+                reorderLink.style.display = 'inline-block';
+            } else {
+                reorderLink.style.display = 'none';
+            }
+            
+            if (part.quantity < 5) {
+                lowStockWarning.style.display = 'block';
+            } else {
+                lowStockWarning.style.display = 'none';
+            }
             
             document.getElementById('currentPart').style.display = 'block';
             document.getElementById('controls').style.display = 'flex';
@@ -498,6 +580,7 @@
             
             document.getElementById('editPartName').value = part.name;
             document.getElementById('editPartQuantity').value = part.quantity;
+            document.getElementById('editPartUrl').value = part.purchaseUrl || '';
             document.getElementById('editPartId').value = partId;
             document.getElementById('editPartModal').style.display = 'block';
         }
@@ -512,6 +595,7 @@
             
             const newName = document.getElementById('editPartName').value.trim();
             const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
+            const newUrl = document.getElementById('editPartUrl').value.trim();
             
             if (!newName) {
                 showNotification('Please enter a part name', 'error');
@@ -520,11 +604,11 @@
             
             inventory[editingPartId].name = newName;
             inventory[editingPartId].quantity = newQuantity;
+            inventory[editingPartId].purchaseUrl = newUrl;
             
             // Update current selection if this part is selected
             if (currentPartId === editingPartId) {
-                document.getElementById('partName').textContent = newName;
-                document.getElementById('currentStock').textContent = newQuantity;
+                selectPart(editingPartId); // Refresh the display
             }
             
             saveInventory();
@@ -569,6 +653,7 @@
         function addNewPart() {
             const name = document.getElementById('newPartName').value.trim();
             const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
+            const purchaseUrl = document.getElementById('newPartUrl').value.trim();
             let id = document.getElementById('newPartId').value.trim();
             
             if (!name) {
@@ -585,11 +670,28 @@
                 return;
             }
             
-            inventory[id] = { name, quantity };
+            inventory[id] = { name, quantity, purchaseUrl };
             saveInventory();
             displayInventory();
             hideAddPartModal();
             showNotification(`Added ${name} to inventory`);
+        }
+
+        function openPurchaseLink(partId) {
+            const part = inventory[partId];
+            if (part.purchaseUrl) {
+                window.open(part.purchaseUrl, '_blank');
+            } else {
+                showNotification('No purchase URL set for this part', 'error');
+            }
+        }
+
+        function hideAddPartModal() {
+            document.getElementById('addPartModal').style.display = 'none';
+            document.getElementById('newPartName').value = '';
+            document.getElementById('newPartQuantity').value = '';
+            document.getElementById('newPartUrl').value = '';
+            document.getElementById('newPartId').value = '';
         }
 
         function showNotification(message, type = 'success') {

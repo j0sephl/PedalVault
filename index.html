@@ -812,3 +812,13 @@ const firebaseConfig = {
             
             document.getElementById('editPartName').value = part.name;
             document.getElementById('editPartQuantity').value = part.quantity
+            document.getElementById('editPartQuantity').value = part.quantity;
+document.getElementById('editPartUrl').value = part.purchaseUrl || '';
+document.getElementById('editPartId').value = partId;
+
+document.getElementById('editPartModal').style.display = 'block';
+}
+
+// Hook the init function to the window
+window.initializeInventory = initializeInventory;
+</script>

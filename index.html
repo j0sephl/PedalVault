@@ -303,6 +303,48 @@
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
+        /* NEW: Sync buttons styling */
+        .sync-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .sync-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .export-btn:hover {
+            background: #0984e3;
+            transform: translateY(-1px);
+        }
+
+        .import-btn {
+            background: #a29bfe;
+            color: white;
+        }
+
+        .import-btn:hover {
+            background: #6c5ce7;
+            transform: translateY(-1px);
+        }
+
+        #importFile {
+            display: none;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -396,6 +438,13 @@
             </div>
 
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
+            
+            <!-- NEW: Sync buttons -->
+            <div class="sync-buttons">
+                <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
+                <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
         </div>
     </div>
 
@@ -473,6 +522,60 @@
 
         function saveInventory() {
             localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+        }
+
+        // NEW: Export function
+        function exportInventory() {
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+            const filename = `guitar-pedal-inventory-${timestamp}.json`;
+            
+            const dataStr = JSON.stringify(inventory, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`Exported inventory to ${filename}`);
+        }
+
+        // NEW: Import function
+        function importInventory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validate the data structure
+                    if (typeof importedData === 'object' && importedData !== null) {
+                        inventory = importedData;
+                        saveInventory();
+                        displayInventory();
+                        
+                        // Clear current selection since parts may have changed
+                        currentPartId = null;
+                        document.getElementById('currentPart').style.display = 'none';
+                        document.getElementById('controls').style.display = 'none';
+                        document.getElementById('actionButtons').style.display = 'none';
+                        
+                        showNotification('Inventory imported successfully!');
+                    } else {
+                        throw new Error('Invalid file format');
+                    }
+                } catch (error) {
+                    showNotification('Error importing file: Invalid format', 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Clear the file input so the same file can be imported again if needed
+            event.target.value = '';
         }
 
         function displayInventory() {

@@ -448,8 +448,28 @@
         function checkUrlForPart() {
             const urlParams = new URLSearchParams(window.location.search);
             const partId = urlParams.get('part');
+            const quickRemove = urlParams.get('remove');
+            
             if (partId && inventory[partId]) {
                 selectPart(partId);
+                
+                // Auto-remove 1 if 'remove=1' parameter is present
+                if (quickRemove === '1') {
+                    quickRemoveOne(partId);
+                }
+            }
+        }
+
+        function quickRemoveOne(partId) {
+            const part = inventory[partId];
+            if (part.quantity > 0) {
+                part.quantity -= 1;
+                document.getElementById('currentStock').textContent = part.quantity;
+                saveInventory();
+                displayInventory();
+                showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
+            } else {
+                showNotification(`No ${part.name} in stock!`, 'error');
             }
         }
 

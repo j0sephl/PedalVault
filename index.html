@@ -3,364 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guitar Pedal Parts Inventory</title>
+    <title>🎸 Guitar Pedal Parts</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
         }
-
+        h1 {
+            text-align: center;
+            color: #333;
+        }
         .container {
-            max-width: 500px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .content {
-            padding: 30px 20px;
-        }
-
-        .part-info {
-            background: #f8f9fa;
-            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            position: relative;
-        }
-
-        .part-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: #2d3436;
-            margin-bottom: 10px;
-        }
-
-        .current-stock {
-            font-size: 32px;
-            font-weight: 700;
-            color: #00b894;
-            margin: 15px 0;
-        }
-
-        .stock-label {
-            color: #636e72;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .quantity-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            font-size: 18px;
-            text-align: center;
-            background: #fff;
-        }
-
-        .quantity-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add {
-            background: #00b894;
-            color: white;
-        }
-
-        .btn-add:hover {
-            background: #00a085;
-            transform: translateY(-2px);
-        }
-
-        .btn-remove {
-            background: #e17055;
-            color: white;
-        }
-
-        .btn-remove:hover {
-            background: #d63031;
-            transform: translateY(-2px);
-        }
-
-        .inventory-list {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .inventory-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .inventory-header h3 {
-            color: #2d3436;
-            margin: 0;
-        }
-
-        .sort-dropdown {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-
-        .sort-dropdown:focus {
-            outline: none;
-            border-color: #667eea;
+        .part-selector, .stock-controls, .sort-controls, .action-buttons {
+            margin: 20px 0;
         }
-
-        .inventory-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
+        select, button, input[type="file"] {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
-
-        .inventory-item:hover {
-            background-color: rgba(102, 126, 234, 0.05);
-            border-radius: 8px;
-        }
-
-        .inventory-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-info {
-            flex: 1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .item-name {
-            font-weight: 500;
-            color: #2d3436;
-        }
-
-        .item-quantity {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .low-stock {
-            background: #e17055;
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 8px;
-            margin-left: 15px;
-        }
-
-        .action-icon {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            font-size: 14px;
-        }
-
-        .edit-icon {
-            color: #667eea;
-        }
-
-        .edit-icon:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .delete-icon {
-            color: #e17055;
-        }
-
-        .delete-icon:hover {
-            background: rgba(225, 112, 85, 0.1);
-        }
-
-        .shop-icon {
-            color: #00b894;
-        }
-
-        .shop-icon:hover {
-            background: rgba(0, 184, 148, 0.1);
-        }
-
-        .reorder-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #00b894;
+        button {
+            background-color: #28a745;
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
         }
-
-        .reorder-btn:hover {
-            background: #00a085;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+        button:hover {
+            background-color: #218838;
         }
-
         .low-stock-warning {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        .add-part-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .add-part-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .sync-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .sync-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .export-btn {
-            background: #74b9ff;
-            color: white;
-        }
-
-        .export-btn:hover {
-            background: #0984e3;
-            transform: translateY(-1px);
-        }
-
-        .import-btn {
-            background: #a29bfe;
-            color: white;
-        }
-
-        .import-btn:hover {
-            background: #6c5ce7;
-            transform: translateY(-1px);
-        }
-
-        #importFile {
+            color: red;
             display: none;
+            margin-top: 10px;
         }
-
+        .part-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .part-list th, .part-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .part-list th {
+            background-color: #f2f2f2;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -369,584 +65,458 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            justify-content: center;
+            align-items: center;
         }
-
         .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal h2 {
-            margin-bottom: 20px;
-            color: #2d3436;
-        }
-
-        .modal input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 20px;
             border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 16px;
+            width: 400px;
         }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
+        .modal-content input {
+            width: calc(100% - 16px);
+            margin: 8px 0;
+            padding: 8px;
         }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #00b894;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-        }
-
-        .notification.show {
-            transform: translateX(0);
+        .bom-results {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
+    <h1>🎸 Guitar Pedal Parts</h1>
+    <p style="text-align: center;">NFC Inventory System</p>
     <div class="container">
-        <div class="header">
-            <h1>🎸 Guitar Pedal Parts</h1>
-            <p>NFC Inventory System</p>
+        <div class="part-selector">
+            <select id="partSelect">
+                <option value="">Select a Part</option>
+            </select>
+            <span id="currentStock">0</span>
+            <span>Current Stock</span>
+            <button id="reorderButton">🛒 Reorder</button>
+            <div id="lowStockWarning" class="low-stock-warning">
+                ⚠️ Low stock! Consider reordering soon.
+            </div>
         </div>
-
-        <div class="content">
-            <div class="part-info" id="currentPart" style="display: none;">
-                <div class="part-name" id="partName">Select a Part</div>
-                <div class="current-stock" id="currentStock">0</div>
-                <div class="stock-label">Current Stock</div>
-                <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
-                <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
-                    ⚠️ Low stock! Consider reordering soon.
-                </div>
-            </div>
-
-            <div class="controls" id="controls" style="display: none;">
-                <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
-            </div>
-
-            <div class="action-buttons" id="actionButtons" style="display: none;">
-                <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
-                <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
-            </div>
-
-            <div class="inventory-list">
-                <div class="inventory-header">
-                    <h3>All Parts</h3>
-                    <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
-                        <option value="name-asc">Name A-Z</option>
-                        <option value="name-desc">Name Z-A</option>
-                        <option value="quantity-asc">Quantity Low-High</option>
-                        <option value="quantity-desc">Quantity High-Low</option>
-                        <option value="stock-status">Low Stock First</option>
-                    </select>
-                </div>
-                <div id="inventoryItems"></div>
-            </div>
-
-            <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
-            
-            <div class="sync-buttons">
-                <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
-                <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
-            </div>
-            
-<button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
-
-<input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
+        <div class="stock-controls">
+            <button onclick="showAddStockModal()">Add Stock</button>
+            <button onclick="showRemoveStockModal()">Remove Stock</button>
+        </div>
+        <div class="sort-controls">
+            <select id="sortSelect" onchange="renderPartList()">
+                <option value="all">All Parts</option>
+                <option value="nameAsc">Name A-Z</option>
+                <option value="nameDesc">Name Z-A</option>
+                <option value="quantityAsc">Quantity Low-High</option>
+                <option value="quantityDesc">Quantity High-Low</option>
+                <option value="lowStock">Low Stock First</option>
+            </select>
+        </div>
+        <div class="part-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>SKU</th>
+                        <th>Quantity</th>
+                        <th>Low Stock Threshold</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="partList"></tbody>
+            </table>
+        </div>
+        <div class="action-buttons">
+            <button onclick="showAddPartModal()">+ Add New Part</button>
+            <button onclick="exportToCsv()">📤 Export Data</button>
+            <button onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+            <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importFromCsv(event)">
+            <button onclick="showBomModal()">📋 Compare BOM</button>
         </div>
     </div>
 
-    <!-- Add Part Modal -->
-    <div class="modal" id="addPartModal">
+    <!-- Add New Part Modal -->
+    <div id="addPartModal" class="modal">
         <div class="modal-content">
             <h2>Add New Part</h2>
-            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
-            <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
-            <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
-            <div class="modal-buttons">
-                <button class="btn btn-add" onclick="addNewPart()" style="flex: 1;">Add Part</button>
-                <button class="btn" onclick="hideAddPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
+            <input type="text" id="addPartName" placeholder="Part Name">
+            <input type="text" id="addPartSku" placeholder="SKU">
+            <input type="number" id="addPartQuantity" placeholder="Quantity" min="0">
+            <input type="number" id="addPartThreshold" placeholder="Low Stock Threshold" min="0">
+            <button onclick="addPart()">Add Part</button>
+            <button onclick="closeModal('addPartModal')">Cancel</button>
         </div>
     </div>
 
     <!-- Edit Part Modal -->
-    <div class="modal" id="editPartModal">
+    <div id="editPartModal" class="modal">
         <div class="modal-content">
             <h2>Edit Part</h2>
-            <input type="text" id="editPartName" placeholder="Part name">
+            <input type="hidden" id="editPartId">
+            <input type="text" id="editPartName" placeholder="Part Name">
+            <input type="text" id="editPartSku" placeholder="SKU">
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
-            <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="editPartId" placeholder="NFC Tag ID" readonly style="background: #f8f9fa;">
-            <div class="modal-buttons">
-                <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
-                <button class="btn" onclick="hideEditPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
+            <input type="number" id="editPartThreshold" placeholder="Low Stock Threshold" min="0">
+            <button onclick="savePartChanges()">Save Changes</button>
+            <button onclick="closeModal('editPartModal')">Cancel</button>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div class="modal" id="deletePartModal">
+    <!-- Delete Part Modal -->
+    <div id="deletePartModal" class="modal">
         <div class="modal-content">
             <h2>Delete Part</h2>
-            <p id="deletePartMessage" style="margin-bottom: 20px; color: #666;"></p>
-            <div class="modal-buttons">
-                <button class="btn btn-remove" onclick="confirmDeletePart()" style="flex: 1;">Delete</button>
-                <button class="btn" onclick="hideDeletePartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
-            </div>
+            <p>Are you sure you want to delete <span id="deletePartName"></span>?</p>
+            <input type="hidden" id="deletePartId">
+            <button onclick="deletePart()">Delete</button>
+            <button onclick="closeModal('deletePartModal')">Cancel</button>
         </div>
     </div>
 
-    <!-- Notification -->
-    <div class="notification" id="notification"></div>
+    <!-- Add Stock Modal -->
+    <div id="addStockModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Stock</h2>
+            <p>Add stock to <span id="addStockPartName"></span></p>
+            <input type="number" id="addStockQuantity" placeholder="Quantity to Add" min="1">
+            <button onclick="addStock()">Add Stock</button>
+            <button onclick="closeModal('addStockModal')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Remove Stock Modal -->
+    <div id="removeStockModal" class="modal">
+        <div class="modal-content">
+            <h2>Remove Stock</h2>
+            <p>Remove stock from <span id="removeStockPartName"></span></p>
+            <input type="number" id="removeStockQuantity" placeholder="Quantity to Remove" min="1">
+            <button onclick="removeStock()">Remove Stock</button>
+            <button onclick="closeModal('removeStockModal')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- BOM Comparison Modal -->
+    <div id="bomModal" class="modal">
+        <div class="modal-content">
+            <h2>Compare BOM</h2>
+            <input type="file" id="bomFile" accept=".csv">
+            <button onclick="compareBom()">Compare</button>
+            <button onclick="closeModal('bomModal')">Cancel</button>
+            <div id="bomResults" class="bom-results"></div>
+        </div>
+    </div>
 
     <script>
-        let inventory = {};
-        let currentPartId = null;
-        let editingPartId = null;
-        let deletingPartId = null;
-        let currentSortOrder = 'name-asc';
+        let parts = JSON.parse(localStorage.getItem('parts')) || [];
+        let selectedPartId = null;
 
-        // Initialize with some sample data
-        function initializeInventory() {
-            const savedInventory = localStorage.getItem('guitarPedalInventory');
-            if (savedInventory) {
-                inventory = JSON.parse(savedInventory);
-            } else {
-                // Sample data
-                inventory = {
-                    'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
-                    'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
-                    'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
-                    'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
-                    'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
-                    'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
-                };
-                saveInventory();
+        function saveParts() {
+            localStorage.setItem('parts', JSON.stringify(parts));
+        }
+
+        function renderPartList() {
+            const partList = document.getElementById('partList');
+            const sortSelect = document.getElementById('sortSelect').value;
+            let sortedParts = [...parts];
+
+            if (sortSelect === 'nameAsc') {
+                sortedParts.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortSelect === 'nameDesc') {
+                sortedParts.sort((a, b) => b.name.localeCompare(a.name));
+            } else if (sortSelect === 'quantityAsc') {
+                sortedParts.sort((a, b) => a.quantity - b.quantity);
+            } else if (sortSelect === 'quantityDesc') {
+                sortedParts.sort((a, b) => b.quantity - a.quantity);
+            } else if (sortSelect === 'lowStock') {
+                sortedParts.sort((a, b) => {
+                    const aLow = a.quantity <= a.threshold;
+                    const bLow = b.quantity <= b.threshold;
+                    if (aLow && !bLow) return -1;
+                    if (!aLow && bLow) return 1;
+                    return a.quantity - b.quantity;
+                });
             }
-            displayInventory();
-            checkUrlForPart();
-        }
 
-        function saveInventory() {
-            localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
-        }
-
-        function exportInventory() {
-            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-            const filename = `guitar-pedal-inventory-${timestamp}.json`;
-            
-            const dataStr = JSON.stringify(inventory, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showNotification(`Exported inventory to ${filename}`);
-        }
-
-        function importInventory(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    
-                    if (typeof importedData === 'object' && importedData !== null) {
-                        inventory = importedData;
-                        saveInventory();
-                        displayInventory();
-                        
-                        currentPartId = null;
-                        document.getElementById('currentPart').style.display = 'none';
-                        document.getElementById('controls').style.display = 'none';
-                        document.getElementById('actionButtons').style.display = 'none';
-                        
-                        showNotification('Inventory imported successfully!');
-                    } else {
-                        throw new Error('Invalid file format');
-                    }
-                } catch (error) {
-                    showNotification('Error importing file: Invalid format', 'error');
-                }
-            };
-            reader.readAsText(file);
-            
-            event.target.value = '';
-        }
-
-        function getSortedInventoryEntries() {
-            const entries = Object.entries(inventory);
-            
-            switch (currentSortOrder) {
-                case 'name-asc':
-                    return entries.sort((a, b) => a[1].name.localeCompare(b[1].name));
-                case 'name-desc':
-                    return entries.sort((a, b) => b[1].name.localeCompare(a[1].name));
-                case 'quantity-asc':
-                    return entries.sort((a, b) => a[1].quantity - b[1].quantity);
-                case 'quantity-desc':
-                    return entries.sort((a, b) => b[1].quantity - a[1].quantity);
-                case 'stock-status':
-                    return entries.sort((a, b) => {
-                        const aLowStock = a[1].quantity < 5;
-                        const bLowStock = b[1].quantity < 5;
-                        if (aLowStock && !bLowStock) return -1;
-                        if (!aLowStock && bLowStock) return 1;
-                        return a[1].name.localeCompare(b[1].name);
-                    });
-                default:
-                    return entries;
-            }
-        }
-
-        function changeSortOrder() {
-            currentSortOrder = document.getElementById('sortDropdown').value;
-            displayInventory();
-        }
-
-        function displayInventory() {
-            const container = document.getElementById('inventoryItems');
-            container.innerHTML = '';
-
-            const sortedEntries = getSortedInventoryEntries();
-
-            sortedEntries.forEach(([id, part]) => {
-                const item = document.createElement('div');
-                item.className = 'inventory-item';
-                
-                const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
-                
-                item.innerHTML = `
-                    <div class="item-info" onclick="selectPart('${id}')">
-                        <span class="item-name">${part.name}</span>
-                        <span class="${quantityClass}">${part.quantity}</span>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Reorder part">🛒</button>
-                        <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">✏️</button>
-                        <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">🗑️</button>
-                    </div>
+            partList.innerHTML = '';
+            sortedParts.forEach(part => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${part.name}</td>
+                    <td>${part.sku}</td>
+                    <td>${part.quantity}</td>
+                    <td>${part.threshold}</td>
+                    <td>
+                        <button onclick="showEditPartModal('${part.id}')">Edit</button>
+                        <button onclick="showDeletePartModal('${part.id}')">Delete</button>
+                    </td>
                 `;
-                
-                container.appendChild(item);
+                partList.appendChild(tr);
             });
+
+            renderPartSelect();
         }
 
-        function selectPart(partId) {
-            currentPartId = partId;
-            const part = inventory[partId];
-            
-            document.getElementById('partName').textContent = part.name;
-            document.getElementById('currentStock').textContent = part.quantity;
-            
-            const reorderLink = document.getElementById('reorderLink');
-            const lowStockWarning = document.getElementById('lowStockWarning');
-            
-            if (part.purchaseUrl) {
-                reorderLink.href = part.purchaseUrl;
-                reorderLink.style.display = 'inline-block';
-            } else {
-                reorderLink.style.display = 'none';
+        function renderPartSelect() {
+            const partSelect = document.getElementById('partSelect');
+            partSelect.innerHTML = '<option value="">Select a Part</option>';
+            parts.forEach(part => {
+                const option = document.createElement('option');
+                option.value = part.id;
+                option.textContent = part.name;
+                partSelect.appendChild(option);
+            });
+
+            if (selectedPartId) {
+                partSelect.value = selectedPartId;
+                updateStockDisplay();
             }
-            
-            if (part.quantity < 5) {
-                lowStockWarning.style.display = 'block';
+        }
+
+        function updateStockDisplay() {
+            const part = parts.find(p => p.id === selectedPartId);
+            const currentStock = document.getElementById('currentStock');
+            const lowStockWarning = document.getElementById('lowStockWarning');
+            if (part) {
+                currentStock.textContent = part.quantity;
+                lowStockWarning.style.display = part.quantity <= part.threshold ? 'block' : 'none';
             } else {
+                currentStock.textContent = '0';
                 lowStockWarning.style.display = 'none';
             }
-            
-            document.getElementById('currentPart').style.display = 'block';
-            document.getElementById('controls').style.display = 'flex';
-            document.getElementById('actionButtons').style.display = 'flex';
-            
-            document.getElementById('quantityInput').focus();
-        }
-
-        function adjustStock(action) {
-            if (!currentPartId) return;
-            
-            const quantity = parseInt(document.getElementById('quantityInput').value);
-            if (!quantity || quantity < 1) {
-                showNotification('Please enter a valid quantity', 'error');
-                return;
-            }
-
-            const part = inventory[currentPartId];
-            
-            if (action === 'add') {
-                part.quantity += quantity;
-                showNotification(`Added ${quantity} ${part.name}(s)`);
-            } else if (action === 'remove') {
-                if (part.quantity >= quantity) {
-                    part.quantity -= quantity;
-                    showNotification(`Removed ${quantity} ${part.name}(s)`);
-                } else {
-                    showNotification('Not enough stock to remove', 'error');
-                    return;
-                }
-            }
-
-            document.getElementById('currentStock').textContent = part.quantity;
-            document.getElementById('quantityInput').value = '';
-            
-            saveInventory();
-            displayInventory();
         }
 
         function showAddPartModal() {
-            document.getElementById('addPartModal').style.display = 'block';
+            document.getElementById('addPartName').value = '';
+            document.getElementById('addPartSku').value = '';
+            document.getElementById('addPartQuantity').value = '';
+            document.getElementById('addPartThreshold').value = '';
+            document.getElementById('addPartModal').style.display = 'flex';
         }
 
-        function hideAddPartModal() {
-            document.getElementById('addPartModal').style.display = 'none';
-            document.getElementById('newPartName').value = '';
-            document.getElementById('newPartQuantity').value = '';
-            document.getElementById('newPartUrl').value = '';
-            document.getElementById('newPartId').value = '';
+        function addPart() {
+            const name = document.getElementById('addPartName').value.trim();
+            const sku = document.getElementById('addPartSku').value.trim();
+            const quantity = parseInt(document.getElementById('addPartQuantity').value) || 0;
+            const threshold = parseInt(document.getElementById('addPartThreshold').value) || 0;
+
+            if (!name || !sku) {
+                alert('Name and SKU are required.');
+                return;
+            }
+
+            const id = Date.now().toString();
+            parts.push({ id, name, sku, quantity, threshold });
+            saveParts();
+            renderPartList();
+            closeModal('addPartModal');
         }
 
-        function showEditPartModal(partId) {
-            editingPartId = partId;
-            const part = inventory[partId];
-            
+        function showEditPartModal(id) {
+            const part = parts.find(p => p.id === id);
+            if (!part) return;
+            document.getElementById('editPartId').value = id;
             document.getElementById('editPartName').value = part.name;
+            document.getElementById('editPartSku').value = part.sku;
             document.getElementById('editPartQuantity').value = part.quantity;
-            document.getElementById('editPartUrl').value = part.purchaseUrl || '';
-            document.getElementById('editPartId').value = partId;
-            document.getElementById('editPartModal').style.display = 'block';
+            document.getElementById('editPartThreshold').value = part.threshold;
+            document.getElementById('editPartModal').style.display = 'flex';
         }
 
-        function hideEditPartModal() {
-            document.getElementById('editPartModal').style.display = 'none';
-            editingPartId = null;
-        }
+        function savePartChanges() {
+            const id = document.getElementById('editPartId').value;
+            const name = document.getElementById('editPartName').value.trim();
+            const sku = document.getElementById('editPartSku').value.trim();
+            const quantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
+            const threshold = parseInt(document.getElementById('editPartThreshold').value) || 0;
 
-        function saveEditPart() {
-            if (!editingPartId) return;
-            
-            const newName = document.getElementById('editPartName').value.trim();
-            const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
-            const newUrl = document.getElementById('editPartUrl').value.trim();
-            
-            if (!newName) {
-                showNotification('Please enter a part name', 'error');
+            if (!name || !sku) {
+                alert('Name and SKU are required.');
                 return;
             }
-            
-            inventory[editingPartId].name = newName;
-            inventory[editingPartId].quantity = newQuantity;
-            inventory[editingPartId].purchaseUrl = newUrl;
-            
-            if (currentPartId === editingPartId) {
-                selectPart(editingPartId);
+
+            const index = parts.findIndex(p => p.id === id);
+            if (index !== -1) {
+                parts[index] = { id, name, sku, quantity, threshold };
+                saveParts();
+                renderPartList();
+                if (selectedPartId === id) updateStockDisplay();
+                closeModal('editPartModal');
             }
-            
-            saveInventory();
-            displayInventory();
-            hideEditPartModal();
-            showNotification(`Updated ${newName}`);
         }
 
-        function showDeletePartModal(partId) {
-            deletingPartId = partId;
-            const part = inventory[partId];
-            document.getElementById('deletePartMessage').textContent = 
-                `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-            document.getElementById('deletePartModal').style.display = 'block';
+        function showDeletePartModal(id) {
+            const part = parts.find(p => p.id === id);
+            if (!part) return;
+            document.getElementById('deletePartId').value = id;
+            document.getElementById('deletePartName').textContent = part.name;
+            document.getElementById('deletePartModal').style.display = 'flex';
         }
 
-        function hideDeletePartModal() {
-            document.getElementById('deletePartModal').style.display = 'none';
-            deletingPartId = null;
+        function deletePart() {
+            const id = document.getElementById('deletePartId').value;
+            parts = parts.filter(p => p.id !== id);
+            if (selectedPartId === id) selectedPartId = null;
+            saveParts();
+            renderPartList();
+            updateStockDisplay();
+            closeModal('deletePartModal');
         }
 
-        function confirmDeletePart() {
-            if (!deletingPartId) return;
-            
-            const partName = inventory[deletingPartId].name;
-            
-            if (currentPartId === deletingPartId) {
-                currentPartId = null;
-                document.getElementById('currentPart').style.display = 'none';
-                document.getElementById('controls').style.display = 'none';
-                document.getElementById('actionButtons').style.display = 'none';
-            }
-            
-            delete inventory[deletingPartId];
-            saveInventory();
-            displayInventory();
-            hideDeletePartModal();
-            showNotification(`Deleted ${partName}`);
-        }
-
-        function addNewPart() {
-            const name = document.getElementById('newPartName').value.trim();
-            const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
-            const purchaseUrl = document.getElementById('newPartUrl').value.trim();
-            let id = document.getElementById('newPartId').value.trim();
-            
-            if (!name) {
-                showNotification('Please enter a part name', 'error');
+        function showAddStockModal() {
+            if (!selectedPartId) {
+                alert('Please select a part first.');
                 return;
             }
-            
-            if (!id) {
-                id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            }
-            
-            if (inventory[id]) {
-                showNotification('Part ID already exists', 'error');
+            const part = parts.find(p => p.id === selectedPartId);
+            document.getElementById('addStockPartName').textContent = part.name;
+            document.getElementById('addStockQuantity').value = '';
+            document.getElementById('addStockModal').style.display = 'flex';
+        }
+
+        function addStock() {
+            const quantity = parseInt(document.getElementById('addStockQuantity').value) || 0;
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity.');
                 return;
             }
-            
-            inventory[id] = { name, quantity, purchaseUrl };
-            saveInventory();
-            displayInventory();
-            hideAddPartModal();
-            showNotification(`Added ${name} to inventory`);
-        }
-
-        function openPurchaseLink(partId) {
-            const part = inventory[partId];
-            if (part.purchaseUrl) {
-                window.open(part.purchaseUrl, '_blank');
-            } else {
-                showNotification('No purchase URL set for this part', 'error');
+            const part = parts.find(p => p.id === selectedPartId);
+            if (part) {
+                part.quantity += quantity;
+                saveParts();
+                renderPartList();
+                updateStockDisplay();
+                closeModal('addStockModal');
             }
         }
 
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+        function showRemoveStockModal() {
+            if (!selectedPartId) {
+                alert('Please select a part first.');
+                return;
+            }
+            const part = parts.find(p => p.id === selectedPartId);
+            document.getElementById('removeStockPartName').textContent = part.name;
+            document.getElementById('removeStockQuantity').value = '';
+            document.getElementById('removeStockModal').style.display = 'flex';
         }
 
-        function checkUrlForPart() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const partId = urlParams.get('part');
-            const quickRemove = urlParams.get('remove');
-            
-            if (partId && inventory[partId]) {
-                selectPart(partId);
-                
-                if (quickRemove === '1') {
-                    quickRemoveOne(partId);
+        function removeStock() {
+            const quantity = parseInt(document.getElementById('removeStockQuantity').value) || 0;
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            const part = parts.find(p => p.id === selectedPartId);
+            if (part) {
+                part.quantity = Math.max(0, part.quantity - quantity);
+                saveParts();
+                renderPartList();
+                updateStockDisplay();
+                closeModal('removeStockModal');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function exportToCsv() {
+            const headers = ['Name', 'SKU', 'Quantity', 'Low Stock Threshold'];
+            const rows = parts.map(part => [
+                `"${part.name.replace(/"/g, '""')}"`,
+                part.sku,
+                part.quantity,
+                part.threshold
+            ]);
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventory.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromCsv(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"')));
+                const headers = rows[0];
+                if (headers[0] !== 'Name' || headers[1] !== 'SKU' || headers[2] !== 'Quantity' || headers[3] !== 'Low Stock Threshold') {
+                    alert('Invalid CSV format.');
+                    return;
                 }
-            }
+                parts = rows.slice(1).filter(row => row[0]).map(row => ({
+                    id: Date.now().toString() + Math.random(),
+                    name: row[0],
+                    sku: row[1],
+                    quantity: parseInt(row[2]) || 0,
+                    threshold: parseInt(row[3]) || 0
+                }));
+                saveParts();
+                renderPartList();
+                document.getElementById('importFile').value = '';
+            };
+            reader.readAsText(file);
         }
 
-        function quickRemoveOne(partId) {
-            const part = inventory[partId];
-            if (part.quantity > 0) {
-                part.quantity -= 1;
-                document.getElementById('currentStock').textContent = part.quantity;
-                saveInventory();
-                displayInventory();
-                showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
-            } else {
-                showNotification(`No ${part.name} in stock!`, 'error');
-            }
+        function showBomModal() {
+            document.getElementById('bomFile').value = '';
+            document.getElementById('bomResults').innerHTML = '';
+            document.getElementById('bomModal').style.display = 'flex';
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const quantityInput = document.getElementById('quantityInput');
-            quantityInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    adjustStock('add');
-                }
-            });
+        function compareBom() {
+            const file = document.getElementById('bomFile').files[0];
+            if (!file) {
+                alert('Please select a BOM CSV file.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"')));
+                const bomParts = rows.slice(1).filter(row => row[0]).map(row => ({
+                    name: row[0],
+                    quantity: parseInt(row[1]) || 0
+                }));
+                let results = '<h3>BOM Comparison Results</h3><ul>';
+                bomParts.forEach(bomPart => {
+                    const inventoryPart = parts.find(p => p.name.toLowerCase() === bomPart.name.toLowerCase());
+                    if (!inventoryPart) {
+                        results += `<li>${bomPart.name}: Not found in inventory. Required: ${bomPart.quantity}</li>`;
+                    } else if (inventoryPart.quantity < bomPart.quantity) {
+                        results += `<li>${bomPart.name}: Insufficient stock. Required: ${bomPart.quantity}, Available: ${inventoryPart.quantity}</li>`;
+                    } else {
+                        results += `<li>${bomPart.name}: Sufficient stock. Required: ${bomPart.quantity}, Available: ${inventoryPart.quantity}</li>`;
+                    }
+                });
+                results += '</ul>';
+                document.getElementById('bomResults').innerHTML = results;
+            };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('partSelect').addEventListener('change', function() {
+            selectedPartId = this.value;
+            updateStockDisplay();
         });
 
-        initializeInventory();
-    
-function compareBOM(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const bom = JSON.parse(e.target.result);
-            const missing = [];
-
-            for (const id in bom) {
-                const required = bom[id].quantity;
-                const partName = bom[id].name;
-
-                if (!inventory[id]) {
-                    missing.push(`<li>❌ <strong>${partName}</strong>: Missing entirely (need ${required})</li>`);
-                } else if (inventory[id].quantity < required) {
-                    const have = inventory[id].quantity;
-                    missing.push(`<li>⚠️ <strong>${partName}</strong>: Have ${have}, need ${required}</li>`);
-                }
-            }
-
-            const resultsContainer = document.getElementById("bomResults");
-            if (missing.length === 0) {
-                resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
+        document.getElementById('reorderButton').addEventListener('click', function() {
+            const part = parts.find(p => p.id === selectedPartId);
+            if (part) {
+                alert(`Initiate reorder for ${part.name}. Please contact supplier with SKU: ${part.sku}`);
             } else {
-                resultsContainer.innerHTML = `<ul style="padding-left: 20px;">${missing.join("")}</ul>`;
+                alert('Please select a part to reorder.');
             }
+        });
 
-            document.getElementById("bomModal").style.display = "block";
-
-        } catch (err) {
-            showNotification("Invalid BOM file", "error");
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-}
-
-function hideBOMModal() {
-    document.getElementById("bomModal").style.display = "none";
-}
-
-</script>
-
-<!-- BOM Comparison Modal -->
-<div class="modal" id="bomModal">
-    <div class="modal-content">
-        <h2>BOM Comparison Results</h2>
-        <div id="bomResults" style="max-height: 300px; overflow-y: auto; font-size: 14px; color: #2d3436;"></div>
-        <div class="modal-buttons" style="margin-top: 20px;">
-            <button class="btn" onclick="hideBOMModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
-        </div>
-    </div>
-</div>
-
+        renderPartList();
+    </script>
 </body>
 </html>

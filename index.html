@@ -678,6 +678,14 @@
         let projects = {};
         let currentProjectFilter = 'all';
 
+        function saveProjects() {
+            localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
+        }
+
+        function saveInventory() {
+            localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+        }
+
         // Initialize with some sample data
         function initializeInventory() {
             const savedInventory = localStorage.getItem('guitarPedalInventory');
@@ -698,10 +706,6 @@
             initializeProjects();
             displayInventory();
             checkUrlForPart();
-        }
-
-        function saveInventory() {
-            localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
         }
 
         function showExportModal() {
@@ -1494,10 +1498,6 @@
             
             // Show notification
             showNotification(`Deleted project: ${projectName}`);
-        }
-
-        function saveProjects() {
-            localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
         }
 
         initializeInventory();

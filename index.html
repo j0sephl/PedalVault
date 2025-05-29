@@ -666,6 +666,9 @@
         </div>
     </div>
 
+    <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
+    <input type="file" id="importFile" accept=".json" onchange="importInventory(event)" style="display: none;">
+
     <script>
         let inventory = {};
         let currentPartId = null;
@@ -755,8 +758,13 @@
                     const importedData = JSON.parse(e.target.result);
                     
                     if (typeof importedData === 'object' && importedData !== null) {
-                        inventory = importedData;
-                        saveInventory();
+                        if (currentProject === 'inventory') {
+                            inventory = importedData;
+                            saveInventory();
+                        } else {
+                            projects[currentProject].inventory = importedData;
+                            saveProjects();
+                        }
                         displayInventory();
                         
                         currentPartId = null;
@@ -774,6 +782,7 @@
             };
             reader.readAsText(file);
             
+            // Reset the file input
             event.target.value = '';
         }
 
@@ -1287,6 +1296,8 @@
                 }
             };
             reader.readAsText(file);
+            
+            // Reset the file input
             event.target.value = '';
         }
 

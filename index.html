@@ -1122,6 +1122,12 @@
 
         function updateProjectFilter() {
             const filter = document.getElementById('projectFilter');
+            if (!filter) return;
+            
+            // Store current selection
+            const currentValue = filter.value;
+            
+            // Clear and rebuild options
             filter.innerHTML = '<option value="all">All Projects</option>';
             
             for (const projectId in projects) {
@@ -1129,6 +1135,13 @@
                 option.value = projectId;
                 option.textContent = projects[projectId].name;
                 filter.appendChild(option);
+            }
+            
+            // Restore selection if it still exists
+            if (currentValue !== 'all' && projects[currentValue]) {
+                filter.value = currentValue;
+            } else {
+                filter.value = 'all';
             }
         }
 
@@ -1412,8 +1425,6 @@
             const modal = document.getElementById('projectManagementModal');
             if (modal) {
                 modal.style.display = 'none';
-                // Force a reflow to ensure the display property is applied
-                modal.offsetHeight;
             }
         }
 
@@ -1422,17 +1433,19 @@
         function showDeleteProjectModal(projectId) {
             deletingProjectId = projectId;
             const project = projects[projectId];
-            document.getElementById('deleteProjectMessage').textContent = 
-                `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
-            document.getElementById('deleteProjectModal').style.display = 'block';
+            const modal = document.getElementById('deleteProjectModal');
+            const message = document.getElementById('deleteProjectMessage');
+            
+            if (modal && message) {
+                message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
+                modal.style.display = 'block';
+            }
         }
 
         function hideDeleteProjectModal() {
             const modal = document.getElementById('deleteProjectModal');
             if (modal) {
                 modal.style.display = 'none';
-                // Force a reflow to ensure the display property is applied
-                modal.offsetHeight;
             }
             deletingProjectId = null;
         }
@@ -1453,31 +1466,33 @@
                 }
             }
             
+            // Delete the project
             delete projects[deletingProjectId];
+            
+            // Save changes
             saveProjects();
             saveInventory();
+            
+            // Update UI
             updateProjectFilter();
             displayInventory();
             
-            // Hide both modals
+            // Hide modals
             const deleteModal = document.getElementById('deleteProjectModal');
             const manageModal = document.getElementById('projectManagementModal');
             
             if (deleteModal) {
                 deleteModal.style.display = 'none';
-                // Force a reflow to ensure the display property is applied
-                deleteModal.offsetHeight;
             }
             
             if (manageModal) {
                 manageModal.style.display = 'none';
-                // Force a reflow to ensure the display property is applied
-                manageModal.offsetHeight;
             }
             
-            // Reset the deletingProjectId
+            // Reset state
             deletingProjectId = null;
             
+            // Show notification
             showNotification(`Deleted project: ${projectName}`);
         }
 

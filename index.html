@@ -1313,11 +1313,23 @@
                     
                     // Tag parts in the main inventory with this project
                     for (const id in bom) {
-                        if (inventory[id]) {
-                            if (!inventory[id].projects) {
-                                inventory[id].projects = {};
+                        // Find the part in inventory by name if ID doesn't match
+                        let partId = id;
+                        if (!inventory[id]) {
+                            // Try to find by name
+                            for (const existingId in inventory) {
+                                if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
+                                    partId = existingId;
+                                    break;
+                                }
                             }
-                            inventory[id].projects[projectId] = bom[id].quantity;
+                        }
+                        
+                        if (inventory[partId]) {
+                            if (!inventory[partId].projects) {
+                                inventory[partId].projects = {};
+                            }
+                            inventory[partId].projects[projectId] = bom[id].quantity;
                         } else {
                             // Create the part if it doesn't exist
                             inventory[id] = {
@@ -1347,7 +1359,17 @@
                     for (const id in bom) {
                         totalParts++;
                         const required = bom[id].quantity;
-                        const part = inventory[id];
+                        // Find the part in inventory by name if ID doesn't match
+                        let part = inventory[id];
+                        if (!part) {
+                            // Try to find by name
+                            for (const existingId in inventory) {
+                                if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
+                                    part = inventory[existingId];
+                                    break;
+                                }
+                            }
+                        }
                         
                         if (!part || part.quantity === 0) {
                             missingParts++;

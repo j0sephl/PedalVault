@@ -1000,11 +1000,18 @@ function compareBOM(event) {
                 }
             } else {
                 // Parse JSON
-                bom = JSON.parse(fileContent);
+                const parsedBom = JSON.parse(fileContent);
+                // Only include parts that have a quantity specified
+                for (const id in parsedBom) {
+                    if (parsedBom[id].quantity !== undefined) {
+                        bom[id] = parsedBom[id];
+                    }
+                }
             }
 
             const missing = [];
 
+            // Only check parts that are in the BOM
             for (const id in bom) {
                 const required = bom[id].quantity;
                 const partName = bom[id].name;

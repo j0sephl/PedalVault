@@ -1172,9 +1172,10 @@
                 const part = inventory[id];
                 const status = part ? (part.quantity >= required ? '✅' : part.quantity > 0 ? '⚠️' : '❌') : '❌';
                 
-                if (!part || part.quantity < required) {
-                    if (!part) missingParts++;
-                    else if (part.quantity > 0) lowStockParts++;
+                if (!part || part.quantity === 0) {
+                    missingParts++;
+                } else if (part.quantity < required) {
+                    lowStockParts++;
                 }
                 
                 const partElement = document.createElement('div');
@@ -1320,17 +1321,23 @@
                     window.currentBom = bom;
 
                     const missing = [];
+                    let totalParts = 0;
+                    let missingParts = 0;
+                    let lowStockParts = 0;
 
-                    // Only check parts that are in the BOM
+                    // Check each part in the BOM against the main inventory
                     for (const id in bom) {
+                        totalParts++;
                         const required = bom[id].quantity;
-                        const partName = bom[id].name;
-
-                        if (!inventory[id]) {
-                            missing.push(`<li>❌ <strong>${partName}</strong>: Missing entirely (need ${required})</li>`);
-                        } else if (inventory[id].quantity < required) {
-                            const have = inventory[id].quantity;
-                            missing.push(`<li>⚠️ <strong>${partName}</strong>: Have ${have}, need ${required}</li>`);
+                        const part = inventory[id];
+                        
+                        if (!part || part.quantity === 0) {
+                            missingParts++;
+                            missing.push(`<li>❌ <strong>${bom[id].name}</strong>: Missing entirely (need ${required})</li>`);
+                        } else if (part.quantity < required) {
+                            lowStockParts++;
+                            const have = part.quantity;
+                            missing.push(`<li>⚠️ <strong>${bom[id].name}</strong>: Have ${have}, need ${required}</li>`);
                         }
                     }
 
@@ -1338,7 +1345,14 @@
                     if (missing.length === 0) {
                         resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
                     } else {
-                        resultsContainer.innerHTML = `<ul style="padding-left: 20px;">${missing.join("")}</ul>`;
+                        resultsContainer.innerHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <div>Total Parts: ${totalParts}</div>
+                                <div>Missing: ${missingParts}</div>
+                                <div>Low Stock: ${lowStockParts}</div>
+                            </div>
+                            <ul style="padding-left: 20px;">${missing.join("")}</ul>
+                        `;
                     }
 
                     document.getElementById("bomModal").style.display = "block";
@@ -1348,8 +1362,6 @@
                 }
             };
             reader.readAsText(file);
-            
-            // Reset the file input
             event.target.value = '';
         }
 

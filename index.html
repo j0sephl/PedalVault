@@ -465,7 +465,7 @@
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
             
             <div class="sync-buttons">
-                <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
+                <button class="sync-btn export-btn" onclick="showExportModal()">📤 Export Data</button>
                 <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
             </div>
             
@@ -521,6 +521,19 @@
     <!-- Notification -->
     <div class="notification" id="notification"></div>
 
+    <!-- Export Options Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <h2>Export Inventory</h2>
+            <p style="margin-bottom: 20px; color: #666;">Choose export format:</p>
+            <div class="modal-buttons">
+                <button class="btn" onclick="exportInventory('json')" style="flex: 1; background: #667eea; color: white;">JSON</button>
+                <button class="btn" onclick="exportInventory('csv')" style="flex: 1; background: #00b894; color: white;">CSV</button>
+                <button class="btn" onclick="hideExportModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let inventory = {};
         let currentPartId = null;
@@ -553,13 +566,39 @@
             localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
         }
 
-        function exportInventory() {
+        function showExportModal() {
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        function hideExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+
+        function exportInventory(format) {
             const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-            const filename = `guitar-pedal-inventory-${timestamp}.json`;
+            let filename, dataStr, mimeType;
             
-            const dataStr = JSON.stringify(inventory, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            if (format === 'csv') {
+                filename = `guitar-pedal-inventory-${timestamp}.csv`;
+                // Create CSV header
+                const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL'];
+                // Create CSV rows
+                const rows = Object.entries(inventory).map(([id, part]) => [
+                    id,
+                    part.name,
+                    part.quantity,
+                    part.purchaseUrl || ''
+                ]);
+                // Combine header and rows
+                dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
+                mimeType = 'text/csv';
+            } else {
+                filename = `guitar-pedal-inventory-${timestamp}.json`;
+                dataStr = JSON.stringify(inventory, null, 2);
+                mimeType = 'application/json';
+            }
             
+            const dataBlob = new Blob([dataStr], {type: mimeType});
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
             link.download = filename;
@@ -567,6 +606,7 @@
             link.click();
             document.body.removeChild(link);
             
+            hideExportModal();
             showNotification(`Exported inventory to ${filename}`);
         }
 

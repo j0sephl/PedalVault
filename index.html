@@ -542,6 +542,7 @@
                                 <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
                                     <option value="all">All Projects</option>
                                 </select>
+                                <button onclick="showProjectManagementModal()" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Manage Projects</button>
                                 <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
                                     <option value="name-asc">Name A-Z</option>
                                     <option value="name-desc">Name Z-A</option>
@@ -1381,12 +1382,19 @@
                 projectElement.style.justifyContent = 'space-between';
                 projectElement.style.alignItems = 'center';
                 
+                // Count parts tagged with this project
+                let taggedParts = 0;
+                for (const id in inventory) {
+                    if (inventory[id].projects && inventory[id].projects[projectId]) {
+                        taggedParts++;
+                    }
+                }
+                
                 projectElement.innerHTML = `
                     <div>
                         <strong>${project.name}</strong>
                         <div style="font-size: 12px; color: #666;">
-                            ${Object.keys(project.inventory).length} parts
-                            ${project.bom ? '• BOM loaded' : ''}
+                            ${taggedParts} parts tagged
                         </div>
                     </div>
                     <div>

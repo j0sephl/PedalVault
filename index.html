@@ -828,9 +828,17 @@
                 
                 const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
                 
+                // Get project tags for this part
+                const projectTags = part.projects ? Object.keys(part.projects).map(projectId => 
+                    `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px;">${projects[projectId].name}</span>`
+                ).join('') : '';
+                
                 item.innerHTML = `
                     <div class="item-info" onclick="selectPart('${id}')">
-                        <span class="item-name">${part.name}</span>
+                        <div>
+                            <span class="item-name">${part.name}</span>
+                            ${projectTags}
+                        </div>
                         <span class="${quantityClass}">${part.quantity}</span>
                     </div>
                     <div class="item-actions">
@@ -1036,7 +1044,12 @@
                 return;
             }
             
-            inventory[id] = { name, quantity, purchaseUrl };
+            inventory[id] = { 
+                name, 
+                quantity, 
+                purchaseUrl,
+                projects: {} // Initialize empty projects object
+            };
             saveInventory();
             displayInventory();
             hideAddPartModal();
@@ -1236,33 +1249,35 @@
                         }
                     }
 
-                    // Store BOM data for the current project
-                    if (currentProject === 'inventory') {
-                        // If in main inventory, create a new project
-                        const projectName = prompt('Enter a name for this BOM project:');
-                        if (!projectName) return;
-                        
-                        const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                        if (projects[projectId]) {
-                            showNotification('Project name already exists', 'error');
-                            return;
-                        }
-                        
-                        projects[projectId] = {
-                            name: projectName,
-                            inventory: {},
-                            bom: bom
-                        };
-                        
-                        saveProjects();
-                        updateProjectSelector();
-                        document.getElementById('projectSelector').value = projectId;
-                        switchProject();
-                    } else {
-                        // Update existing project's BOM
-                        projects[currentProject].bom = bom;
-                        saveProjects();
+                    // Create or update project
+                    const projectName = prompt('Enter a name for this BOM project:');
+                    if (!projectName) return;
+                    
+                    const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    if (projects[projectId]) {
+                        showNotification('Project name already exists', 'error');
+                        return;
                     }
+                    
+                    projects[projectId] = {
+                        name: projectName,
+                        bom: bom
+                    };
+                    
+                    // Tag parts in the main inventory with this project
+                    for (const id in bom) {
+                        if (inventory[id]) {
+                            if (!inventory[id].projects) {
+                                inventory[id].projects = {};
+                            }
+                            inventory[id].projects[projectId] = bom[id].quantity;
+                        }
+                    }
+                    
+                    saveProjects();
+                    saveInventory();
+                    updateProjectSelector();
+                    displayInventory();
 
                     // Store BOM data for comparison
                     window.currentBom = bom;
@@ -1390,17 +1405,22 @@
             
             const projectName = projects[deletingProjectId].name;
             
-            // If we're deleting the current project, switch to main inventory
-            if (currentProject === deletingProjectId) {
-                currentProject = 'inventory';
-                const savedInventory = localStorage.getItem('guitarPedalInventory');
-                inventory = savedInventory ? JSON.parse(savedInventory) : {};
-                displayInventory();
+            // Remove project tags from all parts
+            for (const id in inventory) {
+                if (inventory[id].projects && inventory[id].projects[deletingProjectId]) {
+                    delete inventory[id].projects[deletingProjectId];
+                    // Remove projects object if empty
+                    if (Object.keys(inventory[id].projects).length === 0) {
+                        delete inventory[id].projects;
+                    }
+                }
             }
             
             delete projects[deletingProjectId];
             saveProjects();
+            saveInventory();
             updateProjectSelector();
+            displayInventory();
             hideDeleteProjectModal();
             hideProjectManagementModal();
             showNotification(`Deleted project: ${projectName}`);

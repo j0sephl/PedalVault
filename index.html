@@ -534,6 +534,18 @@
         </div>
     </div>
 
+    <!-- BOM Comparison Modal -->
+    <div class="modal" id="bomModal">
+        <div class="modal-content">
+            <h2>BOM Comparison Results</h2>
+            <div id="bomResults" style="max-height: 300px; overflow-y: auto; font-size: 14px; color: #2d3436;"></div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button class="btn" onclick="addMissingParts()" style="flex: 1; background: #00b894; color: white;">Add Missing Parts</button>
+                <button class="btn" onclick="hideBOMModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let inventory = {};
         let currentPartId = null;
@@ -1009,6 +1021,9 @@ function compareBOM(event) {
                 }
             }
 
+            // Store BOM data for later use
+            window.currentBom = bom;
+
             const missing = [];
 
             // Only check parts that are in the BOM
@@ -1041,22 +1056,38 @@ function compareBOM(event) {
     event.target.value = '';
 }
 
+function addMissingParts() {
+    if (!window.currentBom) return;
+    
+    let addedCount = 0;
+    for (const id in window.currentBom) {
+        if (!inventory[id]) {
+            const part = window.currentBom[id];
+            inventory[id] = {
+                name: part.name,
+                quantity: 0,
+                purchaseUrl: part.purchaseUrl || ''
+            };
+            addedCount++;
+        }
+    }
+    
+    if (addedCount > 0) {
+        saveInventory();
+        displayInventory();
+        showNotification(`Added ${addedCount} new part(s) to inventory`);
+    } else {
+        showNotification('No new parts to add');
+    }
+    
+    hideBOMModal();
+}
+
 function hideBOMModal() {
     document.getElementById("bomModal").style.display = "none";
+    window.currentBom = null; // Clear the stored BOM data
 }
 
 </script>
-
-<!-- BOM Comparison Modal -->
-<div class="modal" id="bomModal">
-    <div class="modal-content">
-        <h2>BOM Comparison Results</h2>
-        <div id="bomResults" style="max-height: 300px; overflow-y: auto; font-size: 14px; color: #2d3436;"></div>
-        <div class="modal-buttons" style="margin-top: 20px;">
-            <button class="btn" onclick="hideBOMModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
-        </div>
-    </div>
-</div>
-
 </body>
 </html>

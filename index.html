@@ -501,6 +501,12 @@
         <div class="header">
             <h1>🎸 Guitar Pedal Parts</h1>
             <p>NFC Inventory System</p>
+            <div class="project-selector" style="margin-top: 15px;">
+                <select id="projectSelector" onchange="switchProject()" style="padding: 8px 12px; border-radius: 8px; border: 2px solid #fff; background: rgba(255,255,255,0.2); color: white; font-size: 14px; cursor: pointer;">
+                    <option value="inventory">Main Inventory</option>
+                </select>
+                <button onclick="showAddProjectModal()" style="margin-left: 10px; padding: 8px 12px; border-radius: 8px; border: 2px solid #fff; background: rgba(255,255,255,0.2); color: white; font-size: 14px; cursor: pointer;">+ New Project</button>
+            </div>
         </div>
 
         <div class="content">
@@ -623,12 +629,39 @@
         </div>
     </div>
 
+    <!-- Add Project Modal -->
+    <div class="modal" id="addProjectModal">
+        <div class="modal-content">
+            <h2>Add New Project</h2>
+            <input type="text" id="newProjectName" placeholder="Project name (e.g., 'Fuzz Face Build')">
+            <div class="modal-buttons">
+                <button class="btn btn-add" onclick="addNewProject()" style="flex: 1;">Create Project</button>
+                <button class="btn" onclick="hideAddProjectModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Management Modal -->
+    <div class="modal" id="projectManagementModal">
+        <div class="modal-content">
+            <h2>Project Management</h2>
+            <div id="projectList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+                <!-- Projects will be listed here -->
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="hideProjectManagementModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let inventory = {};
         let currentPartId = null;
         let editingPartId = null;
         let deletingPartId = null;
         let currentSortOrder = 'name-asc';
+        let projects = {};
+        let currentProject = 'inventory';
 
         // Initialize with some sample data
         function initializeInventory() {
@@ -647,6 +680,7 @@
                 };
                 saveInventory();
             }
+            initializeProjects();
             displayInventory();
             checkUrlForPart();
         }
@@ -1044,127 +1078,239 @@
             });
         });
 
-        initializeInventory();
-    
-function compareBOM(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+        function initializeProjects() {
+            const savedProjects = localStorage.getItem('guitarPedalProjects');
+            if (savedProjects) {
+                projects = JSON.parse(savedProjects);
+                updateProjectSelector();
+            }
+        }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            let bom = {};
-            const fileContent = e.target.result;
+        function updateProjectSelector() {
+            const selector = document.getElementById('projectSelector');
+            selector.innerHTML = '<option value="inventory">Main Inventory</option>';
             
-            // Check if file is CSV
-            if (file.name.toLowerCase().endsWith('.csv')) {
-                // Parse CSV
-                const lines = fileContent.split('\n');
-                const headers = lines[0].split(',').map(h => h.trim());
-                
-                // Find required column indices
-                const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
-                const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
-                const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
-                
-                if (nameIndex === -1 || quantityIndex === -1) {
-                    throw new Error('CSV must contain name and quantity columns');
-                }
-
-                // Process each line
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue; // Skip empty lines
-                    
-                    const values = lines[i].split(',').map(v => v.trim());
-                    const name = values[nameIndex];
-                    const quantity = parseInt(values[quantityIndex]) || 0;
-                    
-                    // Generate ID from name if not provided
-                    const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                    
-                    bom[id] = {
-                        name: name,
-                        quantity: quantity
-                    };
-                }
-            } else {
-                // Parse JSON
-                const parsedBom = JSON.parse(fileContent);
-                // Only include parts that have a quantity specified
-                for (const id in parsedBom) {
-                    if (parsedBom[id].quantity !== undefined) {
-                        bom[id] = parsedBom[id];
-                    }
-                }
+            for (const projectId in projects) {
+                const option = document.createElement('option');
+                option.value = projectId;
+                option.textContent = projects[projectId].name;
+                selector.appendChild(option);
             }
-
-            // Store BOM data for later use
-            window.currentBom = bom;
-
-            const missing = [];
-
-            // Only check parts that are in the BOM
-            for (const id in bom) {
-                const required = bom[id].quantity;
-                const partName = bom[id].name;
-
-                if (!inventory[id]) {
-                    missing.push(`<li>❌ <strong>${partName}</strong>: Missing entirely (need ${required})</li>`);
-                } else if (inventory[id].quantity < required) {
-                    const have = inventory[id].quantity;
-                    missing.push(`<li>⚠️ <strong>${partName}</strong>: Have ${have}, need ${required}</li>`);
-                }
-            }
-
-            const resultsContainer = document.getElementById("bomResults");
-            if (missing.length === 0) {
-                resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
-            } else {
-                resultsContainer.innerHTML = `<ul style="padding-left: 20px;">${missing.join("")}</ul>`;
-            }
-
-            document.getElementById("bomModal").style.display = "block";
-
-        } catch (err) {
-            showNotification("Error processing BOM file: " + err.message, "error");
+            
+            selector.value = currentProject;
         }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-}
 
-function addMissingParts() {
-    if (!window.currentBom) return;
-    
-    let addedCount = 0;
-    for (const id in window.currentBom) {
-        if (!inventory[id]) {
-            const part = window.currentBom[id];
-            inventory[id] = {
-                name: part.name,
-                quantity: 0,
-                purchaseUrl: part.purchaseUrl || ''
+        function switchProject() {
+            const newProject = document.getElementById('projectSelector').value;
+            if (newProject === currentProject) return;
+            
+            // Save current project state
+            if (currentProject === 'inventory') {
+                saveInventory();
+            } else {
+                projects[currentProject].inventory = {...inventory};
+                saveProjects();
+            }
+            
+            // Load new project
+            currentProject = newProject;
+            if (currentProject === 'inventory') {
+                const savedInventory = localStorage.getItem('guitarPedalInventory');
+                inventory = savedInventory ? JSON.parse(savedInventory) : {};
+            } else {
+                inventory = {...projects[currentProject].inventory};
+            }
+            
+            displayInventory();
+            showNotification(`Switched to ${currentProject === 'inventory' ? 'Main Inventory' : projects[currentProject].name}`);
+        }
+
+        function showAddProjectModal() {
+            document.getElementById('addProjectModal').style.display = 'block';
+        }
+
+        function hideAddProjectModal() {
+            document.getElementById('addProjectModal').style.display = 'none';
+            document.getElementById('newProjectName').value = '';
+        }
+
+        function addNewProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) {
+                showNotification('Please enter a project name', 'error');
+                return;
+            }
+            
+            const projectId = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            if (projects[projectId]) {
+                showNotification('Project name already exists', 'error');
+                return;
+            }
+            
+            projects[projectId] = {
+                name: name,
+                inventory: {},
+                bom: null
             };
-            addedCount++;
+            
+            saveProjects();
+            updateProjectSelector();
+            hideAddProjectModal();
+            showNotification(`Created new project: ${name}`);
         }
-    }
-    
-    if (addedCount > 0) {
-        saveInventory();
-        displayInventory();
-        showNotification(`Added ${addedCount} new part(s) to inventory`);
-    } else {
-        showNotification('No new parts to add');
-    }
-    
-    hideBOMModal();
-}
 
-function hideBOMModal() {
-    document.getElementById("bomModal").style.display = "none";
-    window.currentBom = null; // Clear the stored BOM data
-}
+        function saveProjects() {
+            localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
+        }
 
-</script>
+        function compareBOM(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let bom = {};
+                    const fileContent = e.target.result;
+                    
+                    // Check if file is CSV
+                    if (file.name.toLowerCase().endsWith('.csv')) {
+                        // Parse CSV
+                        const lines = fileContent.split('\n');
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        
+                        // Find required column indices
+                        const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
+                        const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
+                        const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
+                        
+                        if (nameIndex === -1 || quantityIndex === -1) {
+                            throw new Error('CSV must contain name and quantity columns');
+                        }
+
+                        // Process each line
+                        for (let i = 1; i < lines.length; i++) {
+                            if (!lines[i].trim()) continue; // Skip empty lines
+                            
+                            const values = lines[i].split(',').map(v => v.trim());
+                            const name = values[nameIndex];
+                            const quantity = parseInt(values[quantityIndex]) || 0;
+                            
+                            // Generate ID from name if not provided
+                            const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                            
+                            bom[id] = {
+                                name: name,
+                                quantity: quantity
+                            };
+                        }
+                    } else {
+                        // Parse JSON
+                        const parsedBom = JSON.parse(fileContent);
+                        // Only include parts that have a quantity specified
+                        for (const id in parsedBom) {
+                            if (parsedBom[id].quantity !== undefined) {
+                                bom[id] = parsedBom[id];
+                            }
+                        }
+                    }
+
+                    // Store BOM data for the current project
+                    if (currentProject === 'inventory') {
+                        // If in main inventory, create a new project
+                        const projectName = prompt('Enter a name for this BOM project:');
+                        if (!projectName) return;
+                        
+                        const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        if (projects[projectId]) {
+                            showNotification('Project name already exists', 'error');
+                            return;
+                        }
+                        
+                        projects[projectId] = {
+                            name: projectName,
+                            inventory: {},
+                            bom: bom
+                        };
+                        
+                        saveProjects();
+                        updateProjectSelector();
+                        document.getElementById('projectSelector').value = projectId;
+                        switchProject();
+                    } else {
+                        // Update existing project's BOM
+                        projects[currentProject].bom = bom;
+                        saveProjects();
+                    }
+
+                    // Store BOM data for comparison
+                    window.currentBom = bom;
+
+                    const missing = [];
+
+                    // Only check parts that are in the BOM
+                    for (const id in bom) {
+                        const required = bom[id].quantity;
+                        const partName = bom[id].name;
+
+                        if (!inventory[id]) {
+                            missing.push(`<li>❌ <strong>${partName}</strong>: Missing entirely (need ${required})</li>`);
+                        } else if (inventory[id].quantity < required) {
+                            const have = inventory[id].quantity;
+                            missing.push(`<li>⚠️ <strong>${partName}</strong>: Have ${have}, need ${required}</li>`);
+                        }
+                    }
+
+                    const resultsContainer = document.getElementById("bomResults");
+                    if (missing.length === 0) {
+                        resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
+                    } else {
+                        resultsContainer.innerHTML = `<ul style="padding-left: 20px;">${missing.join("")}</ul>`;
+                    }
+
+                    document.getElementById("bomModal").style.display = "block";
+
+                } catch (err) {
+                    showNotification("Error processing BOM file: " + err.message, "error");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function addMissingParts() {
+            if (!window.currentBom) return;
+            
+            let addedCount = 0;
+            for (const id in window.currentBom) {
+                if (!inventory[id]) {
+                    const part = window.currentBom[id];
+                    inventory[id] = {
+                        name: part.name,
+                        quantity: 0,
+                        purchaseUrl: part.purchaseUrl || ''
+                    };
+                    addedCount++;
+                }
+            }
+            
+            if (addedCount > 0) {
+                saveInventory();
+                displayInventory();
+                showNotification(`Added ${addedCount} new part(s) to inventory`);
+            } else {
+                showNotification('No new parts to add');
+            }
+            
+            hideBOMModal();
+        }
+
+        function hideBOMModal() {
+            document.getElementById("bomModal").style.display = "none";
+            window.currentBom = null; // Clear the stored BOM data
+        }
+
+        initializeInventory();
+    </script>
 </body>
 </html>

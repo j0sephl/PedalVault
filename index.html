@@ -1409,7 +1409,12 @@
         }
 
         function hideProjectManagementModal() {
-            document.getElementById('projectManagementModal').style.display = 'none';
+            const modal = document.getElementById('projectManagementModal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Force a reflow to ensure the display property is applied
+                modal.offsetHeight;
+            }
         }
 
         let deletingProjectId = null;
@@ -1423,7 +1428,12 @@
         }
 
         function hideDeleteProjectModal() {
-            document.getElementById('deleteProjectModal').style.display = 'none';
+            const modal = document.getElementById('deleteProjectModal');
+            if (modal) {
+                modal.style.display = 'none';
+                // Force a reflow to ensure the display property is applied
+                modal.offsetHeight;
+            }
             deletingProjectId = null;
         }
 
@@ -1450,8 +1460,20 @@
             displayInventory();
             
             // Hide both modals
-            document.getElementById('deleteProjectModal').style.display = 'none';
-            document.getElementById('projectManagementModal').style.display = 'none';
+            const deleteModal = document.getElementById('deleteProjectModal');
+            const manageModal = document.getElementById('projectManagementModal');
+            
+            if (deleteModal) {
+                deleteModal.style.display = 'none';
+                // Force a reflow to ensure the display property is applied
+                deleteModal.offsetHeight;
+            }
+            
+            if (manageModal) {
+                manageModal.style.display = 'none';
+                // Force a reflow to ensure the display property is applied
+                manageModal.offsetHeight;
+            }
             
             // Reset the deletingProjectId
             deletingProjectId = null;

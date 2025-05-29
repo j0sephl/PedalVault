@@ -1448,8 +1448,14 @@
             saveInventory();
             updateProjectFilter();
             displayInventory();
-            hideDeleteProjectModal();
-            hideProjectManagementModal();
+            
+            // Hide both modals
+            document.getElementById('deleteProjectModal').style.display = 'none';
+            document.getElementById('projectManagementModal').style.display = 'none';
+            
+            // Reset the deletingProjectId
+            deletingProjectId = null;
+            
             showNotification(`Deleted project: ${projectName}`);
         }
 

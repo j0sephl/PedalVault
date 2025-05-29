@@ -470,7 +470,7 @@
             </div>
             
 <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
+<input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
 
 <input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
         </div>
@@ -899,7 +899,45 @@ function compareBOM(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const bom = JSON.parse(e.target.result);
+            let bom = {};
+            const fileContent = e.target.result;
+            
+            // Check if file is CSV
+            if (file.name.toLowerCase().endsWith('.csv')) {
+                // Parse CSV
+                const lines = fileContent.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                // Find required column indices
+                const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
+                const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
+                const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
+                
+                if (nameIndex === -1 || quantityIndex === -1) {
+                    throw new Error('CSV must contain name and quantity columns');
+                }
+
+                // Process each line
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue; // Skip empty lines
+                    
+                    const values = lines[i].split(',').map(v => v.trim());
+                    const name = values[nameIndex];
+                    const quantity = parseInt(values[quantityIndex]) || 0;
+                    
+                    // Generate ID from name if not provided
+                    const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    
+                    bom[id] = {
+                        name: name,
+                        quantity: quantity
+                    };
+                }
+            } else {
+                // Parse JSON
+                bom = JSON.parse(fileContent);
+            }
+
             const missing = [];
 
             for (const id in bom) {
@@ -924,7 +962,7 @@ function compareBOM(event) {
             document.getElementById("bomModal").style.display = "block";
 
         } catch (err) {
-            showNotification("Invalid BOM file", "error");
+            showNotification("Error processing BOM file: " + err.message, "error");
         }
     };
     reader.readAsText(file);

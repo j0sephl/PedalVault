@@ -464,15 +464,15 @@
 
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
             
-
-            <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
-
             <div class="sync-buttons">
                 <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
                 <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
             </div>
-            <input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
+            
+<button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
+<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
+
+<input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
         </div>
     </div>
 
@@ -527,43 +527,6 @@
         let editingPartId = null;
         let deletingPartId = null;
         let currentSortOrder = 'name-asc';
-
-
-        function compareBOM(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const bom = JSON.parse(e.target.result);
-            const missing = [];
-
-            for (const id in bom) {
-                const required = bom[id].quantity;
-                const partName = bom[id].name;
-
-                if (!inventory[id]) {
-                    missing.push(`${partName} (Missing entirely, need ${required})`);
-                } else if (inventory[id].quantity < required) {
-                    const have = inventory[id].quantity;
-                    missing.push(`${partName} (Have ${have}, need ${required})`);
-                }
-            }
-
-            if (missing.length === 0) {
-                showNotification("✅ All BOM parts are in stock.");
-            } else {
-                alert("Missing/Insufficient Parts:\n\n" + missing.join("\n"));
-            }
-
-        } catch (err) {
-            showNotification("Invalid BOM file", "error");
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = ''; // reset file input
-}
 
         // Initialize with some sample data
         function initializeInventory() {
@@ -928,6 +891,62 @@
         });
 
         initializeInventory();
-    </script>
+    
+function compareBOM(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const bom = JSON.parse(e.target.result);
+            const missing = [];
+
+            for (const id in bom) {
+                const required = bom[id].quantity;
+                const partName = bom[id].name;
+
+                if (!inventory[id]) {
+                    missing.push(`<li>❌ <strong>${partName}</strong>: Missing entirely (need ${required})</li>`);
+                } else if (inventory[id].quantity < required) {
+                    const have = inventory[id].quantity;
+                    missing.push(`<li>⚠️ <strong>${partName}</strong>: Have ${have}, need ${required}</li>`);
+                }
+            }
+
+            const resultsContainer = document.getElementById("bomResults");
+            if (missing.length === 0) {
+                resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
+            } else {
+                resultsContainer.innerHTML = `<ul style="padding-left: 20px;">${missing.join("")}</ul>`;
+            }
+
+            document.getElementById("bomModal").style.display = "block";
+
+        } catch (err) {
+            showNotification("Invalid BOM file", "error");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function hideBOMModal() {
+    document.getElementById("bomModal").style.display = "none";
+}
+
+</script>
+
+<!-- BOM Comparison Modal -->
+<div class="modal" id="bomModal">
+    <div class="modal-content">
+        <h2>BOM Comparison Results</h2>
+        <div id="bomResults" style="max-height: 300px; overflow-y: auto; font-size: 14px; color: #2d3436;"></div>
+        <div class="modal-buttons" style="margin-top: 20px;">
+            <button class="btn" onclick="hideBOMModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

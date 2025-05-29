@@ -498,7 +498,7 @@
             <input type="text" id="editPartName" placeholder="Part name">
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
             <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="editPartId" placeholder="NFC Tag ID" readonly style="background: #f8f9fa;">
+            <input type="text" id="editPartId" placeholder="NFC Tag ID" style="background: #f8f9fa;">
             <div class="modal-buttons">
                 <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
                 <button class="btn" onclick="hideEditPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
@@ -755,15 +755,40 @@
             const newName = document.getElementById('editPartName').value.trim();
             const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
             const newUrl = document.getElementById('editPartUrl').value.trim();
+            const newId = document.getElementById('editPartId').value.trim();
             
             if (!newName) {
                 showNotification('Please enter a part name', 'error');
                 return;
             }
             
-            inventory[editingPartId].name = newName;
-            inventory[editingPartId].quantity = newQuantity;
-            inventory[editingPartId].purchaseUrl = newUrl;
+            if (!newId) {
+                showNotification('Please enter a part ID', 'error');
+                return;
+            }
+            
+            // If ID is changing, check if new ID already exists
+            if (newId !== editingPartId && inventory[newId]) {
+                showNotification('Part ID already exists', 'error');
+                return;
+            }
+            
+            // If ID is changing, we need to create a new entry and delete the old one
+            if (newId !== editingPartId) {
+                const part = inventory[editingPartId];
+                inventory[newId] = {
+                    name: newName,
+                    quantity: newQuantity,
+                    purchaseUrl: newUrl
+                };
+                delete inventory[editingPartId];
+                editingPartId = newId;
+            } else {
+                // Just update the existing entry
+                inventory[editingPartId].name = newName;
+                inventory[editingPartId].quantity = newQuantity;
+                inventory[editingPartId].purchaseUrl = newUrl;
+            }
             
             if (currentPartId === editingPartId) {
                 selectPart(editingPartId);

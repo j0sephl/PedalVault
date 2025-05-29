@@ -1496,6 +1496,10 @@
             showNotification(`Deleted project: ${projectName}`);
         }
 
+        function saveProjects() {
+            localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
+        }
+
         initializeInventory();
     </script>
 </body>

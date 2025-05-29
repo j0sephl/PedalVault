@@ -833,9 +833,12 @@
                 const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
                 
                 // Get project tags for this part
-                const projectTags = part.projects ? Object.keys(part.projects).map(projectId => 
-                    `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px; cursor: pointer;" onclick="showProjectDetails('${projectId}')">${projects[projectId].name}</span>`
-                ).join('') : '';
+                const projectTags = part.projects ? Object.keys(part.projects).map(projectId => {
+                    if (projects[projectId]) {  // Only show tags for existing projects
+                        return `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px; cursor: pointer;" onclick="showProjectDetails('${projectId}')">${projects[projectId].name}</span>`;
+                    }
+                    return '';
+                }).filter(tag => tag !== '').join('') : '';
                 
                 item.innerHTML = `
                     <div class="item-info" onclick="selectPart('${id}')">
@@ -975,7 +978,8 @@
                 inventory[newId] = {
                     name: newName,
                     quantity: newQuantity,
-                    purchaseUrl: newUrl
+                    purchaseUrl: newUrl,
+                    projects: part.projects || {} // Preserve project tags
                 };
                 delete inventory[editingPartId];
                 editingPartId = newId;
@@ -984,6 +988,10 @@
                 inventory[editingPartId].name = newName;
                 inventory[editingPartId].quantity = newQuantity;
                 inventory[editingPartId].purchaseUrl = newUrl;
+                // Preserve existing projects object
+                if (!inventory[editingPartId].projects) {
+                    inventory[editingPartId].projects = {};
+                }
             }
             
             if (currentPartId === editingPartId) {
@@ -1054,6 +1062,7 @@
                 purchaseUrl,
                 projects: {} // Initialize empty projects object
             };
+            
             saveInventory();
             displayInventory();
             hideAddPartModal();
@@ -1309,6 +1318,15 @@
                                 inventory[id].projects = {};
                             }
                             inventory[id].projects[projectId] = bom[id].quantity;
+                        } else {
+                            // Create the part if it doesn't exist
+                            inventory[id] = {
+                                name: bom[id].name,
+                                quantity: 0,
+                                projects: {
+                                    [projectId]: bom[id].quantity
+                                }
+                            };
                         }
                     }
                     
@@ -1375,7 +1393,10 @@
                     inventory[id] = {
                         name: part.name,
                         quantity: 0,
-                        purchaseUrl: part.purchaseUrl || ''
+                        purchaseUrl: part.purchaseUrl || '',
+                        projects: {
+                            [Object.keys(part.projects)[0]]: part.projects[Object.keys(part.projects)[0]]
+                        }
                     };
                     addedCount++;
                 }

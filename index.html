@@ -544,13 +544,18 @@
                     <div class="inventory-list">
                         <div class="inventory-header">
                             <h3>All Parts</h3>
-                            <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
-                                <option value="name-asc">Name A-Z</option>
-                                <option value="name-desc">Name Z-A</option>
-                                <option value="quantity-asc">Quantity Low-High</option>
-                                <option value="quantity-desc">Quantity High-Low</option>
-                                <option value="stock-status">Low Stock First</option>
-                            </select>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
+                                    <option value="all">All Projects</option>
+                                </select>
+                                <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
+                                    <option value="name-asc">Name A-Z</option>
+                                    <option value="name-desc">Name Z-A</option>
+                                    <option value="quantity-asc">Quantity Low-High</option>
+                                    <option value="quantity-desc">Quantity High-Low</option>
+                                    <option value="stock-status">Low Stock First</option>
+                                </select>
+                            </div>
                         </div>
                         <div id="inventoryItems"></div>
                     </div>
@@ -666,6 +671,18 @@
         </div>
     </div>
 
+    <!-- Project Details Modal -->
+    <div class="modal" id="projectDetailsModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="projectDetailsTitle">Project Details</h2>
+            <div id="projectStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;"></div>
+            <div id="projectParts" style="max-height: 400px; overflow-y: auto;"></div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="hideProjectDetailsModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
     <input type="file" id="importFile" accept=".json" onchange="importInventory(event)" style="display: none;">
 
@@ -677,6 +694,7 @@
         let currentSortOrder = 'name-asc';
         let projects = {};
         let currentProject = 'inventory';
+        let currentProjectFilter = 'all';
 
         // Initialize with some sample data
         function initializeInventory() {
@@ -823,6 +841,11 @@
             const sortedEntries = getSortedInventoryEntries();
 
             sortedEntries.forEach(([id, part]) => {
+                // Skip if filtering by project and part doesn't belong to that project
+                if (currentProjectFilter !== 'all' && (!part.projects || !part.projects[currentProjectFilter])) {
+                    return;
+                }
+                
                 const item = document.createElement('div');
                 item.className = 'inventory-item';
                 
@@ -830,7 +853,7 @@
                 
                 // Get project tags for this part
                 const projectTags = part.projects ? Object.keys(part.projects).map(projectId => 
-                    `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px;">${projects[projectId].name}</span>`
+                    `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px; cursor: pointer;" onclick="showProjectDetails('${projectId}')">${projects[projectId].name}</span>`
                 ).join('') : '';
                 
                 item.innerHTML = `
@@ -1117,6 +1140,7 @@
             if (savedProjects) {
                 projects = JSON.parse(savedProjects);
                 updateProjectSelector();
+                updateProjectFilter();
             }
         }
 
@@ -1424,6 +1448,103 @@
             hideDeleteProjectModal();
             hideProjectManagementModal();
             showNotification(`Deleted project: ${projectName}`);
+        }
+
+        function updateProjectFilter() {
+            const filter = document.getElementById('projectFilter');
+            filter.innerHTML = '<option value="all">All Projects</option>';
+            
+            for (const projectId in projects) {
+                const option = document.createElement('option');
+                option.value = projectId;
+                option.textContent = projects[projectId].name;
+                filter.appendChild(option);
+            }
+        }
+
+        function filterByProject() {
+            currentProjectFilter = document.getElementById('projectFilter').value;
+            displayInventory();
+        }
+
+        function showProjectDetails(projectId) {
+            const project = projects[projectId];
+            const bom = project.bom;
+            let totalParts = 0;
+            let missingParts = 0;
+            let lowStockParts = 0;
+            
+            document.getElementById('projectDetailsTitle').textContent = project.name;
+            
+            const partsContainer = document.getElementById('projectParts');
+            partsContainer.innerHTML = '';
+            
+            for (const id in bom) {
+                totalParts++;
+                const required = bom[id].quantity;
+                const part = inventory[id];
+                const status = part ? (part.quantity >= required ? '✅' : part.quantity > 0 ? '⚠️' : '❌') : '❌';
+                
+                if (!part || part.quantity < required) {
+                    if (!part) missingParts++;
+                    else if (part.quantity > 0) lowStockParts++;
+                }
+                
+                const partElement = document.createElement('div');
+                partElement.style.padding = '10px';
+                partElement.style.borderBottom = '1px solid #eee';
+                partElement.style.display = 'flex';
+                partElement.style.justifyContent = 'space-between';
+                partElement.style.alignItems = 'center';
+                
+                partElement.innerHTML = `
+                    <div>
+                        <strong>${bom[id].name}</strong>
+                        <div style="font-size: 12px; color: #666;">
+                            Need: ${required} | Have: ${part ? part.quantity : 0}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 20px;">${status}</span>
+                        <button onclick="removeProjectTag('${id}', '${projectId}')" style="padding: 5px 10px; background: #e17055; color: white; border: none; border-radius: 5px; cursor: pointer;">Remove</button>
+                    </div>
+                `;
+                
+                partsContainer.appendChild(partElement);
+            }
+            
+            const statusContainer = document.getElementById('projectStatus');
+            statusContainer.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <div>Total Parts: ${totalParts}</div>
+                    <div>Missing: ${missingParts}</div>
+                    <div>Low Stock: ${lowStockParts}</div>
+                </div>
+                <div style="height: 10px; background: #eee; border-radius: 5px; overflow: hidden;">
+                    <div style="height: 100%; width: ${((totalParts - missingParts - lowStockParts) / totalParts * 100)}%; background: #00b894;"></div>
+                    <div style="height: 100%; width: ${(lowStockParts / totalParts * 100)}%; background: #fdcb6e; margin-top: -10px;"></div>
+                </div>
+            `;
+            
+            document.getElementById('projectDetailsModal').style.display = 'block';
+        }
+
+        function hideProjectDetailsModal() {
+            document.getElementById('projectDetailsModal').style.display = 'none';
+        }
+
+        function removeProjectTag(partId, projectId) {
+            if (!inventory[partId].projects) return;
+            
+            delete inventory[partId].projects[projectId];
+            if (Object.keys(inventory[partId].projects).length === 0) {
+                delete inventory[partId].projects;
+            }
+            
+            saveInventory();
+            displayInventory();
+            showProjectDetails(projectId);
+            showNotification(`Removed ${inventory[partId].name} from ${projects[projectId].name}`);
         }
 
         initializeInventory();

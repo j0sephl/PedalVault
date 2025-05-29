@@ -470,7 +470,7 @@
             </div>
             
 <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-<input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
+<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
 
 <input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
         </div>
@@ -892,22 +892,16 @@
 
         initializeInventory();
     
-
 function compareBOM(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        let bom;
         try {
-            if (file.name.endsWith(".csv")) {
-                bom = parseCSVBOM(e.target.result);
-            } else {
-                bom = JSON.parse(e.target.result);
-            }
-
+            const bom = JSON.parse(e.target.result);
             const missing = [];
+
             for (const id in bom) {
                 const required = bom[id].quantity;
                 const partName = bom[id].name;
@@ -937,32 +931,9 @@ function compareBOM(event) {
     event.target.value = '';
 }
 
-function parseCSVBOM(csvText) {
-    const lines = csvText.trim().split('
-');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const idIndex = headers.indexOf("id");
-    const nameIndex = headers.indexOf("name");
-    const qtyIndex = headers.indexOf("quantity");
-
-    const bom = {};
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim());
-        const id = cols[idIndex];
-        const name = cols[nameIndex];
-        const quantity = parseInt(cols[qtyIndex]);
-
-        if (id && name && !isNaN(quantity)) {
-            bom[id] = { name, quantity };
-        }
-    }
-    return bom;
-}
-
 function hideBOMModal() {
     document.getElementById("bomModal").style.display = "none";
 }
-
 
 </script>
 

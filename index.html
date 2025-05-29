@@ -19,12 +19,15 @@
         }
 
         .container {
-            max-width: 500px;
+            max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -35,17 +38,36 @@
         }
 
         .header h1 {
-            font-size: 24px;
+            font-size: 28px;
             margin-bottom: 5px;
         }
 
         .header p {
             opacity: 0.9;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .content {
             padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .right-panel {
+            flex: 2;
+            min-width: 300px;
         }
 
         .part-info {
@@ -59,14 +81,14 @@
         }
 
         .part-name {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
             color: #2d3436;
             margin-bottom: 10px;
         }
 
         .current-stock {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
             color: #00b894;
             margin: 15px 0;
@@ -74,7 +96,7 @@
 
         .stock-label {
             color: #636e72;
-            font-size: 14px;
+            font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -142,7 +164,7 @@
             background: #f8f9fa;
             border-radius: 15px;
             padding: 20px;
-            max-height: 300px;
+            max-height: 600px;
             overflow-y: auto;
         }
 
@@ -151,11 +173,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .inventory-header h3 {
             color: #2d3436;
             margin: 0;
+            font-size: 20px;
         }
 
         .sort-dropdown {
@@ -165,6 +190,7 @@
             font-size: 14px;
             background: white;
             cursor: pointer;
+            min-width: 150px;
         }
 
         .sort-dropdown:focus {
@@ -196,11 +222,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-right: 15px;
         }
 
         .item-name {
             font-weight: 500;
             color: #2d3436;
+            font-size: 16px;
         }
 
         .item-quantity {
@@ -219,7 +247,6 @@
         .item-actions {
             display: flex;
             gap: 8px;
-            margin-left: 15px;
         }
 
         .action-icon {
@@ -311,7 +338,6 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 20px;
             transition: all 0.3s ease;
         }
 
@@ -324,10 +350,12 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .sync-btn {
             flex: 1;
+            min-width: 150px;
             padding: 12px;
             border: none;
             border-radius: 10px;
@@ -381,7 +409,7 @@
             padding: 30px;
             border-radius: 20px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
         }
 
         .modal h2 {
@@ -419,6 +447,53 @@
         .notification.show {
             transform: translateX(0);
         }
+
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+            }
+
+            .inventory-list {
+                max-height: 400px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .part-name {
+                font-size: 20px;
+            }
+
+            .current-stock {
+                font-size: 32px;
+            }
+
+            .sync-buttons {
+                flex-direction: column;
+            }
+
+            .sync-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -429,50 +504,52 @@
         </div>
 
         <div class="content">
-            <div class="part-info" id="currentPart" style="display: none;">
-                <div class="part-name" id="partName">Select a Part</div>
-                <div class="current-stock" id="currentStock">0</div>
-                <div class="stock-label">Current Stock</div>
-                <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
-                <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
-                    ⚠️ Low stock! Consider reordering soon.
+            <div class="main-content">
+                <div class="left-panel">
+                    <div class="part-info" id="currentPart" style="display: none;">
+                        <div class="part-name" id="partName">Select a Part</div>
+                        <div class="current-stock" id="currentStock">0</div>
+                        <div class="stock-label">Current Stock</div>
+                        <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
+                        <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
+                            ⚠️ Low stock! Consider reordering soon.
+                        </div>
+                    </div>
+
+                    <div class="controls" id="controls" style="display: none;">
+                        <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
+                    </div>
+
+                    <div class="action-buttons" id="actionButtons" style="display: none;">
+                        <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
+                        <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
+                    </div>
+
+                    <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
+                    
+                    <div class="sync-buttons">
+                        <button class="sync-btn export-btn" onclick="showExportModal()">📤 Export Data</button>
+                        <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+                        <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
+                    </div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="inventory-list">
+                        <div class="inventory-header">
+                            <h3>All Parts</h3>
+                            <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
+                                <option value="name-asc">Name A-Z</option>
+                                <option value="name-desc">Name Z-A</option>
+                                <option value="quantity-asc">Quantity Low-High</option>
+                                <option value="quantity-desc">Quantity High-Low</option>
+                                <option value="stock-status">Low Stock First</option>
+                            </select>
+                        </div>
+                        <div id="inventoryItems"></div>
+                    </div>
                 </div>
             </div>
-
-            <div class="controls" id="controls" style="display: none;">
-                <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
-            </div>
-
-            <div class="action-buttons" id="actionButtons" style="display: none;">
-                <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
-                <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
-            </div>
-
-            <div class="inventory-list">
-                <div class="inventory-header">
-                    <h3>All Parts</h3>
-                    <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
-                        <option value="name-asc">Name A-Z</option>
-                        <option value="name-desc">Name Z-A</option>
-                        <option value="quantity-asc">Quantity Low-High</option>
-                        <option value="quantity-desc">Quantity High-Low</option>
-                        <option value="stock-status">Low Stock First</option>
-                    </select>
-                </div>
-                <div id="inventoryItems"></div>
-            </div>
-
-            <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
-            
-            <div class="sync-buttons">
-                <button class="sync-btn export-btn" onclick="showExportModal()">📤 Export Data</button>
-                <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
-            </div>
-            
-<button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-<input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
-
-<input type="file" id="importFile" accept=".json" onchange="importInventory(event)">
         </div>
     </div>
 

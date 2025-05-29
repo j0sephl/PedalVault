@@ -464,6 +464,10 @@
 
             <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
             
+
+            <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
+<input type="file" id="importBOM" accept=".json" onchange="compareBOM(event)" style="display: none;">
+
             <div class="sync-buttons">
                 <button class="sync-btn export-btn" onclick="exportInventory()">📤 Export Data</button>
                 <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
@@ -523,6 +527,43 @@
         let editingPartId = null;
         let deletingPartId = null;
         let currentSortOrder = 'name-asc';
+
+
+        function compareBOM(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const bom = JSON.parse(e.target.result);
+            const missing = [];
+
+            for (const id in bom) {
+                const required = bom[id].quantity;
+                const partName = bom[id].name;
+
+                if (!inventory[id]) {
+                    missing.push(`${partName} (Missing entirely, need ${required})`);
+                } else if (inventory[id].quantity < required) {
+                    const have = inventory[id].quantity;
+                    missing.push(`${partName} (Have ${have}, need ${required})`);
+                }
+            }
+
+            if (missing.length === 0) {
+                showNotification("✅ All BOM parts are in stock.");
+            } else {
+                alert("Missing/Insufficient Parts:\n\n" + missing.join("\n"));
+            }
+
+        } catch (err) {
+            showNotification("Invalid BOM file", "error");
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // reset file input
+}
 
         // Initialize with some sample data
         function initializeInventory() {

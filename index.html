@@ -180,7 +180,7 @@
 
         .btn-add:hover {
             background: #5E81AC;
-            transform: translateY(-2px);
+            color: #ECEFF4;
         }
 
         .btn-remove {
@@ -190,6 +190,7 @@
 
         .btn-remove:hover {
             background: #D08770;
+            color: #ECEFF4;
         }
 
         .inventory-list {
@@ -389,7 +390,7 @@
 
         .sync-btn:hover {
             background: #5E81AC;
-            transform: translateY(-1px);
+            color: #ECEFF4;
         }
 
         .add-part-btn {
@@ -408,7 +409,7 @@
 
         .add-part-btn:hover {
             background: #5E81AC;
-            transform: translateY(-1px);
+            color: #ECEFF4;
         }
 
         .export-btn {
@@ -418,7 +419,7 @@
 
         .export-btn:hover {
             background: #5E81AC;
-            transform: translateY(-1px);
+            color: #ECEFF4;
         }
 
         .import-btn {
@@ -428,7 +429,7 @@
 
         .import-btn:hover {
             background: #5E81AC;
-            transform: translateY(-1px);
+            color: #ECEFF4;
         }
 
         #importFile {
@@ -710,13 +711,19 @@
         }
 
         .project-tag {
-            background: #667eea;
+            background: #81A1C1;
             color: white;
             padding: 2px 6px;
             border-radius: 10px;
             font-size: 12px;
             margin-left: 5px;
             cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .project-tag:hover {
+            background: #5E81AC;
+            color: #ECEFF4;
         }
 
         .project-status {
@@ -828,6 +835,12 @@
             border: none;
             cursor: pointer;
             font-size: 14px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .manage-projects-btn:hover {
+            background: #5E81AC;
+            color: #ECEFF4;
         }
 
         .export-format-text {

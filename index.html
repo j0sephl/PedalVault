@@ -13,7 +13,7 @@
 
         body {
             font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #282A36 0%, #44475A 100%);
+            background: #2E3440;
             min-height: 100vh;
             padding: 20px;
         }
@@ -22,8 +22,7 @@
             max-width: 1200px;
             width: 100%;
             margin: 0 auto;
-            background: #44475A;
-            border-radius: 20px;
+            background: #3B4252;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
             display: flex;
@@ -31,15 +30,14 @@
         }
 
         .header {
-            background: #44475A
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
+            background: #3B4252;
+            color: #E5E9F0;
+            padding: 20px 20px 0px;
+            text-align: left;
         }
 
         .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
+            font-size: 50px;
         }
 
         .header p {
@@ -63,6 +61,10 @@
         .left-panel {
             flex: 1;
             min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
         }
 
         .right-panel {
@@ -71,31 +73,41 @@
         }
 
         .part-info {
-            background: #f8f9fa;
-            border-radius: 15px;
+            background: #2E3440;
             padding: 20px;
-            margin-bottom: 25px;
             text-align: center;
-            border: 2px solid #e9ecef;
             position: relative;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(.4,0,.2,1), opacity 0.3s, margin 0.3s;
+            margin: 0;
+            z-index: 1;
+        }
+
+        .part-info.visible {
+            max-height: 500px;
+            opacity: 1;
+            overflow: visible;
+            margin-bottom: 20px;
         }
 
         .part-name {
             font-size: 24px;
             font-weight: 600;
-            color: #2d3436;
+            color: #E5E9F0;
             margin-bottom: 10px;
         }
 
         .current-stock {
             font-size: 36px;
             font-weight: 700;
-            color: #00b894;
+            color: #E5E9F0;
             margin: 15px 0;
         }
 
         .stock-label {
-            color: #636e72;
+            color: #E5E9F0;
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -104,17 +116,27 @@
         .controls {
             display: flex;
             gap: 15px;
-            margin-bottom: 25px;
+            height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: height 0.3s, opacity 0.3s;
+            z-index: 1;
+        }
+
+        .controls:not(.hidden) {
+            height: auto;
+            opacity: 1;
         }
 
         .quantity-input {
             flex: 1;
             padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
+            border: 2px solid #4C566A;
+            border-radius: 0;
             font-size: 18px;
             text-align: center;
-            background: #fff;
+            background: #2E3440;
+            color: #E5E9F0;
         }
 
         .quantity-input:focus {
@@ -126,43 +148,52 @@
         .action-buttons {
             display: flex;
             gap: 15px;
-            margin-bottom: 25px;
+            height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: height 0.3s, opacity 0.3s;
+            z-index: 1;
+            margin-bottom: 56px
+        }
+
+        .action-buttons:not(.hidden) {
+            height: auto;
+            opacity: 1;
         }
 
         .btn {
             flex: 1;
             padding: 15px;
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
         }
 
         .btn-add {
-            background: #00b894;
-            color: white;
+            background: #4C566A;
+            color: #E5E9F0;
         }
 
         .btn-add:hover {
-            background: #00a085;
+            background: #5E81AC;
             transform: translateY(-2px);
         }
 
         .btn-remove {
-            background: #e17055;
-            color: white;
+            background: #BF616A;
+            color: #E5E9F0;
         }
 
         .btn-remove:hover {
-            background: #d63031;
-            transform: translateY(-2px);
+            background: #D08770;
         }
 
         .inventory-list {
-            background: #f8f9fa;
-            border-radius: 15px;
+            background: #2E3440;
             padding: 20px;
             max-height: 600px;
             overflow-y: auto;
@@ -178,39 +209,46 @@
         }
 
         .inventory-header h3 {
-            color: #2d3436;
+            color: #F8F8F2;
             margin: 0;
             font-size: 20px;
         }
 
+        .inventory-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .sort-dropdown {
             padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            border: 1px solid #4C566A;
             font-size: 14px;
-            background: white;
+            background: #2E3440;
+            color: #E5E9F0;
             cursor: pointer;
             min-width: 150px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
         }
 
         .sort-dropdown:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #88C0D0;
         }
 
         .inventory-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #dee2e6;
+            padding: 12px 10px;
+            border-bottom: 1px solid #4C566A;
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
 
         .inventory-item:hover {
-            background-color: rgba(102, 126, 234, 0.05);
-            border-radius: 8px;
+            background-color: #434C5E;
         }
 
         .inventory-item:last-child {
@@ -227,13 +265,13 @@
 
         .item-name {
             font-weight: 500;
-            color: #2d3436;
+            color: #F8F8F2;
             font-size: 16px;
         }
 
         .item-quantity {
-            background: #667eea;
-            color: white;
+            background: #5E81AC;
+            color: #E5E9F0;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 14px;
@@ -241,7 +279,7 @@
         }
 
         .low-stock {
-            background: #e17055;
+            background: #BF616A;
         }
 
         .item-actions {
@@ -265,35 +303,35 @@
         }
 
         .edit-icon {
-            color: #667eea;
+            color: #88C0D0;
         }
 
         .edit-icon:hover {
-            background: rgba(102, 126, 234, 0.1);
+            background: rgba(136, 192, 208, 0.1);
         }
 
         .delete-icon {
-            color: #e17055;
+            color: #BF616A;
         }
 
         .delete-icon:hover {
-            background: rgba(225, 112, 85, 0.1);
+            background: rgba(191, 97, 106, 0.1);
         }
 
         .shop-icon {
-            color: #00b894;
+            color: #A3BE8C;
         }
 
         .shop-icon:hover {
-            background: rgba(0, 184, 148, 0.1);
+            background: rgba(163, 190, 140, 0.1);
         }
 
         .reorder-btn {
             position: absolute;
             top: 15px;
             right: 15px;
-            background: #00b894;
-            color: white;
+            background: #A3BE8C;
+            color: #E5E9F0;
             border: none;
             padding: 8px 15px;
             border-radius: 20px;
@@ -306,17 +344,15 @@
         }
 
         .reorder-btn:hover {
-            background: #00a085;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+            background: #8FBCBB;
         }
 
         .low-stock-warning {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
+            background: #BF616A;
+            color: #E5E9F0;
             padding: 10px 15px;
-            border-radius: 10px;
             margin-bottom: 20px;
+            margin-top: 20px;
             font-size: 14px;
             font-weight: 600;
             animation: pulse 2s infinite;
@@ -328,29 +364,12 @@
             100% { opacity: 1; }
         }
 
-        .add-part-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .add-part-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
         .sync-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
+            display: flow;
+            position: relative;
+            z-index: 2;
+            margin-top: -60px;
+            padding-top: 10px;
         }
 
         .sync-btn {
@@ -358,30 +377,57 @@
             min-width: 150px;
             padding: 12px;
             border: none;
-            border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: #4C566A;
+            color: #E5E9F0;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+        }
+
+        .sync-btn:hover {
+            background: #5E81AC;
+            transform: translateY(-1px);
+        }
+
+        .add-part-btn {
+            width: 100%;
+            background: #4C566A;
+            color: #E5E9F0;
+            border: none;
+            padding: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+        }
+
+        .add-part-btn:hover {
+            background: #5E81AC;
+            transform: translateY(-1px);
         }
 
         .export-btn {
-            background: #74b9ff;
-            color: white;
+            background: #4C566A;
+            color: #E5E9F0;
         }
 
         .export-btn:hover {
-            background: #0984e3;
+            background: #5E81AC;
             transform: translateY(-1px);
         }
 
         .import-btn {
-            background: #a29bfe;
-            color: white;
+            background: #4C566A;
+            color: #E5E9F0;
         }
 
         .import-btn:hover {
-            background: #6c5ce7;
+            background: #5E81AC;
             transform: translateY(-1px);
         }
 
@@ -396,7 +442,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(46, 52, 64, 0.8);
             z-index: 1000;
         }
 
@@ -405,25 +451,45 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: #3B4252;
             padding: 30px;
             border-radius: 20px;
             width: 90%;
             max-width: 500px;
+            box-shadow: 0 8px 32px 0 #2E3440cc;
+            border: 2px solid #4C566A;
         }
 
         .modal h2 {
             margin-bottom: 20px;
-            color: #2d3436;
+            color: #88C0D0;
+            font-size: 24px;
+            letter-spacing: 1px;
         }
 
         .modal input {
             width: 100%;
             padding: 12px;
-            border: 2px solid #ddd;
+            border: 2px solid #4C566A;
             border-radius: 8px;
             margin-bottom: 15px;
             font-size: 16px;
+            background: #2E3440;
+            color: #D8DEE9;
+        }
+
+        .modal input::placeholder {
+            color: #4C566A;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #81A1C1;
+        }
+
+        .modal p {
+            color: #D8DEE9;
+            margin-bottom: 20px;
         }
 
         .modal-buttons {
@@ -435,8 +501,8 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #00b894;
-            color: white;
+            background: #A3BE8C;
+            color: #E5E9F0;
             padding: 15px 25px;
             border-radius: 10px;
             transform: translateX(400px);
@@ -446,6 +512,10 @@
 
         .notification.show {
             transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #BF616A;
         }
 
         @media (max-width: 768px) {
@@ -493,44 +563,371 @@
             .sync-btn {
                 width: 100%;
             }
+
+            .inventory-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .inventory-controls select,
+            .inventory-controls button {
+                width: 100%;
+            }
+        }
+
+        /* Project Management Modal */
+        #projectList {
+            background: #2E3440;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        #projectList div {
+            border-bottom: 1px solid #4C566A;
+            padding: 15px;
+        }
+
+        #projectList div:last-child {
+            border-bottom: none;
+        }
+
+        #projectList strong {
+            color: #E5E9F0;
+        }
+
+        #projectList div div {
+            color: #4C566A;
+            border: none;
+            padding: 5px 0;
+        }
+
+        /* Project Details Modal */
+        #projectDetailsModal .modal-content {
+            background: #2E3440;
+            border-radius: 16px;
+            border: 2px solid #4C566A;
+            color: #E5E9F0;
+            box-shadow: 0 8px 32px 0 #2E3440cc;
+        }
+        #projectDetailsModal h2 {
+            color: #88C0D0;
+            font-size: 24px;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        #projectStatus {
+            background: #3B4252;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #E5E9F0;
+        }
+        #projectParts {
+            background: #3B4252;
+            border-radius: 8px;
+            padding: 10px;
+            color: #D8DEE9;
+        }
+        #projectParts strong {
+            color: #E5E9F0;
+        }
+        #projectParts .project-list-item {
+            border-bottom: 1px solid #4C566A;
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #projectParts .project-list-item:last-child {
+            border-bottom: none;
+        }
+        #projectParts .project-info {
+            color: #81A1C1;
+            font-size: 13px;
+        }
+        #projectParts .project-status-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        #projectParts .project-remove-btn {
+            padding: 6px 14px;
+            background: #BF616A;
+            color: #ECEFF4;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        #projectParts .project-remove-btn:hover {
+            background: #D08770;
+            color: #2E3440;
+        }
+        #projectStatus .project-header {
+            color: #EBCB8B;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        #projectStatus .project-status-bar {
+            height: 10px;
+            background: #434C5E;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        #projectStatus .project-status-progress {
+            height: 100%;
+            background: #A3BE8C;
+        }
+        #projectStatus .project-status-warning {
+            height: 100%;
+            background: #EBCB8B;
+            margin-top: -10px;
+        }
+        #projectDetailsModal .close-btn {
+            background: #4C566A;
+            color: #D8DEE9;
+            border: 1.5px solid #434C5E;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+        #projectDetailsModal .close-btn:hover {
+            background: #434C5E;
+            color: #ECEFF4;
+        }
+
+        /* Additional utility classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .full-width {
+            width: 100%;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+        .project-tag {
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .project-status {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .project-parts {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .project-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .bom-results {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+            color: #2d3436;
+        }
+
+        .modal-content-wide {
+            max-width: 600px;
+        }
+
+        .modal-buttons-top {
+            margin-top: 20px;
+        }
+
+        .project-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .project-status-icon {
+            font-size: 20px;
+        }
+
+        .project-status-bar {
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .project-status-progress {
+            height: 100%;
+            background: #00b894;
+        }
+
+        .project-status-warning {
+            height: 100%;
+            background: #fdcb6e;
+            margin-top: -10px;
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .project-list-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .project-delete-btn {
+            padding: 5px 10px;
+            background: #e17055;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .project-remove-btn {
+            padding: 5px 10px;
+            background: #e17055;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .manage-projects-btn {
+            padding: 10px 12px;
+            background: #4C566A;
+            color: #E5E9F0;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .export-format-text {
+            margin-bottom: 20px;
+            color: #E5E9F0;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .json-btn {
+            background: #5E81AC;
+            color: #ECEFF4;
+            border: 1.5px solid #81A1C1;
+        }
+        .json-btn:hover {
+            background: #81A1C1;
+            color: #2E3440;
+            border-color: #88C0D0;
+        }
+
+        .csv-btn {
+            background: #8FBCBB;
+            color: #ECEFF4;
+            border: 1.5px solid #A3BE8C;
+        }
+        .csv-btn:hover {
+            background: #A3BE8C;
+            color: #2E3440;
+            border-color: #8FBCBB;
+        }
+
+        .cancel-btn {
+            background: #4C566A;
+            color: #D8DEE9;
+            border: 1.5px solid #434C5E;
+        }
+        .cancel-btn:hover {
+            background: #434C5E;
+            color: #ECEFF4;
+            border-color: #4C566A;
+        }
+
+        .add-missing-btn {
+            background: #00b894;
+            color: #F8F8F2;
+        }
+
+        .close-btn {
+            background: #ddd;
+            color: #666;
+        }
+
+        .readonly-input {
+            background: #f8f9fa;
+        }
+
+        @keyframes flash-highlight {
+            0%   { box-shadow: 0 0 0 0 #5E81AC33; }
+            50%  { box-shadow: 0 0 8px 2px #5E81AC66; }
+            100% { box-shadow: 0 0 0 0 #5E81AC33; }
+        }
+        .part-info.flash {
+            animation: flash-highlight 0.5s;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎸 GUITAR PEDAL INVENTORY</h1>
+            <h1>GPI</h1>
             <p>NFC Inventory System</p>
         </div>
 
         <div class="content">
             <div class="main-content">
                 <div class="left-panel">
-                    <div class="part-info" id="currentPart" style="display: none;">
+                    <div class="part-info" id="currentPart">
                         <div class="part-name" id="partName">Select a Part</div>
                         <div class="current-stock" id="currentStock">0</div>
                         <div class="stock-label">Current Stock</div>
-                        <a href="#" id="reorderLink" class="reorder-btn" target="_blank" style="display: none;">🛒 Reorder</a>
-                        <div id="lowStockWarning" class="low-stock-warning" style="display: none;">
+                        <a href="#" id="reorderLink" class="reorder-btn hidden" target="_blank">🛒 Reorder</a>
+                        <div id="lowStockWarning" class="low-stock-warning hidden">
                             ⚠️ Low stock! Consider reordering soon.
                         </div>
                     </div>
 
-                    <div class="controls" id="controls" style="display: none;">
+                    <div class="controls hidden" id="controls">
                         <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
                     </div>
 
-                    <div class="action-buttons" id="actionButtons" style="display: none;">
+                    <div class="action-buttons hidden" id="actionButtons">
                         <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
                         <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
                     </div>
 
-                    <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
-                    
                     <div class="sync-buttons">
-                        <button class="sync-btn export-btn" onclick="showExportModal()">📤 Export Data</button>
-                        <button class="sync-btn import-btn" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
-                        <button class="sync-btn import-btn" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
+                        <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
+                        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
+                        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+                        <button class="sync-btn export-btn full-width" onclick="showExportModal()">📤 Export Data</button>
                     </div>
                 </div>
 
@@ -538,11 +935,11 @@
                     <div class="inventory-list">
                         <div class="inventory-header">
                             <h3>All Parts</h3>
-                            <div style="display: flex; gap: 10px; align-items: center;">
+                            <div class="inventory-controls">
+                                <button onclick="showProjectManagementModal()" class="manage-projects-btn">Manage Projects</button>
                                 <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
                                     <option value="all">All Projects</option>
                                 </select>
-                                <button onclick="showProjectManagementModal()" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Manage Projects</button>
                                 <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
                                     <option value="name-asc">Name A-Z</option>
                                     <option value="name-desc">Name Z-A</option>
@@ -568,8 +965,8 @@
             <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
             <div class="modal-buttons">
-                <button class="btn btn-add" onclick="addNewPart()" style="flex: 1;">Add Part</button>
-                <button class="btn" onclick="hideAddPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+                <button class="btn btn-add flex-1" onclick="addNewPart()">Add Part</button>
+                <button class="btn cancel-btn flex-1" onclick="hideAddPartModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -581,10 +978,10 @@
             <input type="text" id="editPartName" placeholder="Part name">
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
             <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="editPartId" placeholder="NFC Tag ID" style="background: #f8f9fa;">
+            <input type="text" id="editPartId" placeholder="NFC Tag ID" class="readonly-input">
             <div class="modal-buttons">
-                <button class="btn btn-add" onclick="saveEditPart()" style="flex: 1;">Save Changes</button>
-                <button class="btn" onclick="hideEditPartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+                <button class="btn btn-add flex-1" onclick="saveEditPart()">Save Changes</button>
+                <button class="btn cancel-btn flex-1" onclick="hideEditPartModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -593,10 +990,10 @@
     <div class="modal" id="deletePartModal">
         <div class="modal-content">
             <h2>Delete Part</h2>
-            <p id="deletePartMessage" style="margin-bottom: 20px; color: #666;"></p>
+            <p id="deletePartMessage">Are you sure you want to delete this part? This action cannot be undone.</p>
             <div class="modal-buttons">
-                <button class="btn btn-remove" onclick="confirmDeletePart()" style="flex: 1;">Delete</button>
-                <button class="btn" onclick="hideDeletePartModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+                <button class="btn btn-remove" onclick="confirmDeletePart()">Delete</button>
+                <button class="btn" onclick="hideDeletePartModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -608,11 +1005,11 @@
     <div class="modal" id="exportModal">
         <div class="modal-content">
             <h2>Export Inventory</h2>
-            <p style="margin-bottom: 20px; color: #666;">Choose export format:</p>
+            <p class="export-format-text">Choose export format:</p>
             <div class="modal-buttons">
-                <button class="btn" onclick="exportInventory('json')" style="flex: 1; background: #667eea; color: white;">JSON</button>
-                <button class="btn" onclick="exportInventory('csv')" style="flex: 1; background: #00b894; color: white;">CSV</button>
-                <button class="btn" onclick="hideExportModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+                <button class="btn json-btn flex-1" onclick="exportInventory('json')">JSON</button>
+                <button class="btn csv-btn flex-1" onclick="exportInventory('csv')">CSV</button>
+                <button class="btn cancel-btn flex-1" onclick="hideExportModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -621,10 +1018,10 @@
     <div class="modal" id="bomModal">
         <div class="modal-content">
             <h2>BOM Comparison Results</h2>
-            <div id="bomResults" style="max-height: 300px; overflow-y: auto; font-size: 14px; color: #2d3436;"></div>
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button class="btn" onclick="addMissingParts()" style="flex: 1; background: #00b894; color: white;">Add Missing Parts</button>
-                <button class="btn" onclick="hideBOMModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+            <div id="bomResults" class="bom-results"></div>
+            <div class="modal-buttons modal-buttons-top">
+                <button class="btn add-missing-btn flex-1" onclick="addMissingParts()">Add Missing Parts</button>
+                <button class="btn cancel-btn flex-1" onclick="hideBOMModal()">Close</button>
             </div>
         </div>
     </div>
@@ -633,11 +1030,11 @@
     <div class="modal" id="projectManagementModal">
         <div class="modal-content">
             <h2>Project Management</h2>
-            <div id="projectList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+            <div id="projectList" class="project-list">
                 <!-- Projects will be listed here -->
             </div>
             <div class="modal-buttons">
-                <button class="btn" onclick="hideProjectManagementModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+                <button class="btn close-btn flex-1" onclick="hideProjectManagementModal()">Close</button>
             </div>
         </div>
     </div>
@@ -646,28 +1043,28 @@
     <div class="modal" id="deleteProjectModal">
         <div class="modal-content">
             <h2>Delete Project</h2>
-            <p id="deleteProjectMessage" style="margin-bottom: 20px; color: #666;"></p>
+            <p id="deleteProjectMessage" class="project-info"></p>
             <div class="modal-buttons">
-                <button class="btn btn-remove" onclick="confirmDeleteProject()" style="flex: 1;">Delete</button>
-                <button class="btn" onclick="hideDeleteProjectModal()" style="flex: 1; background: #ddd; color: #666;">Cancel</button>
+                <button class="btn btn-remove flex-1" onclick="confirmDeleteProject()">Delete</button>
+                <button class="btn close-btn flex-1" onclick="hideDeleteProjectModal()">Cancel</button>
             </div>
         </div>
     </div>
 
     <!-- Project Details Modal -->
     <div class="modal" id="projectDetailsModal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content modal-content-wide">
             <h2 id="projectDetailsTitle">Project Details</h2>
-            <div id="projectStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;"></div>
-            <div id="projectParts" style="max-height: 400px; overflow-y: auto;"></div>
+            <div id="projectStatus" class="project-status"></div>
+            <div id="projectParts" class="project-parts"></div>
             <div class="modal-buttons">
-                <button class="btn" onclick="hideProjectDetailsModal()" style="flex: 1; background: #ddd; color: #666;">Close</button>
+                <button class="btn close-btn flex-1" onclick="hideProjectDetailsModal()">Close</button>
             </div>
         </div>
     </div>
 
-    <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" style="display: none;">
-    <input type="file" id="importFile" accept=".json" onchange="importInventory(event)" style="display: none;">
+    <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" class="hidden">
+    <input type="file" id="importFile" accept=".json" onchange="importInventory(event)" class="hidden">
 
     <script>
         let inventory = {};
@@ -767,9 +1164,7 @@
                         displayInventory();
                         
                         currentPartId = null;
-                        document.getElementById('currentPart').style.display = 'none';
-                        document.getElementById('controls').style.display = 'none';
-                        document.getElementById('actionButtons').style.display = 'none';
+                        hidePartInfoPanel();
                         
                         showNotification('Inventory imported successfully!');
                     } else {
@@ -835,7 +1230,7 @@
                 // Get project tags for this part
                 const projectTags = part.projects ? Object.keys(part.projects).map(projectId => {
                     if (projects[projectId]) {  // Only show tags for existing projects
-                        return `<span class="project-tag" style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: 5px; cursor: pointer;" onclick="showProjectDetails('${projectId}')">${projects[projectId].name}</span>`;
+                        return `<span class="project-tag" onclick="showProjectDetails('${projectId}')">${projects[projectId].name}</span>`;
                     }
                     return '';
                 }).filter(tag => tag !== '').join('') : '';
@@ -860,33 +1255,48 @@
         }
 
         function selectPart(partId) {
+            // If clicking the same part, hide the panel
+            if (currentPartId === partId) {
+                hidePartInfoPanel();
+                return;
+            }
+
+            // Flash effect
+            const partInfo = document.getElementById('currentPart');
+            partInfo.classList.remove('flash'); // Remove if already present
+            void partInfo.offsetWidth; // Force reflow to restart animation
+            partInfo.classList.add('flash');
+
             currentPartId = partId;
             const part = inventory[partId];
-            
             document.getElementById('partName').textContent = part.name;
             document.getElementById('currentStock').textContent = part.quantity;
-            
             const reorderLink = document.getElementById('reorderLink');
             const lowStockWarning = document.getElementById('lowStockWarning');
-            
             if (part.purchaseUrl) {
                 reorderLink.href = part.purchaseUrl;
-                reorderLink.style.display = 'inline-block';
+                reorderLink.classList.remove('hidden');
             } else {
-                reorderLink.style.display = 'none';
+                reorderLink.classList.add('hidden');
             }
-            
             if (part.quantity < 5) {
-                lowStockWarning.style.display = 'block';
+                lowStockWarning.classList.remove('hidden');
             } else {
-                lowStockWarning.style.display = 'none';
+                lowStockWarning.classList.add('hidden');
             }
-            
-            document.getElementById('currentPart').style.display = 'block';
-            document.getElementById('controls').style.display = 'flex';
-            document.getElementById('actionButtons').style.display = 'flex';
-            
+            // Only use .visible for animation
+            partInfo.classList.add('visible');
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('actionButtons').classList.remove('hidden');
             document.getElementById('quantityInput').focus();
+        }
+
+        function hidePartInfoPanel() {
+            const partInfo = document.getElementById('currentPart');
+            partInfo.classList.remove('visible');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('actionButtons').classList.add('hidden');
+            currentPartId = null;
         }
 
         function adjustStock(action) {
@@ -1024,9 +1434,7 @@
             
             if (currentPartId === deletingPartId) {
                 currentPartId = null;
-                document.getElementById('currentPart').style.display = 'none';
-                document.getElementById('controls').style.display = 'none';
-                document.getElementById('actionButtons').style.display = 'none';
+                hidePartInfoPanel();
             }
             
             delete inventory[deletingPartId];
@@ -1120,6 +1528,7 @@
             const quantityInput = document.getElementById('quantityInput');
             quantityInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent default form submission
                     adjustStock('add');
                 }
             });
@@ -1188,22 +1597,18 @@
                 }
                 
                 const partElement = document.createElement('div');
-                partElement.style.padding = '10px';
-                partElement.style.borderBottom = '1px solid #eee';
-                partElement.style.display = 'flex';
-                partElement.style.justifyContent = 'space-between';
-                partElement.style.alignItems = 'center';
+                partElement.className = 'project-list-item';
                 
                 partElement.innerHTML = `
                     <div>
                         <strong>${bom[id].name}</strong>
-                        <div style="font-size: 12px; color: #666;">
+                        <div class="project-info">
                             Need: ${required} | Have: ${part ? part.quantity : 0}
                         </div>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <span style="font-size: 20px;">${status}</span>
-                        <button onclick="removeProjectTag('${id}', '${projectId}')" style="padding: 5px 10px; background: #e17055; color: white; border: none; border-radius: 5px; cursor: pointer;">Remove</button>
+                    <div class="project-actions">
+                        <span class="project-status-icon">${status}</span>
+                        <button onclick="removeProjectTag('${id}', '${projectId}')" class="project-remove-btn">Remove</button>
                     </div>
                 `;
                 
@@ -1212,14 +1617,14 @@
             
             const statusContainer = document.getElementById('projectStatus');
             statusContainer.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div class="project-header">
                     <div>Total Parts: ${totalParts}</div>
                     <div>Missing: ${missingParts}</div>
                     <div>Low Stock: ${lowStockParts}</div>
                 </div>
-                <div style="height: 10px; background: #eee; border-radius: 5px; overflow: hidden;">
-                    <div style="height: 100%; width: ${((totalParts - missingParts - lowStockParts) / totalParts * 100)}%; background: #00b894;"></div>
-                    <div style="height: 100%; width: ${(lowStockParts / totalParts * 100)}%; background: #fdcb6e; margin-top: -10px;"></div>
+                <div class="project-status-bar">
+                    <div class="project-status-progress" style="width: ${((totalParts - missingParts - lowStockParts) / totalParts * 100)}%"></div>
+                    <div class="project-status-warning" style="width: ${(lowStockParts / totalParts * 100)}%"></div>
                 </div>
             `;
             
@@ -1233,12 +1638,19 @@
         function removeProjectTag(partId, projectId) {
             if (!inventory[partId].projects) return;
             
+            // Remove the tag from the inventory part
             delete inventory[partId].projects[projectId];
             if (Object.keys(inventory[partId].projects).length === 0) {
                 delete inventory[partId].projects;
             }
-            
+
+            // Remove the part from the project's BOM
+            if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[partId]) {
+                delete projects[projectId].bom[partId];
+            }
+
             saveInventory();
+            saveProjects();
             displayInventory();
             showProjectDetails(projectId);
             showNotification(`Removed ${inventory[partId].name} from ${projects[projectId].name}`);
@@ -1386,12 +1798,12 @@
                         resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
                     } else {
                         resultsContainer.innerHTML = `
-                            <div style="margin-bottom: 15px;">
+                            <div class="project-header">
                                 <div>Total Parts: ${totalParts}</div>
                                 <div>Missing: ${missingParts}</div>
                                 <div>Low Stock: ${lowStockParts}</div>
                             </div>
-                            <ul style="padding-left: 20px;">${missing.join("")}</ul>
+                            <ul class="project-info">${missing.join("")}</ul>
                         `;
                     }
 
@@ -1416,9 +1828,7 @@
                         name: part.name,
                         quantity: 0,
                         purchaseUrl: part.purchaseUrl || '',
-                        projects: {
-                            [Object.keys(part.projects)[0]]: part.projects[Object.keys(part.projects)[0]]
-                        }
+                        projects: {}
                     };
                     addedCount++;
                 }
@@ -1448,11 +1858,7 @@
             for (const projectId in projects) {
                 const project = projects[projectId];
                 const projectElement = document.createElement('div');
-                projectElement.style.padding = '10px';
-                projectElement.style.borderBottom = '1px solid #eee';
-                projectElement.style.display = 'flex';
-                projectElement.style.justifyContent = 'space-between';
-                projectElement.style.alignItems = 'center';
+                projectElement.className = 'project-list-item';
                 
                 // Count parts tagged with this project
                 let taggedParts = 0;
@@ -1465,12 +1871,12 @@
                 projectElement.innerHTML = `
                     <div>
                         <strong>${project.name}</strong>
-                        <div style="font-size: 12px; color: #666;">
+                        <div class="project-info">
                             ${taggedParts} parts tagged
                         </div>
                     </div>
                     <div>
-                        <button onclick="showDeleteProjectModal('${projectId}')" style="padding: 5px 10px; background: #e17055; color: white; border: none; border-radius: 5px; cursor: pointer;">Delete</button>
+                        <button onclick="showDeleteProjectModal('${projectId}')" class="project-delete-btn">Delete</button>
                     </div>
                 `;
                 

@@ -825,7 +825,7 @@
     }
 
     .project-tag {
-        color: white;
+        color: #2E3440; /* Nord Dark */
         padding: 2px 6px;
         border-radius: 4px;
         font-size: 10px;
@@ -836,6 +836,7 @@
         max-width: 120px;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-weight: 500; /* Slightly bolder for better readability */
     }
 
     .project-tag:nth-child(4n+1) {

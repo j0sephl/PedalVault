@@ -810,10 +810,33 @@
     #projectParts .project-info {
         color: #81A1C1;
         font-size: 13px;
+        margin-top: 4px;
     }
-    #projectParts .project-status-icon {
-        font-size: 20px;
-        margin-right: 10px;
+    #projectParts .project-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    #projectParts .status-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #projectParts .status-icon svg {
+        width: 100%;
+        height: 100%;
+        fill: currentColor;
+    }
+    #projectParts .status-success {
+        color: #A3BE8C;
+    }
+    #projectParts .status-warning {
+        color: #EBCB8B;
+    }
+    #projectParts .status-error {
+        color: #BF616A;
     }
     #projectParts .project-remove-btn {
         padding: 6px 14px;
@@ -833,6 +856,8 @@
         color: #EBCB8B;
         font-size: 15px;
         margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
     }
     #projectStatus .project-status-bar {
         height: 10px;

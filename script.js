@@ -550,7 +550,7 @@
             totalParts++;
             const required = bom[id].quantity;
             const part = inventory[id];
-            const status = part ? (part.quantity >= required ? '✅' : part.quantity > 0 ? '⚠️' : '❌') : '❌';
+            let statusIcon;
             
             if (!part || part.quantity === 0) {
                 missingParts++;

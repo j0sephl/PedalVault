@@ -825,7 +825,6 @@
     }
 
     .project-tag {
-        background: #81A1C1;
         color: white;
         padding: 2px 6px;
         border-radius: 4px;
@@ -839,9 +838,24 @@
         text-overflow: ellipsis;
     }
 
+    .project-tag:nth-child(4n+1) {
+        background: #81A1C1; /* Nord Blue */
+    }
+
+    .project-tag:nth-child(4n+2) {
+        background: #A3BE8C; /* Nord Green */
+    }
+
+    .project-tag:nth-child(4n+3) {
+        background: #EBCB8B; /* Nord Yellow */
+    }
+
+    .project-tag:nth-child(4n+4) {
+        background: #B48EAD; /* Nord Purple */
+    }
+
     .project-tag:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
+        filter: brightness(1.1);
     }
 
     .project-status {

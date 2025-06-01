@@ -719,17 +719,46 @@
             
             if (!part || part.quantity === 0) {
                 missingParts++;
-                missing.push(`<li>❌ <strong>${bom[id].name}</strong>: Missing entirely (need ${required})</li>`);
+                missing.push(`
+                    <li>
+                        <span class="status-icon status-error">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>: Missing entirely (need ${required})
+                    </li>
+                `);
             } else if (part.quantity < required) {
                 lowStockParts++;
                 const have = part.quantity;
-                missing.push(`<li>⚠️ <strong>${bom[id].name}</strong>: Have ${have}, need ${required}</li>`);
+                missing.push(`
+                    <li>
+                        <span class="status-icon status-warning">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>: Have ${have}, need ${required}
+                    </li>
+                `);
             }
         }
 
         const resultsContainer = document.getElementById("bomResults");
         if (missing.length === 0) {
-            resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
+            resultsContainer.innerHTML = `
+                <div class="project-info">
+                    <li>
+                        <span class="status-icon status-success">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </span>
+                        <strong>All parts in the BOM are sufficiently in stock.</strong>
+                    </li>
+                </div>
+            `;
         } else {
             resultsContainer.innerHTML = `
                 <div class="project-header">

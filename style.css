@@ -928,11 +928,71 @@
         margin-bottom: 20px;
     }
 
+    /* BOM Results Styling */
     .bom-results {
         max-height: 300px;
         overflow-y: auto;
         font-size: 14px;
-        color: #2d3436;
+        color: #E5E9F0;
+        background: #2E3440;
+        padding: 15px;
+        border-radius: 4px;
+    }
+
+    .bom-results .project-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #4C566A;
+        color: #88C0D0;
+        font-size: 15px;
+    }
+
+    .bom-results .project-info {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .bom-results .project-info li {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #4C566A;
+    }
+
+    .bom-results .project-info li:last-child {
+        border-bottom: none;
+    }
+
+    .bom-results .project-info li strong {
+        color: #ECEFF4;
+        margin-right: 8px;
+    }
+
+    .bom-results .status-icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
+    .bom-results .status-icon svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .bom-results .status-success {
+        color: #A3BE8C;
+    }
+
+    .bom-results .status-warning {
+        color: #EBCB8B;
+    }
+
+    .bom-results .status-error {
+        color: #BF616A;
     }
 
     .modal-content-wide {

@@ -369,7 +369,12 @@
         align-items: center;
         justify-content: center;
         transition: all 0.2s ease;
-        font-size: 12px;
+    }
+
+    .action-icon svg {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
     }
 
     .edit-icon {
@@ -394,6 +399,33 @@
 
     .shop-icon:hover {
         background: rgba(163, 190, 140, 0.1);
+    }
+
+    /* Status Icons */
+    .status-icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+
+    .status-icon svg {
+        width: 100%;
+        height: 100%;
+        fill: currentColor;
+    }
+
+    .status-success {
+        color: #A3BE8C;
+    }
+
+    .status-warning {
+        color: #EBCB8B;
+    }
+
+    .status-error {
+        color: #BF616A;
     }
 
     .reorder-btn {

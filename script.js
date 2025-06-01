@@ -175,9 +175,21 @@
                     <span class="${quantityClass}">${part.quantity}</span>
                 </div>
                 <div class="item-actions">
-                    <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Reorder part">🛒</button>
-                    <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">✏️</button>
-                    <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">🗑️</button>
+                    <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Reorder part">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                    </button>
+                    <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                    </button>
+                    <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
                 </div>
             `;
             

@@ -1171,6 +1171,9 @@
         height: 100%;
         background-color: rgba(46, 52, 64, 0.8);
         z-index: 1000;
+    }
+
+    #projectNameModal.show {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1185,7 +1188,7 @@
         width: 90%;
         max-width: 500px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 0; /* Remove margin since we're using flex centering */
+        margin: 0;
     }
 
     .modal-header {

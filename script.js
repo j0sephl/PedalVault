@@ -619,13 +619,15 @@
     }
 
     function showProjectNameModal() {
-        document.getElementById('projectNameModal').style.display = 'block';
+        const modal = document.getElementById('projectNameModal');
+        modal.classList.add('show');
         document.getElementById('projectNameInput').value = '';
         document.getElementById('projectNameInput').focus();
     }
 
     function hideProjectNameModal() {
-        document.getElementById('projectNameModal').style.display = 'none';
+        const modal = document.getElementById('projectNameModal');
+        modal.classList.remove('show');
         pendingBomData = null;
     }
 

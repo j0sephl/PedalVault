@@ -179,9 +179,9 @@
                         <span class="item-name">${part.name}</span>
                         ${projectTags}
                     </div>
-                    <div class="${quantityClass}">
+                    <div class="${quantityClass}" data-part-id="${id}">
                         <button class="quantity-btn" onclick="adjustStockInline('${id}', 'remove')">-</button>
-                        <span>${part.quantity}</span>
+                        <span class="quantity-number" onclick="showQuantityInput('${id}', ${part.quantity})">${part.quantity}</span>
                         <button class="quantity-btn" onclick="adjustStockInline('${id}', 'add')">+</button>
                     </div>
                 </div>
@@ -1097,6 +1097,57 @@
                 Export Data
             </button>
         `;
+    }
+
+    function showQuantityInput(partId, currentQuantity) {
+        // Find the specific quantity span for this part
+        const quantitySpan = document.querySelector(`.item-quantity[data-part-id="${partId}"] .quantity-number`);
+        if (!quantitySpan) return;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.value = currentQuantity;
+        input.className = 'quantity-input-inline';
+        
+        // Replace span with input
+        quantitySpan.replaceWith(input);
+        input.focus();
+        input.select();
+
+        // Handle input events
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                updateQuantity(partId, parseInt(input.value) || 0);
+            }
+        });
+
+        input.addEventListener('blur', function() {
+            updateQuantity(partId, parseInt(input.value) || 0);
+        });
+
+        // Prevent click propagation to avoid immediate blur
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+
+    function updateQuantity(partId, newQuantity) {
+        if (newQuantity < 0) newQuantity = 0;
+        
+        const part = inventory[partId];
+        if (!part) return;
+
+        const oldQuantity = part.quantity;
+        part.quantity = newQuantity;
+        
+        saveInventory();
+        displayInventory();
+        
+        if (newQuantity !== oldQuantity) {
+            showNotification(`Updated ${part.name} quantity to ${newQuantity}`);
+        }
     }
 
     initializeInventory();

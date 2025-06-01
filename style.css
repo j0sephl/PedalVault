@@ -485,8 +485,6 @@
         display: flow;
         position: relative;
         z-index: 2;
-        margin-top: -60px;
-        padding-top: 10px;
     }
 
     .sync-icon {

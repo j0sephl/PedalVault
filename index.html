@@ -5,15 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guitar Pedal Parts Inventory</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3B4252">
+    <meta name="description" content="NFC Inventory System for Guitar Pedal Parts">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <script src="https://unpkg.com/@rive-app/canvas@2.10.3"></script>
     <script src="rive-logo.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="logo">
                 <canvas id="rive-logo" width="200" height="200"></canvas>
-              </div>
+            </div>
             <h1>GUTIAR PARTS INVENTORY</h1>
             <p>NFC Inventory System</p>
         </div>

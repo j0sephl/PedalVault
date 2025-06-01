@@ -38,6 +38,7 @@
         display: block;
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
+        image-rendering: pixelated;
     }
 
     .header h1 {
@@ -573,7 +574,7 @@
 
         .header h1 {
             font-size: 24px;
-            font-variant-caps: normal;
+            text-transform: uppercase;
         }
 
         .header p {

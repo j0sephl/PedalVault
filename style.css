@@ -32,6 +32,12 @@
         gap: 16px;
     }
 
+    .header-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
     .logo canvas {
         width: 100px;
         height: 100px;
@@ -664,6 +670,10 @@
             text-align: center;
         }
 
+        .header-content {
+            align-items: center;
+        }
+
         .header h1 {
             font-size: 24px;
             text-transform: uppercase;
@@ -739,6 +749,10 @@
 
         .inventory-item {
             padding: 12px 8px;
+        }
+
+        .coffee-link {
+            margin-top: 12px;
         }
     }
 
@@ -1380,4 +1394,29 @@
             padding: 6px 12px;
             font-size: 0.8rem;
         }
+    }
+
+    .coffee-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #EBCB8B;
+        text-decoration: none;
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 4px;
+        background: rgba(235, 203, 139, 0.1);
+        transition: all 0.2s ease;
+        margin-top: 8px;
+    }
+
+    .coffee-link:hover {
+        background: rgba(235, 203, 139, 0.2);
+        color: #EBCB8B;
+    }
+
+    .coffee-icon {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
     }

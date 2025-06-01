@@ -163,7 +163,7 @@
             const item = document.createElement('div');
             item.className = 'inventory-item';
             
-            const quantityClass = part.quantity < 5 ? 'item-quantity low-stock' : 'item-quantity';
+            const quantityClass = part.quantity < 5 ? 'item-quantity low' : 'item-quantity';
             
             // Get project tags for this part
             const projectTags = part.projects ? Object.keys(part.projects).map(projectId => {
@@ -174,12 +174,16 @@
             }).filter(tag => tag !== '').join('') : '';
             
             item.innerHTML = `
-                <div class="item-info" onclick="selectPart('${id}')">
+                <div class="item-info">
                     <div>
                         <span class="item-name">${part.name}</span>
                         ${projectTags}
                     </div>
-                    <span class="${quantityClass}">${part.quantity}</span>
+                    <div class="${quantityClass}">
+                        <button class="quantity-btn" onclick="adjustStockInline('${id}', 'remove')">-</button>
+                        <span>${part.quantity}</span>
+                        <button class="quantity-btn" onclick="adjustStockInline('${id}', 'add')">+</button>
+                    </div>
                 </div>
                 <div class="item-actions">
                     <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Reorder part">
@@ -204,89 +208,22 @@
         });
     }
 
-    function selectPart(partId) {
-        // If clicking the same part, hide the panel
-        if (currentPartId === partId) {
-            hidePartInfoPanel();
-            return;
-        }
-
-        // Flash effect
-        const partInfo = document.getElementById('currentPart');
-        partInfo.classList.remove('flash'); // Remove if already present
-        void partInfo.offsetWidth; // Force reflow to restart animation
-        partInfo.classList.add('flash');
-
-        currentPartId = partId;
+    function adjustStockInline(partId, action) {
         const part = inventory[partId];
-        document.getElementById('partName').textContent = part.name;
-        document.getElementById('currentStock').textContent = part.quantity;
-        const currentStockElem = document.getElementById('currentStock');
-        if (part.quantity < 5) {
-            currentStockElem.classList.add('low');
-        } else {
-            currentStockElem.classList.remove('low');
-        }
-        const reorderLink = document.getElementById('reorderLink');
-        const lowStockWarning = document.getElementById('lowStockWarning');
-        if (part.purchaseUrl) {
-            reorderLink.href = part.purchaseUrl;
-            reorderLink.classList.remove('hidden');
-        } else {
-            reorderLink.classList.add('hidden');
-        }
-        if (part.quantity < 5) {
-            lowStockWarning.classList.remove('hidden');
-        } else {
-            lowStockWarning.classList.add('hidden');
-        }
-        // Only use .visible for animation
-        partInfo.classList.add('visible');
-        document.getElementById('controls').classList.remove('hidden');
-        document.getElementById('actionButtons').classList.remove('hidden');
-        document.getElementById('quantityInput').focus();
-    }
-
-    function hidePartInfoPanel() {
-        const partInfo = document.getElementById('currentPart');
-        partInfo.classList.remove('visible');
-        document.getElementById('controls').classList.add('hidden');
-        document.getElementById('actionButtons').classList.add('hidden');
-        currentPartId = null;
-    }
-
-    function adjustStock(action) {
-        if (!currentPartId) return;
-        
-        const quantity = parseInt(document.getElementById('quantityInput').value);
-        if (!quantity || quantity < 1) {
-            showNotification('Please enter a valid quantity', 'error');
-            return;
-        }
-
-        const part = inventory[currentPartId];
+        if (!part) return;
         
         if (action === 'add') {
-            part.quantity += quantity;
-            showNotification(`Added ${quantity} ${part.name}(s)`);
+            part.quantity += 1;
+            showNotification(`Added 1 ${part.name}`);
         } else if (action === 'remove') {
-            if (part.quantity >= quantity) {
-                part.quantity -= quantity;
-                showNotification(`Removed ${quantity} ${part.name}(s)`);
+            if (part.quantity > 0) {
+                part.quantity -= 1;
+                showNotification(`Removed 1 ${part.name}`);
             } else {
-                showNotification('Not enough stock to remove', 'error');
+                showNotification('Cannot remove more items', 'error');
                 return;
             }
         }
-
-        document.getElementById('currentStock').textContent = part.quantity;
-        const currentStockElem = document.getElementById('currentStock');
-        if (part.quantity < 5) {
-            currentStockElem.classList.add('low');
-        } else {
-            currentStockElem.classList.remove('low');
-        }
-        document.getElementById('quantityInput').value = '';
         
         saveInventory();
         displayInventory();
@@ -465,10 +402,8 @@
         const quickRemove = urlParams.get('remove');
         
         if (partId && inventory[partId]) {
-            selectPart(partId);
-            
             if (quickRemove === '1') {
-                quickRemoveOne(partId);
+                adjustStockInline(partId, 'remove');
             }
         }
     }

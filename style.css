@@ -88,30 +88,7 @@
     }
 
     .part-info {
-        background: #2E3440;
-        padding: 20px;
-        text-align: center;
-        position: relative;
-        max-height: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: max-height 0.4s cubic-bezier(.4,0,.2,1), opacity 0.3s, margin 0.3s;
-        margin: 0;
-        z-index: 1;
-    }
-
-    .part-info.visible {
-        max-height: 500px;
-        opacity: 1;
-        overflow: visible;
-        margin-bottom: 20px;
-    }
-
-    .part-name {
-        font-size: 24px;
-        font-weight: 600;
-        color: #E5E9F0;
-        margin-bottom: 10px;
+        display: none;
     }
 
     .current-stock {
@@ -331,7 +308,7 @@
         flex: 1;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         padding-right: 15px;
         flex-wrap: wrap;
         gap: 4px;
@@ -346,6 +323,9 @@
     }
 
     .item-quantity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         background: #5E81AC;
         color: #E5E9F0;
         padding: 2px 8px;
@@ -354,8 +334,37 @@
         font-weight: 600;
     }
 
-    .low-stock {
+    .item-quantity.low {
         background: #BF616A;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .quantity-btn {
+        background: none;
+        border: none;
+        color: #E5E9F0;
+        cursor: pointer;
+        padding: 2px 6px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .quantity-btn:hover {
+        color: #ECEFF4;
+        background: rgba(236, 239, 244, 0.1);
+        border-radius: 4px;
+    }
+
+    .quantity-btn:active {
+        transform: scale(0.95);
     }
 
     .item-actions {
@@ -749,6 +758,19 @@
         .item-name {
             margin-right: 0;
             margin-bottom: 4px;
+        }
+
+        .item-quantity {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .quantity-controls {
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            padding: 4px 8px;
         }
 
         .project-tag {

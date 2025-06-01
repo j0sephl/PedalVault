@@ -1,0 +1,4 @@
+{
+  "resistor_10k": { "name": "Resistor 10kΩ", "quantity": 10 },
+  "led_3mm": { "name": "LED 3mm Red", "quantity": 15 }
+}

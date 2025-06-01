@@ -219,6 +219,7 @@
         margin-bottom: 15px;
         flex-wrap: wrap;
         gap: 10px;
+        width: 100%;
         position: sticky;
         top: 0;
         background: #434C5E;
@@ -572,6 +573,7 @@
 
         .header h1 {
             font-size: 24px;
+            font-variant-caps: normal;
         }
 
         .header p {

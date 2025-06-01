@@ -564,36 +564,40 @@
         height: 100%;
         background: rgba(46, 52, 64, 0.8);
         z-index: 1000;
+        padding: 20px;
+        overflow-y: auto;
     }
 
     .modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        position: relative;
         background: #3B4252;
-        padding: 30px;
+        padding: 20px;
         border-radius: 0;
-        width: 90%;
+        width: 100%;
         max-width: 500px;
+        margin: 20px auto;
         box-shadow: 0 8px 32px 0 #2E3440cc;
         border: 2px solid #4C566A;
     }
 
+    .modal-content-wide {
+        max-width: 600px;
+    }
+
     .modal h2 {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         color: #88C0D0;
-        font-size: 24px;
+        font-size: 20px;
         letter-spacing: 1px;
     }
 
     .modal input {
         width: 100%;
-        padding: 12px;
+        padding: 10px;
         border: 2px solid #4C566A;
         border-radius: 0;
-        margin-bottom: 15px;
-        font-size: 16px;
+        margin-bottom: 12px;
+        font-size: 14px;
         background: #2E3440;
         color: #D8DEE9;
     }
@@ -609,13 +613,19 @@
 
     .modal p {
         color: #D8DEE9;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+        font-size: 14px;
     }
 
     .modal-buttons {
         display: flex;
-        gap: 10px;
-        border-radius: 0;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .modal-buttons button {
+        padding: 8px 12px;
+        font-size: 13px;
     }
 
     .notification {
@@ -754,6 +764,59 @@
         .coffee-link {
             margin-top: 12px;
         }
+
+        .modal {
+            padding: 10px;
+        }
+
+        .modal-content {
+            padding: 15px;
+            margin: 10px auto;
+        }
+
+        .modal-content-wide {
+            max-width: 100%;
+        }
+
+        .modal h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .modal input {
+            padding: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .modal-buttons {
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-buttons button {
+            width: 100%;
+            padding: 10px;
+        }
+
+        #projectDetailsModal .modal-content,
+        #allProjectRequirementsModal .modal-content {
+            max-width: 100%;
+        }
+
+        .bom-results {
+            max-height: 200px;
+        }
+
+        #projectParts .project-list-item {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #projectParts .project-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
     }
 
     /* Project Management Modal */
@@ -783,122 +846,44 @@
 
     /* Project Details Modal */
     #projectDetailsModal .modal-content {
-        background: #2E3440;
-        border-radius: 0;
-        border: 2px solid #4C566A;
-        color: #E5E9F0;
-        box-shadow: 0 8px 32px 0 #2E3440cc;
+        max-width: 500px;
     }
+
     #projectDetailsModal h2 {
-        color: #88C0D0;
-        font-size: 24px;
-        margin-bottom: 18px;
-        letter-spacing: 1px;
+        font-size: 20px;
+        margin-bottom: 15px;
     }
+
     #projectStatus {
-        background: #3B4252;
-        border-radius: 0;
-        padding: 15px;
-        margin-bottom: 20px;
-        color: #E5E9F0;
+        padding: 12px;
+        margin-bottom: 15px;
     }
+
     #projectParts {
-        background: #3B4252;
-        border-radius: 0;
-        padding: 10px;
-        color: #D8DEE9;
+        padding: 8px;
     }
-    #projectParts strong {
-        color: #E5E9F0;
-    }
+
     #projectParts .project-list-item {
-        border-bottom: 1px solid #4C566A;
-        padding: 15px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding: 12px 0;
     }
-    #projectParts .project-list-item:last-child {
-        border-bottom: none;
-    }
+
     #projectParts .project-info {
-        color: #81A1C1;
-        font-size: 13px;
-        margin-top: 4px;
+        font-size: 12px;
+        margin-top: 3px;
     }
+
     #projectParts .project-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+        gap: 8px;
     }
+
     #projectParts .status-icon {
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 18px;
+        height: 18px;
     }
-    #projectParts .status-icon svg {
-        width: 100%;
-        height: 100%;
-        fill: currentColor;
-    }
-    #projectParts .status-success {
-        color: #A3BE8C;
-    }
-    #projectParts .status-warning {
-        color: #EBCB8B;
-    }
-    #projectParts .status-error {
-        color: #BF616A;
-    }
+
     #projectParts .project-remove-btn {
-        padding: 6px 14px;
-        background: #BF616A;
-        color: #ECEFF4;
-        border: none;
-        border-radius: 0;
-        cursor: pointer;
-        font-size: 13px;
-        transition: background 0.2s;
-    }
-    #projectParts .project-remove-btn:hover {
-        background: #D08770;
-        color: #2E3440;
-    }
-    #projectStatus .project-header {
-        color: #EBCB8B;
-        font-size: 15px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-    }
-    #projectStatus .project-status-bar {
-        height: 10px;
-        background: #434C5E;
-        border-radius: 5px;
-        overflow: hidden;
-        margin-top: 8px;
-    }
-    #projectStatus .project-status-progress {
-        height: 100%;
-        background: #A3BE8C;
-    }
-    #projectStatus .project-status-warning {
-        height: 100%;
-        background: #EBCB8B;
-        margin-top: -10px;
-    }
-    #projectDetailsModal .close-btn {
-        background: #4C566A;
-        color: #D8DEE9;
-        border: 1.5px solid #434C5E;
-        border-radius: 0;
-        transition: background 0.2s, color 0.2s;
-    }
-    #projectDetailsModal .close-btn:hover {
-        background: #434C5E;
-        color: #ECEFF4;
+        padding: 5px 10px;
+        font-size: 12px;
     }
 
     /* Additional utility classes */
@@ -969,225 +954,192 @@
 
     /* BOM Results Styling */
     .bom-results {
-        max-height: 300px;
-        overflow-y: auto;
-        font-size: 14px;
-        color: #E5E9F0;
-        background: #2E3440;
-        padding: 15px;
-        border-radius: 4px;
+        max-height: 250px;
+        font-size: 13px;
+        padding: 12px;
     }
 
     .bom-results .project-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #4C566A;
-        color: #88C0D0;
-        font-size: 15px;
-    }
-
-    .bom-results .project-info {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        font-size: 14px;
     }
 
     .bom-results .project-info li {
-        display: flex;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #4C566A;
-    }
-
-    .bom-results .project-info li:last-child {
-        border-bottom: none;
-    }
-
-    .bom-results .project-info li strong {
-        color: #ECEFF4;
-        margin-right: 8px;
+        padding: 6px 0;
     }
 
     .bom-results .status-icon {
         width: 16px;
         height: 16px;
-        margin-right: 8px;
-        flex-shrink: 0;
+        margin-right: 6px;
     }
 
-    .bom-results .status-icon svg {
+    /* Export/Import Modals */
+    .export-format-text {
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+
+    /* All Projects Modal */
+    #allProjectRequirementsModal .modal-content {
+        max-width: 500px;
+    }
+
+    #allProjectRequirementsModal h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    #allProjectRequirementsTable {
+        font-size: 13px;
+    }
+
+    #allProjectRequirementsTable th, 
+    #allProjectRequirementsTable td {
+        padding: 6px 8px;
+    }
+
+    /* Project Name Modal */
+    #projectNameModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+        background-color: rgba(46, 52, 64, 0.8);
+        z-index: 1000;
     }
 
-    .bom-results .status-success {
-        color: #A3BE8C;
+    #projectNameModal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .bom-results .status-warning {
+    #projectNameModal .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #2E3440;
+        padding: 20px;
+        border: 1px solid #4C566A;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 0;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #4C566A;
+    }
+
+    .modal-header h2 {
+        color: #ECEFF4;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .modal-body {
+        margin-bottom: 20px;
+    }
+
+    .modal-body input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #4C566A;
+        border-radius: 4px;
+        background-color: #3B4252;
+        color: #ECEFF4;
+        font-size: 1rem;
+    }
+
+    .modal-body input:focus {
+        outline: none;
+        border-color: #81A1C1;
+        box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-footer button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .modal-footer button:first-child {
+        background-color: #4C566A;
+        color: #ECEFF4;
+    }
+
+    .modal-footer button:last-child {
+        background-color: #81A1C1;
+        color: #2E3440;
+    }
+
+    .modal-footer button:hover {
+        filter: brightness(1.1);
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            margin: 20% auto;
+            width: 95%;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+        
+        .modal-body input {
+            font-size: 0.9rem;
+        }
+        
+        .modal-footer button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+    }
+
+    .coffee-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #EBCB8B;
+        text-decoration: none;
+        font-size: 14px;
+        padding: 6px 12px;
+        border-radius: 4px;
+        background: rgba(235, 203, 139, 0.1);
+        transition: all 0.2s ease;
+        margin-top: 8px;
+    }
+
+    .coffee-link:hover {
+        background: rgba(235, 203, 139, 0.2);
         color: #EBCB8B;
     }
 
-    .bom-results .status-error {
-        color: #BF616A;
-    }
-
-    .modal-content-wide {
-        max-width: 600px;
-        border-radius: 0;
-    }
-
-    .modal-buttons-top {
-        margin-top: 20px;
-    }
-
-    .project-info {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .project-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .project-status-icon {
-        font-size: 20px;
-    }
-
-    .project-status-bar {
-        height: 10px;
-        background: #eee;
-        border-radius: 5px;
-        overflow: hidden;
-    }
-
-    .project-status-progress {
-        height: 100%;
-        background: #00b894;
-    }
-
-    .project-status-warning {
-        height: 100%;
-        background: #fdcb6e;
-        margin-top: -10px;
-    }
-
-    .project-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-
-    .project-list-item {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .project-list-item:last-child {
-        border-bottom: none;
-    }
-
-    .project-delete-btn {
-        padding: 5px 10px;
-        background: #e17055;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .project-remove-btn {
-        padding: 5px 10px;
-        background: #e17055;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .manage-projects-btn {
-        padding: 10px 12px;
-        background: #4C566A;
-        color: #E5E9F0;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s, color 0.2s;
-    }
-
-    .manage-projects-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    .export-format-text {
-        margin-bottom: 20px;
-        color: #E5E9F0;
-        font-size: 15px;
-        letter-spacing: 0.5px;
-    }
-
-    .json-btn {
-        background: #5E81AC;
-        color: #ECEFF4;
-        border: 1.5px solid #81A1C1;
-    }
-    .json-btn:hover {
-        background: #81A1C1;
-        color: #2E3440;
-        border-color: #88C0D0;
-    }
-
-    .csv-btn {
-        background: #8FBCBB;
-        color: #ECEFF4;
-        border: 1.5px solid #A3BE8C;
-    }
-    .csv-btn:hover {
-        background: #A3BE8C;
-        color: #2E3440;
-        border-color: #8FBCBB;
-    }
-
-    .cancel-btn {
-        background: #4C566A;
-        color: #D8DEE9;
-        border: 1.5px solid #434C5E;
-    }
-    .cancel-btn:hover {
-        background: #434C5E;
-        color: #ECEFF4;
-        border-color: #4C566A;
-    }
-
-    .add-missing-btn {
-        background: #00b894;
-        color: #F8F8F2;
-    }
-
-    .close-btn {
-        background: #ddd;
-        color: #666;
-    }
-
-    .readonly-input {
-        background: #f8f9fa;
-    }
-
-    @keyframes flash-highlight {
-        0%   { box-shadow: 0 0 0 0 #5E81AC33; }
-        50%  { box-shadow: 0 0 8px 2px #5E81AC66; }
-        100% { box-shadow: 0 0 0 0 #5E81AC33; }
-    }
-    .part-info.flash {
-        animation: flash-highlight 0.5s;
+    .coffee-icon {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
     }
 
     /* Nord Scrollbar Styling - Square Corners */

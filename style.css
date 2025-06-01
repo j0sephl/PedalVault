@@ -499,6 +499,11 @@
         font-family: 'JetBrains Mono', monospace;
     }
 
+    .sync-btn:hover {
+        background: #5E81AC;
+        color: #ECEFF4;
+    }
+
     .add-part-btn {
         display: flex;
         align-items: center;
@@ -513,6 +518,11 @@
         cursor: pointer;
         transition: all 0.3s ease;
         font-family: 'JetBrains Mono', monospace;
+    }
+
+    .add-part-btn:hover {
+        background: #5E81AC;
+        color: #ECEFF4;
     }
 
     .export-btn {

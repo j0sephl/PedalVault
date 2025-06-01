@@ -46,25 +46,6 @@
         <div class="content">
             <div class="main-content">
                 <div class="left-panel">
-                    <div class="part-info" id="currentPart">
-                        <div class="part-name" id="partName">Select a Part</div>
-                        <div class="current-stock" id="currentStock">0</div>
-                        <div class="stock-label">Current Stock</div>
-                        <a href="#" id="reorderLink" class="reorder-btn hidden" target="_blank">🛒 Reorder</a>
-                        <div id="lowStockWarning" class="low-stock-warning hidden">
-                            ⚠️ Low stock! Consider reordering soon.
-                        </div>
-                    </div>
-
-                    <div class="controls hidden" id="controls">
-                        <input type="number" class="quantity-input" id="quantityInput" placeholder="Enter quantity" min="1">
-                    </div>
-
-                    <div class="action-buttons hidden" id="actionButtons">
-                        <button class="btn btn-add" onclick="adjustStock('add')">Add Stock</button>
-                        <button class="btn btn-remove" onclick="adjustStock('remove')">Remove Stock</button>
-                    </div>
-
                     <div class="sync-buttons">
                         <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
                         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>

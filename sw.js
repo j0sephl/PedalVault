@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpi-v1.3';
+const CACHE_NAME = 'gpi-v1.4';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -41,40 +41,38 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    // Add cache busting parameter to URLs
+    const url = new URL(event.request.url);
+    if (url.origin === location.origin) {
+        url.searchParams.set('v', CACHE_NAME);
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                // Return cached response if found
-                if (response) {
-                    return response;
-                }
-
-                // Clone the request because it can only be used once
-                const fetchRequest = event.request.clone();
-
-                // Make network request and cache the response
-                return fetch(fetchRequest).then(response => {
-                    // Check if we received a valid response
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
-
-                    // Clone the response because it can only be used once
-                    const responseToCache = response.clone();
-
-                    // Open cache and store the response
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
-                }).catch(() => {
-                    // If network request fails and it's a navigation request, show offline page
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('/offline.html');
-                    }
-                });
+                // Always fetch from network first
+                return fetch(event.request)
+                    .then(networkResponse => {
+                        // Cache the new response
+                        if (networkResponse && networkResponse.status === 200) {
+                            const responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    cache.put(event.request, responseToCache);
+                                });
+                        }
+                        return networkResponse;
+                    })
+                    .catch(() => {
+                        // If network fails, return cached response if available
+                        if (response) {
+                            return response;
+                        }
+                        // If no cached response and it's a navigation request, show offline page
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('/offline.html');
+                        }
+                    });
             })
     );
 }); 

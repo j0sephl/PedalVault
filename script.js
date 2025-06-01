@@ -1038,7 +1038,11 @@
             html += '</tr>';
         }
         html += '</table>';
-        html += '<div style="font-size:13px;color:#BF616A;margin-top:8px;">* Red means you do not have enough in stock for all projects.</div>';
+        
+        // Update the modal title to include the explanation
+        document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
+            'All Project Requirements<br><span style="font-size:13px;color:#BF616A;font-weight:normal;">* Red means you do not have enough in stock for all projects.</span>';
+        
         document.getElementById('allProjectRequirements').innerHTML = html;
         document.getElementById('allProjectRequirementsModal').style.display = 'block';
     }

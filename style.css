@@ -37,6 +37,8 @@
         height: 100px;
         display: block;
         image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
     }
 
     .header h1 {
@@ -256,11 +258,46 @@
         min-width: 150px;
         font-family: 'JetBrains Mono', monospace;
         text-align: left;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E5E9F0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 16px;
+        padding-right: 32px;
     }
 
     .sort-dropdown:focus {
         outline: none;
         border-color: #88C0D0;
+        box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+    }
+
+    /* Safari-specific fixes */
+    @supports (-webkit-touch-callout: none) {
+        .sort-dropdown {
+            background-color: #2E3440;
+            border-radius: 0;
+        }
+        
+        .sort-dropdown option {
+            background-color: #2E3440;
+            color: #E5E9F0;
+        }
+    }
+
+    /* Firefox-specific fixes */
+    @-moz-document url-prefix() {
+        .sort-dropdown {
+            background-color: #2E3440;
+            color: #E5E9F0;
+        }
+        
+        .sort-dropdown option {
+            background-color: #2E3440;
+            color: #E5E9F0;
+        }
     }
 
     .inventory-item {

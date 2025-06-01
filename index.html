@@ -225,6 +225,18 @@
         </div>
     </div>
 
+    <!-- Project Name Modal -->
+    <div class="modal" id="projectNameModal">
+        <div class="modal-content">
+            <h2>New Project</h2>
+            <input type="text" id="projectNameInput" placeholder="Enter project name" class="full-width">
+            <div class="modal-buttons">
+                <button class="btn btn-add flex-1" onclick="confirmProjectName()">Create Project</button>
+                <button class="btn cancel-btn flex-1" onclick="hideProjectNameModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" class="hidden">
     <input type="file" id="importFile" accept=".json" onchange="importInventory(event)" class="hidden">
 

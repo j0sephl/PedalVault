@@ -1160,3 +1160,111 @@
         background: #434C5E;
         color: #ECEFF4;
     }
+
+    /* Project Name Modal */
+    #projectNameModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(46, 52, 64, 0.8);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        position: relative;
+        background-color: #2E3440;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #4C566A;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #4C566A;
+    }
+
+    .modal-header h2 {
+        color: #ECEFF4;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .modal-body {
+        margin-bottom: 20px;
+    }
+
+    .modal-body input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #4C566A;
+        border-radius: 4px;
+        background-color: #3B4252;
+        color: #ECEFF4;
+        font-size: 1rem;
+    }
+
+    .modal-body input:focus {
+        outline: none;
+        border-color: #81A1C1;
+        box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-footer button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .modal-footer button:first-child {
+        background-color: #4C566A;
+        color: #ECEFF4;
+    }
+
+    .modal-footer button:last-child {
+        background-color: #81A1C1;
+        color: #2E3440;
+    }
+
+    .modal-footer button:hover {
+        filter: brightness(1.1);
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            margin: 20% auto;
+            width: 95%;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.2rem;
+        }
+        
+        .modal-body input {
+            font-size: 0.9rem;
+        }
+        
+        .modal-footer button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+    }

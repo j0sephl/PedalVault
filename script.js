@@ -5,6 +5,7 @@
     let currentSortOrder = 'name-asc';
     let projects = {};
     let currentProjectFilter = 'all';
+    let pendingBomData = null;
 
     function saveProjects() {
         localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
@@ -617,6 +618,130 @@
         showNotification(`Removed ${inventory[partId].name} from ${projects[projectId].name}`);
     }
 
+    function showProjectNameModal() {
+        document.getElementById('projectNameModal').style.display = 'block';
+        document.getElementById('projectNameInput').value = '';
+        document.getElementById('projectNameInput').focus();
+    }
+
+    function hideProjectNameModal() {
+        document.getElementById('projectNameModal').style.display = 'none';
+        pendingBomData = null;
+    }
+
+    function confirmProjectName() {
+        const projectName = document.getElementById('projectNameInput').value.trim();
+        if (!projectName) {
+            showNotification('Please enter a project name', 'error');
+            return;
+        }
+        
+        const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        if (projects[projectId]) {
+            showNotification('Project name already exists', 'error');
+            return;
+        }
+        
+        if (pendingBomData) {
+            createProjectFromBom(projectName, projectId, pendingBomData);
+        }
+        
+        hideProjectNameModal();
+    }
+
+    function createProjectFromBom(projectName, projectId, bom) {
+        projects[projectId] = {
+            name: projectName,
+            bom: bom
+        };
+        
+        // Tag parts in the main inventory with this project
+        for (const id in bom) {
+            // Find the part in inventory by name if ID doesn't match
+            let partId = id;
+            if (!inventory[id]) {
+                // Try to find by name
+                for (const existingId in inventory) {
+                    if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
+                        partId = existingId;
+                        break;
+                    }
+                }
+            }
+            
+            if (inventory[partId]) {
+                if (!inventory[partId].projects) {
+                    inventory[partId].projects = {};
+                }
+                inventory[partId].projects[projectId] = bom[id].quantity;
+            } else {
+                // Create the part if it doesn't exist
+                inventory[id] = {
+                    name: bom[id].name,
+                    quantity: 0,
+                    projects: {
+                        [projectId]: bom[id].quantity
+                    }
+                };
+            }
+        }
+        
+        saveProjects();
+        saveInventory();
+        updateProjectFilter();
+        displayInventory();
+
+        // Store BOM data for comparison
+        window.currentBom = bom;
+
+        const missing = [];
+        let totalParts = 0;
+        let missingParts = 0;
+        let lowStockParts = 0;
+
+        // Check each part in the BOM against the main inventory
+        for (const id in bom) {
+            totalParts++;
+            const required = bom[id].quantity;
+            // Find the part in inventory by name if ID doesn't match
+            let part = inventory[id];
+            if (!part) {
+                // Try to find by name
+                for (const existingId in inventory) {
+                    if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
+                        part = inventory[existingId];
+                        break;
+                    }
+                }
+            }
+            
+            if (!part || part.quantity === 0) {
+                missingParts++;
+                missing.push(`<li>❌ <strong>${bom[id].name}</strong>: Missing entirely (need ${required})</li>`);
+            } else if (part.quantity < required) {
+                lowStockParts++;
+                const have = part.quantity;
+                missing.push(`<li>⚠️ <strong>${bom[id].name}</strong>: Have ${have}, need ${required}</li>`);
+            }
+        }
+
+        const resultsContainer = document.getElementById("bomResults");
+        if (missing.length === 0) {
+            resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
+        } else {
+            resultsContainer.innerHTML = `
+                <div class="project-header">
+                    <div>Total Parts: ${totalParts}</div>
+                    <div>Missing: ${missingParts}</div>
+                    <div>Low Stock: ${lowStockParts}</div>
+                </div>
+                <ul class="project-info">${missing.join("")}</ul>
+            `;
+        }
+
+        document.getElementById("bomModal").style.display = "block";
+    }
+
     function compareBOM(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -669,106 +794,9 @@
                     }
                 }
 
-                // Create new project
-                const projectName = prompt('Enter a name for this BOM project:');
-                if (!projectName) return;
-                
-                const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                if (projects[projectId]) {
-                    showNotification('Project name already exists', 'error');
-                    return;
-                }
-                
-                projects[projectId] = {
-                    name: projectName,
-                    bom: bom
-                };
-                
-                // Tag parts in the main inventory with this project
-                for (const id in bom) {
-                    // Find the part in inventory by name if ID doesn't match
-                    let partId = id;
-                    if (!inventory[id]) {
-                        // Try to find by name
-                        for (const existingId in inventory) {
-                            if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
-                                partId = existingId;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (inventory[partId]) {
-                        if (!inventory[partId].projects) {
-                            inventory[partId].projects = {};
-                        }
-                        inventory[partId].projects[projectId] = bom[id].quantity;
-                    } else {
-                        // Create the part if it doesn't exist
-                        inventory[id] = {
-                            name: bom[id].name,
-                            quantity: 0,
-                            projects: {
-                                [projectId]: bom[id].quantity
-                            }
-                        };
-                    }
-                }
-                
-                saveProjects();
-                saveInventory();
-                updateProjectFilter();
-                displayInventory();
-
-                // Store BOM data for comparison
-                window.currentBom = bom;
-
-                const missing = [];
-                let totalParts = 0;
-                let missingParts = 0;
-                let lowStockParts = 0;
-
-                // Check each part in the BOM against the main inventory
-                for (const id in bom) {
-                    totalParts++;
-                    const required = bom[id].quantity;
-                    // Find the part in inventory by name if ID doesn't match
-                    let part = inventory[id];
-                    if (!part) {
-                        // Try to find by name
-                        for (const existingId in inventory) {
-                            if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
-                                part = inventory[existingId];
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (!part || part.quantity === 0) {
-                        missingParts++;
-                        missing.push(`<li>❌ <strong>${bom[id].name}</strong>: Missing entirely (need ${required})</li>`);
-                    } else if (part.quantity < required) {
-                        lowStockParts++;
-                        const have = part.quantity;
-                        missing.push(`<li>⚠️ <strong>${bom[id].name}</strong>: Have ${have}, need ${required}</li>`);
-                    }
-                }
-
-                const resultsContainer = document.getElementById("bomResults");
-                if (missing.length === 0) {
-                    resultsContainer.innerHTML = "<p>✅ All parts in the BOM are sufficiently in stock.</p>";
-                } else {
-                    resultsContainer.innerHTML = `
-                        <div class="project-header">
-                            <div>Total Parts: ${totalParts}</div>
-                            <div>Missing: ${missingParts}</div>
-                            <div>Low Stock: ${lowStockParts}</div>
-                        </div>
-                        <ul class="project-info">${missing.join("")}</ul>
-                    `;
-                }
-
-                document.getElementById("bomModal").style.display = "block";
+                // Store the BOM data and show the project name modal
+                pendingBomData = bom;
+                showProjectNameModal();
 
             } catch (err) {
                 showNotification("Error processing BOM file: " + err.message, "error");

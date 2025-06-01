@@ -1,2 +1,2 @@
-# GPI
-GPI Guitar Part Invetory
+# Component Horde
+Pedal Part Invetory

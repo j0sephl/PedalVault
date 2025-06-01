@@ -34,6 +34,12 @@
         initializeProjects();
         displayInventory();
         checkUrlForPart();
+        
+        // Update sync buttons
+        const syncButtonsContainer = document.querySelector('.sync-buttons');
+        if (syncButtonsContainer) {
+            syncButtonsContainer.innerHTML = createSyncButtons();
+        }
     }
 
     function showExportModal() {
@@ -1035,6 +1041,42 @@
 
         hideExportBOMModal();
         showNotification(`Exported BOM for ${project.name}`);
+    }
+
+    // Add this function to create the sync buttons HTML
+    function createSyncButtons() {
+        return `
+            <button class="add-part-btn" onclick="showAddPartModal()">
+                <svg class="sync-icon" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add New Part
+            </button>
+            <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
+                <svg class="sync-icon" viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Compare BOM
+            </button>
+            <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
+                <svg class="sync-icon" viewBox="0 0 24 24">
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
+                </svg>
+                Export Project BOM
+            </button>
+            <button class="sync-btn import-btn full-width" onclick="document.getElementById('importFile').click()">
+                <svg class="sync-icon" viewBox="0 0 24 24">
+                    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                </svg>
+                Import Data
+            </button>
+            <button class="sync-btn export-btn full-width" onclick="showExportModal()">
+                <svg class="sync-icon" viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Export Data
+            </button>
+        `;
     }
 
     initializeInventory();

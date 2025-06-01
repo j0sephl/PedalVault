@@ -474,7 +474,18 @@
         padding-top: 10px;
     }
 
+    .sync-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+        vertical-align: middle;
+        fill: currentColor;
+    }
+
     .sync-btn {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
         flex: 1;
         min-width: 150px;
         padding: 12px;
@@ -486,15 +497,12 @@
         background: #4C566A;
         color: #E5E9F0;
         font-family: 'JetBrains Mono', monospace;
-        text-align: left;
-    }
-
-    .sync-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
     }
 
     .add-part-btn {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
         width: 100%;
         background: #4C566A;
         color: #E5E9F0;
@@ -505,12 +513,6 @@
         cursor: pointer;
         transition: all 0.3s ease;
         font-family: 'JetBrains Mono', monospace;
-        text-align: left;
-    }
-
-    .add-part-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
     }
 
     .export-btn {
@@ -687,8 +689,15 @@
             flex-direction: column;
         }
 
-        .sync-btn {
-            width: 100%;
+        .sync-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+        
+        .sync-btn, .add-part-btn {
+            padding: 10px;
+            font-size: 13px;
         }
 
         .inventory-controls {

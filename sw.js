@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpi-v1.2';
+const CACHE_NAME = 'gpi-v1.3';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -41,77 +41,40 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    if (url.origin === location.origin) {
-        url.searchParams.set('v', CACHE_NAME);
-    }
-
     event.respondWith(
         caches.match(event.request)
             .then(response => {
+                // Return cached response if found
                 if (response) {
-                    const cacheTime = response.headers.get('sw-cache-time');
-                    if (cacheTime) {
-                        const cacheAge = Date.now() - parseInt(cacheTime);
-                        if (cacheAge > 5 * 60 * 1000) {
-                            return fetchAndCache(event.request);
-                        }
-                    }
                     return response;
                 }
 
+                // Clone the request because it can only be used once
                 const fetchRequest = event.request.clone();
-                return fetch(fetchRequest).then(
-                    response => {
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
 
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                const headers = new Headers(responseToCache.headers);
-                                headers.append('sw-cache-time', Date.now().toString());
-                                const cachedResponse = new Response(responseToCache.body, {
-                                    status: responseToCache.status,
-                                    statusText: responseToCache.statusText,
-                                    headers: headers
-                                });
-                                cache.put(event.request, cachedResponse);
-                            });
+                // Make network request and cache the response
+                return fetch(fetchRequest).then(response => {
+                    // Check if we received a valid response
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
                         return response;
                     }
-                ).catch(() => {
+
+                    // Clone the response because it can only be used once
+                    const responseToCache = response.clone();
+
+                    // Open cache and store the response
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+
+                    return response;
+                }).catch(() => {
+                    // If network request fails and it's a navigation request, show offline page
                     if (event.request.mode === 'navigate') {
                         return caches.match('/offline.html');
                     }
                 });
             })
     );
-});
-
-async function fetchAndCache(request) {
-    try {
-        const response = await fetch(request);
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-        }
-
-        const responseToCache = response.clone();
-        const cache = await caches.open(CACHE_NAME);
-        
-        const headers = new Headers(responseToCache.headers);
-        headers.append('sw-cache-time', Date.now().toString());
-        const cachedResponse = new Response(responseToCache.body, {
-            status: responseToCache.status,
-            statusText: responseToCache.statusText,
-            headers: headers
-        });
-        
-        await cache.put(request, cachedResponse);
-        return response;
-    } catch (error) {
-        console.error('Fetch failed:', error);
-        return caches.match(request);
-    }
-} 
+}); 

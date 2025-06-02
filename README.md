@@ -33,7 +33,7 @@ Scanning the tag with your phone will automatically subtract 1 from that part’
 
 Works on both iPhone and Android using the phone’s built-in NFC scanning and browser.
 # How to Use
-### 3.Add Parts
+### 1.Add Parts
 - Click Add New Part.
 - Enter the part name, quantity, and (optionally) a purchase URL or NFC tag ID.
 ### 2. Manage Inventory

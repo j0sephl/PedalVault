@@ -1,7 +1,8 @@
 # Component Horde: Guitar Pedal Parts Inventory
 A modern, offline-friendly, mobile-first inventory and project management app for guitar pedal builders.
 Easily track your parts, manage projects, compare BOMs, and sync data across devices.
-Features
+
+# Features
 ## Inventory Management:
 - Add, edit, delete, and reorder parts with quantities, purchase links, and optional NFC Tag IDs.
 ## Project Management:

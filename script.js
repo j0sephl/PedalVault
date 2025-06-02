@@ -72,7 +72,8 @@
             mimeType = 'text/csv';
         } else {
             filename = `guitar-pedal-inventory-${timestamp}.json`;
-            dataStr = JSON.stringify(inventory, null, 2);
+            // Export both inventory and projects
+            dataStr = JSON.stringify({ inventory, projects }, null, 2);
             mimeType = 'application/json';
         }
         
@@ -97,15 +98,21 @@
             try {
                 const importedData = JSON.parse(e.target.result);
                 
-                if (typeof importedData === 'object' && importedData !== null) {
+                if (importedData.inventory && importedData.projects) {
+                    inventory = importedData.inventory;
+                    projects = importedData.projects;
+                    saveProjects();
+                    updateProjectFilter();
+                } else if (typeof importedData === 'object' && importedData !== null) {
+                    // Fallback for old format
                     inventory = importedData;
-                    saveInventory();
-                    displayInventory();
-                    currentPartId = null;
-                    showNotification('Inventory imported successfully!');
                 } else {
                     throw new Error('Invalid file format');
                 }
+                saveInventory();
+                displayInventory();
+                currentPartId = null;
+                showNotification('Inventory imported successfully!');
             } catch (error) {
                 showNotification('Error importing file: ' + error.message, 'error');
             }

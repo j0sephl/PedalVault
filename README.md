@@ -82,5 +82,5 @@ Questions, feedback, or want to say thanks?
 
 Open an issue or reach out via Buy Me a Coffee.
 ## License
-MIT License (or your preferred license)
+
 ### Enjoy building pedals and keeping your parts organized!

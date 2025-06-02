@@ -695,12 +695,15 @@
                 missingParts++;
                 missing.push(`
                     <li>
-                        <span class="status-icon status-error">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                            </svg>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-error">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
                         </span>
-                        <strong>${bom[id].name}</strong>: Missing entirely (need ${required})
+                        <span class="bom-part-status">: Missing entirely (need ${required})</span>
                     </li>
                 `);
             } else if (part.quantity < required) {
@@ -708,12 +711,15 @@
                 const have = part.quantity;
                 missing.push(`
                     <li>
-                        <span class="status-icon status-warning">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                            </svg>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-warning">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
                         </span>
-                        <strong>${bom[id].name}</strong>: Have ${have}, need ${required}
+                        <span class="bom-part-status">: Have ${have}, need ${required}</span>
                     </li>
                 `);
             }

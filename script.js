@@ -6,6 +6,7 @@
     let projects = {};
     let currentProjectFilter = 'all';
     let pendingBomData = null;
+    let currentSearchQuery = '';
 
     function saveProjects() {
         localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
@@ -118,20 +119,36 @@
         event.target.value = '';
     }
 
+    function searchParts() {
+        currentSearchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+        displayInventory();
+    }
+
     function getSortedInventoryEntries() {
         const entries = Object.entries(inventory);
         
+        // First filter by search query if one exists
+        const filteredEntries = currentSearchQuery 
+            ? entries.filter(([_, part]) => part.name.toLowerCase().includes(currentSearchQuery))
+            : entries;
+        
+        // Then apply project filter
+        const projectFilteredEntries = currentProjectFilter !== 'all'
+            ? filteredEntries.filter(([_, part]) => part.projects && part.projects[currentProjectFilter])
+            : filteredEntries;
+        
+        // Finally apply sorting
         switch (currentSortOrder) {
             case 'name-asc':
-                return entries.sort((a, b) => a[1].name.localeCompare(b[1].name));
+                return projectFilteredEntries.sort((a, b) => a[1].name.localeCompare(b[1].name));
             case 'name-desc':
-                return entries.sort((a, b) => b[1].name.localeCompare(a[1].name));
+                return projectFilteredEntries.sort((a, b) => b[1].name.localeCompare(a[1].name));
             case 'quantity-asc':
-                return entries.sort((a, b) => a[1].quantity - b[1].quantity);
+                return projectFilteredEntries.sort((a, b) => a[1].quantity - b[1].quantity);
             case 'quantity-desc':
-                return entries.sort((a, b) => b[1].quantity - a[1].quantity);
+                return projectFilteredEntries.sort((a, b) => b[1].quantity - a[1].quantity);
             case 'stock-status':
-                return entries.sort((a, b) => {
+                return projectFilteredEntries.sort((a, b) => {
                     const aLowStock = a[1].quantity < 5;
                     const bLowStock = b[1].quantity < 5;
                     if (aLowStock && !bLowStock) return -1;
@@ -139,7 +156,7 @@
                     return a[1].name.localeCompare(b[1].name);
                 });
             default:
-                return entries;
+                return projectFilteredEntries;
         }
     }
 

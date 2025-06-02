@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Component Horde</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3B4252">
@@ -49,7 +54,7 @@
         <div class="content">
             <div class="main-content">
                 <div class="left-panel">
-                    <div class="sync-buttons">
+                    <div class="sync-buttons"> 
                         <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
                         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
                         <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">📋 Export Project BOM</button>
@@ -63,6 +68,7 @@
                         <button onclick="showProjectManagementModal()" class="manage-projects-btn">Manage Projects</button>
                         <button onclick="showAllProjectRequirements()" class="manage-projects-btn">Compare All Projects</button>
                         <div class="inventory-controls">
+                            <input type="text" id="searchInput" class="search-input" placeholder="Search parts..." oninput="searchParts()">
                             <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
                                 <option value="all">All Projects</option>
                             </select>

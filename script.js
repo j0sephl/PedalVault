@@ -101,16 +101,13 @@
                     inventory = importedData;
                     saveInventory();
                     displayInventory();
-                    
                     currentPartId = null;
-                    hidePartInfoPanel();
-                    
                     showNotification('Inventory imported successfully!');
                 } else {
                     throw new Error('Invalid file format');
                 }
             } catch (error) {
-                showNotification('Error importing file: Invalid format', 'error');
+                showNotification('Error importing file: ' + error.message, 'error');
             }
         };
         reader.readAsText(file);

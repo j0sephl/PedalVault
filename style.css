@@ -1137,6 +1137,30 @@
         }
     }
 
+    .footer {
+        background: #2E3440;
+        padding: 15px;
+        text-align: right;
+        border-top: 2px solid #4C566A;
+        margin-top: auto;
+    }
+
+    .footer-content {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .version {
+        color: #4C566A;
+        font-size: 13px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
     .coffee-link {
         display: inline-flex;
         align-items: center;
@@ -1144,22 +1168,45 @@
         color: #EBCB8B;
         text-decoration: none;
         font-size: 14px;
-        padding: 6px 12px;
+        padding: 8px 16px;
         border-radius: 4px;
         background: rgba(235, 203, 139, 0.1);
         transition: all 0.2s ease;
-        margin-top: 8px;
     }
 
     .coffee-link:hover {
         background: rgba(235, 203, 139, 0.2);
         color: #EBCB8B;
+        transform: translateY(-1px);
     }
 
     .coffee-icon {
         width: 18px;
         height: 18px;
         fill: currentColor;
+    }
+
+    @media (max-width: 768px) {
+        .footer {
+            padding: 12px;
+            text-align: center;
+        }
+
+        .footer-content {
+            flex-direction: column;
+            gap: 8px;
+            justify-content: center;
+            padding: 0 10px;
+        }
+
+        .coffee-link {
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+
+        .version {
+            font-size: 12px;
+        }
     }
 
     /* Nord Scrollbar Styling - Square Corners */

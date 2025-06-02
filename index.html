@@ -43,12 +43,6 @@
             <div class="header-content">
                 <h1>Component Horde</h1>
                 <p>Pedal Part Inventory</p>
-                <a href="https://buymeacoffee.com/j0sephl" target="_blank" class="coffee-link" title="Buy me a coffee">
-                    <svg viewBox="0 0 24 24" class="coffee-icon">
-                        <path d="M2 21h18v-2H2v2zm6-4h12v-2H8v2zm-6-4h16v-2H2v2zm6-4h12V7H8v2zM2 3v2h18V3H2z"/>
-                    </svg>
-                    Buy me a coffee
-                </a>
             </div>
         </div>
 
@@ -66,27 +60,37 @@
 
                 <div class="right-panel">
                     <div class="inventory-header">
-                           
-                            <button onclick="showProjectManagementModal()" class="manage-projects-btn">Manage Projects</button>
-                            <button onclick="showAllProjectRequirements()" class="manage-projects-btn">Compare All Projects</button>
-                            <div class="inventory-controls">
-                                <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
-                                    <option value="all">All Projects</option>
-                                </select>
-                                <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
-                                    <option value="name-asc">Name A-Z</option>
-                                    <option value="name-desc">Name Z-A</option>
-                                    <option value="quantity-asc">Quantity Low-High</option>
-                                    <option value="quantity-desc">Quantity High-Low</option>
-                                    <option value="stock-status">Low Stock First</option>
-                                </select>
+                        <button onclick="showProjectManagementModal()" class="manage-projects-btn">Manage Projects</button>
+                        <button onclick="showAllProjectRequirements()" class="manage-projects-btn">Compare All Projects</button>
+                        <div class="inventory-controls">
+                            <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
+                                <option value="all">All Projects</option>
+                            </select>
+                            <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
+                                <option value="name-asc">Name A-Z</option>
+                                <option value="name-desc">Name Z-A</option>
+                                <option value="quantity-asc">Quantity Low-High</option>
+                                <option value="quantity-desc">Quantity High-Low</option>
+                                <option value="stock-status">Low Stock First</option>
+                            </select>
                         </div>
-                      </div>
+                    </div>
                     <div class="inventory-list">
-                        
                         <div id="inventoryItems"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-content">
+                <a href="https://buymeacoffee.com/j0sephl" target="_blank" class="coffee-link" title="Buy me a coffee">
+                    <svg viewBox="0 0 24 24" class="coffee-icon">
+                        <path d="M2 21h18v-2H2v2zm6-4h12v-2H8v2zm-6-4h16v-2H2v2zm6-4h12V7H8v2zM2 3v2h18V3H2z"/>
+                    </svg>
+                    Buy me a coffee
+                </a>
+                <span class="version">v1.4.0</span>
             </div>
         </div>
     </div>

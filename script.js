@@ -438,16 +438,6 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const quantityInput = document.getElementById('quantityInput');
-        quantityInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent default form submission
-                adjustStock('add');
-            }
-        });
-    });
-
     function initializeProjects() {
         const savedProjects = localStorage.getItem('guitarPedalProjects');
         if (savedProjects) {

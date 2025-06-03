@@ -8,7 +8,7 @@ Easily track your parts, manage projects, compare BOMs, and sync data across dev
 ![addPart](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnc3cW9hNXI4dWs2OG9wMHFvNzJ2eWFkdzFyYjBrbmk1NzlzZndnNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8Yl6UMh0uu993TPEnx/giphy.gif)
 ## BOM Comparison:
 - Import a BOM (CSV/JSON), compare it to your inventory, and see what’s missing or low.
-- ![compare](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzI1cjN4Ynl3N2JvYzR0cDBkamtsYjAyODF6M3cxcjNyZm1uc2JzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/OqFfsPZsESJdZwPhAL/giphy.gif)
+![compare](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzI1cjN4Ynl3N2JvYzR0cDBkamtsYjAyODF6M3cxcjNyZm1uc2JzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/OqFfsPZsESJdZwPhAL/giphy.gif)
 ## Export/Import:
 - Export your full inventory and projects as a CSV or JSON file for backup or transfer. Import on any device.
 ## PWA (Progressive Web App):

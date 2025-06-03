@@ -557,8 +557,7 @@
             </div>
             <ul class="project-info">${results.join("")}</ul>
         `;
-        
-        document.getElementById('projectDetailsModal').style.display = 'block';
+        document.getElementById("bomModal").style.display = "block";
     }
 
     function hideProjectDetailsModal() {
@@ -729,7 +728,6 @@
             </div>
             <ul class="project-info">${results.join("")}</ul>
         `;
-
         document.getElementById("bomModal").style.display = "block";
     }
 

@@ -40,7 +40,7 @@ Works on both iPhone and Android using the phone’s built-in NFC scanning and b
 - Use the + and – buttons to adjust stock.
 - Click the pencil icon to edit, or the trash icon to delete a part.
 ### 3. Projects & BOMs
-- Click Manage Projects to create or delete projects.
+- Click Manage Projects to delete projects.
 - Import a BOM (CSV/JSON) to create a new project and compare it to your inventory.
 - View project details to see which parts are missing or low.
 

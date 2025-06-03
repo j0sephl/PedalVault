@@ -1789,3 +1789,16 @@
             font-size: 14px;
         }
     }
+
+    .wordmark-svg {
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+        display: block;
+        margin-bottom: 4px;
+    }
+    @media (max-width: 768px) {
+        .wordmark-svg {
+            max-width: 250px;
+        }
+    }

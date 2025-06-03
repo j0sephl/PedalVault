@@ -619,6 +619,9 @@
     }
 
     function createProjectFromBom(projectName, projectId, bom) {
+        let totalParts = 0;
+        let missingParts = 0;
+        let lowStockParts = 0;
         projects[projectId] = {
             name: projectName,
             bom: bom

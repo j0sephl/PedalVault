@@ -9,7 +9,7 @@ Easily track your parts, manage projects, compare BOMs, and sync data across dev
 ## BOM Comparison:
 - Import a BOM (CSV/JSON), compare it to your inventory, and see what’s missing or low.
 ## Export/Import:
-- Export your full inventory and projects as a JSON file for backup or transfer. Import on any device.
+- Export your full inventory and projects as a CSV or JSON file for backup or transfer. Import on any device.
 ## PWA (Progressive Web App):
 - Install on your phone or desktop for offline use and a native app feel.
 ## Search & Sort:

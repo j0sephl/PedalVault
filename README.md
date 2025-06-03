@@ -6,8 +6,6 @@ Easily track your parts, manage projects, compare BOMs, and sync data across dev
 ## Inventory Management:
 - Add, edit, delete, and reorder parts with quantities, purchase links, and optional NFC Tag IDs.
 ![addPart](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnc3cW9hNXI4dWs2OG9wMHFvNzJ2eWFkdzFyYjBrbmk1NzlzZndnNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8Yl6UMh0uu993TPEnx/giphy.gif)
-## Project Management:
-- Create projects, assign parts/BOMs, and track which parts are needed for each build.
 ## BOM Comparison:
 - Import a BOM (CSV/JSON), compare it to your inventory, and see what’s missing or low.
 ## Export/Import:

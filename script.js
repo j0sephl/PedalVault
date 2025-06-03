@@ -596,6 +596,8 @@
         const modal = document.getElementById('projectNameModal');
         modal.classList.remove('show');
         pendingBomData = null;
+        // Also clear the input for safety
+        document.getElementById('projectNameInput').value = '';
     }
 
     function confirmProjectName() {
@@ -604,17 +606,15 @@
             showNotification('Please enter a project name', 'error');
             return;
         }
-        
         const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
         if (projects[projectId]) {
             showNotification('Project name already exists', 'error');
             return;
         }
-        
         if (pendingBomData) {
             createProjectFromBom(projectName, projectId, pendingBomData);
+            pendingBomData = null;
         }
-        
         hideProjectNameModal();
     }
 
@@ -729,6 +729,7 @@
             <ul class="project-info">${results.join("")}</ul>
         `;
         document.getElementById("bomModal").style.display = "block";
+        showBOMModal();
     }
 
     function compareBOM(event) {
@@ -823,9 +824,13 @@
         hideBOMModal();
     }
 
+    function showBOMModal() {
+        document.getElementById('bomModal').style.display = 'block';
+    }
+
     function hideBOMModal() {
-        document.getElementById("bomModal").style.display = "none";
-        window.currentBom = null; // Clear the stored BOM data
+        document.getElementById('bomModal').style.display = 'none';
+        window.currentBom = null;
     }
 
     // Add these new functions for project management

@@ -492,70 +492,70 @@
         const partsContainer = document.getElementById('projectParts');
         partsContainer.innerHTML = '';
         
+        const results = [];
         for (const id in bom) {
             totalParts++;
             const required = bom[id].quantity;
-            const part = inventory[id];
-            let statusIcon;
-            
-            if (!part || part.quantity === 0) {
+            let part = inventory[id];
+            if (!part) {
+                // Missing entirely
                 missingParts++;
-                statusIcon = `
-                    <span class="status-icon status-error">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                        </svg>
-                    </span>
-                `;
+                results.push(`
+                    <li>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-error">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
+                        </span>
+                        <span class="bom-part-status">: Missing entirely (need ${required})</span>
+                    </li>
+                `);
             } else if (part.quantity < required) {
+                // Low stock
                 lowStockParts++;
-                statusIcon = `
-                    <span class="status-icon status-warning">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                        </svg>
-                    </span>
-                `;
+                const have = part.quantity;
+                results.push(`
+                    <li>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-warning">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
+                        </span>
+                        <span class="bom-part-status">: Have ${have}, need ${required}</span>
+                    </li>
+                `);
             } else {
-                statusIcon = `
-                    <span class="status-icon status-success">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                    </span>
-                `;
+                // Sufficient stock
+                results.push(`
+                    <li>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-success">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
+                        </span>
+                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${required})</span>
+                    </li>
+                `);
             }
-            
-            const partElement = document.createElement('div');
-            partElement.className = 'project-list-item';
-            
-            partElement.innerHTML = `
-                <div>
-                    <strong>${bom[id].name}</strong>
-                    <div class="project-info">
-                        Need: ${required} | Have: ${part ? part.quantity : 0}
-                    </div>
-                </div>
-                <div class="project-actions">
-                    ${statusIcon}
-                    <button onclick="removeProjectTag('${id}', '${projectId}')" class="project-remove-btn">Remove</button>
-                </div>
-            `;
-            
-            partsContainer.appendChild(partElement);
         }
-        
-        const statusContainer = document.getElementById('projectStatus');
-        statusContainer.innerHTML = `
+
+        const resultsContainer = document.getElementById("bomResults");
+        resultsContainer.innerHTML = `
             <div class="project-header">
                 <div>Total Parts: ${totalParts}</div>
                 <div>Missing: ${missingParts}</div>
                 <div>Low Stock: ${lowStockParts}</div>
             </div>
-            <div class="project-status-bar">
-                <div class="project-status-progress" style="width: ${((totalParts - missingParts - lowStockParts) / totalParts * 100)}%"></div>
-                <div class="project-status-warning" style="width: ${(lowStockParts / totalParts * 100)}%"></div>
-            </div>
+            <ul class="project-info">${results.join("")}</ul>
         `;
         
         document.getElementById('projectDetailsModal').style.display = 'block';
@@ -664,30 +664,15 @@
         // Store BOM data for comparison
         window.currentBom = bom;
 
-        const missing = [];
-        let totalParts = 0;
-        let missingParts = 0;
-        let lowStockParts = 0;
-
-        // Check each part in the BOM against the main inventory
+        const results = [];
         for (const id in bom) {
             totalParts++;
             const required = bom[id].quantity;
-            // Find the part in inventory by name if ID doesn't match
             let part = inventory[id];
             if (!part) {
-                // Try to find by name
-                for (const existingId in inventory) {
-                    if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
-                        part = inventory[existingId];
-                        break;
-                    }
-                }
-            }
-            
-            if (!part || part.quantity === 0) {
+                // Missing entirely
                 missingParts++;
-                missing.push(`
+                results.push(`
                     <li>
                         <span class="bom-part-label">
                             <span class="status-icon status-error">
@@ -701,9 +686,10 @@
                     </li>
                 `);
             } else if (part.quantity < required) {
+                // Low stock
                 lowStockParts++;
                 const have = part.quantity;
-                missing.push(`
+                results.push(`
                     <li>
                         <span class="bom-part-label">
                             <span class="status-icon status-warning">
@@ -716,33 +702,33 @@
                         <span class="bom-part-status">: Have ${have}, need ${required}</span>
                     </li>
                 `);
+            } else {
+                // Sufficient stock
+                results.push(`
+                    <li>
+                        <span class="bom-part-label">
+                            <span class="status-icon status-success">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                            </span>
+                            <strong>${bom[id].name}</strong>
+                        </span>
+                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${required})</span>
+                    </li>
+                `);
             }
         }
 
         const resultsContainer = document.getElementById("bomResults");
-        if (missing.length === 0) {
-            resultsContainer.innerHTML = `
-                <div class="project-info">
-                    <li>
-                        <span class="status-icon status-success">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
-                        </span>
-                        <strong>All parts in the BOM are sufficiently in stock.</strong>
-                    </li>
-                </div>
-            `;
-        } else {
-            resultsContainer.innerHTML = `
-                <div class="project-header">
-                    <div>Total Parts: ${totalParts}</div>
-                    <div>Missing: ${missingParts}</div>
-                    <div>Low Stock: ${lowStockParts}</div>
-                </div>
-                <ul class="project-info">${missing.join("")}</ul>
-            `;
-        }
+        resultsContainer.innerHTML = `
+            <div class="project-header">
+                <div>Total Parts: ${totalParts}</div>
+                <div>Missing: ${missingParts}</div>
+                <div>Low Stock: ${lowStockParts}</div>
+            </div>
+            <ul class="project-info">${results.join("")}</ul>
+        `;
 
         document.getElementById("bomModal").style.display = "block";
     }

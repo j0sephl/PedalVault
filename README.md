@@ -1,4 +1,4 @@
-# Component Horde: Guitar Pedal Parts Inventory
+# PedalVault: Guitar Pedal Parts Inventory
 A modern, offline-friendly, mobile-first inventory and project management app for guitar pedal builders.
 Easily track your parts, manage projects, compare BOMs, and sync data across devices.
 

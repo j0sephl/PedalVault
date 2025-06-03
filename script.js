@@ -497,7 +497,7 @@
             totalParts++;
             const required = bom[id].quantity;
             let part = inventory[id];
-            if (!part) {
+            if (!part || part.quantity === 0) {
                 // Missing entirely
                 missingParts++;
                 results.push(`
@@ -671,7 +671,7 @@
             totalParts++;
             const required = bom[id].quantity;
             let part = inventory[id];
-            if (!part) {
+            if (!part || part.quantity === 0) {
                 // Missing entirely
                 missingParts++;
                 results.push(`

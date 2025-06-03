@@ -52,8 +52,6 @@
     .header-content {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-    }
 
     .logo canvas {
         width: 100px;
@@ -74,7 +72,7 @@
     .header p {
         opacity: 0.9;
         font-size: 16px;
-        color: #E5E9F0;
+        color: #EBCB8B;
         margin-left: 5px;
     }
 

@@ -1870,6 +1870,7 @@
       margin-top: 8px;
       max-height: 220px;
       overflow-y: auto;
+      background: #2E3440;
     }
     .nord-project-inv-row {
       display: flex;

@@ -60,6 +60,14 @@
             filename = `guitar-pedal-inventory-${timestamp}.csv`;
             // Create CSV header
             const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL', 'Projects'];
+            // Helper to quote and escape fields
+            function csvEscape(val) {
+                if (val == null) return '';
+                val = String(val);
+                if (val.includes('"')) val = val.replace(/"/g, '""');
+                if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
+                return val;
+            }
             // Create CSV rows
             const rows = Object.entries(inventory).map(([id, part]) => [
                 id,
@@ -67,9 +75,9 @@
                 part.quantity,
                 part.purchaseUrl || '',
                 part.projects ? Object.entries(part.projects).map(([pid, qty]) => `${pid}:${qty}`).join(';') : ''
-            ]);
+            ].map(csvEscape));
             // Combine header and rows
-            dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
+            dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\n');
             mimeType = 'text/csv';
         } else {
             filename = `guitar-pedal-inventory-${timestamp}.json`;
@@ -122,7 +130,7 @@
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue; // Skip empty lines
                         
-                        const values = lines[i].split(',').map(v => v.trim());
+                        const values = parseCsvLine(lines[i]).map(v => v.trim());
                         const name = values[nameIndex];
                         if (!name) {
                             showNotification('Missing name for part on line ' + (i+1) + ', skipping.', 'error');
@@ -842,7 +850,7 @@
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue; // Skip empty lines
                         
-                        const values = lines[i].split(',').map(v => v.trim());
+                        const values = parseCsvLine(lines[i]).map(v => v.trim());
                         const name = values[nameIndex];
                         const quantity = parseInt(values[quantityIndex]) || 0;
                         
@@ -1235,6 +1243,34 @@
         if (newQuantity !== oldQuantity) {
             showNotification(`Updated ${part.name} quantity to ${newQuantity}`);
         }
+    }
+
+    // --- CSV Import: Parse quoted fields ---
+    function parseCsvLine(line) {
+        const result = [];
+        let cur = '', inQuotes = false;
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (inQuotes) {
+                if (char === '"') {
+                    if (line[j+1] === '"') { cur += '"'; j++; } // Escaped quote
+                    else inQuotes = false;
+                } else {
+                    cur += char;
+                }
+            } else {
+                if (char === ',') {
+                    result.push(cur);
+                    cur = '';
+                } else if (char === '"') {
+                    inQuotes = true;
+                } else {
+                    cur += char;
+                }
+            }
+        }
+        result.push(cur);
+        return result;
     }
 
     initializeInventory();

@@ -66,7 +66,7 @@
                 part.name,
                 part.quantity,
                 part.purchaseUrl || '',
-                part.projects ? Object.keys(part.projects).join(';') : ''
+                part.projects ? Object.entries(part.projects).map(([pid, qty]) => `${pid}:${qty}`).join(';') : ''
             ]);
             // Combine header and rows
             dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -131,8 +131,9 @@
                         const purchaseUrl = urlIndex !== -1 ? values[urlIndex] : '';
                         let projects = {};
                         if (projectsIndex !== -1 && values[projectsIndex]) {
-                            values[projectsIndex].split(';').forEach(pid => {
-                                if (pid.trim()) projects[pid.trim()] = true;
+                            values[projectsIndex].split(';').forEach(pair => {
+                                const [pid, qty] = pair.split(':').map(s => s.trim());
+                                if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
                             });
                         }
                         importedData[id] = {

@@ -8,6 +8,16 @@
     let pendingBomData = null;
     let currentSearchQuery = '';
 
+    function normalizeValue(str) {
+        if (!str) return '';
+        // Lowercase, remove spaces, replace , or . with nothing, then handle k/M/R
+        return str
+            .toLowerCase()
+            .replace(/[,\.]/g, '') // Remove commas and dots
+            .replace(/([0-9]+)[ ]*([kmru])([0-9]*)/g, (m, p1, p2, p3) => p1 + p2 + (p3 || ''))
+            .replace(/[^a-z0-9]/g, ''); // Remove all non-alphanum
+    }
+
     function saveProjects() {
         localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
     }
@@ -118,7 +128,7 @@
                     importedData = {};
                     parsed.data.forEach(row => {
                         // Normalize headers
-                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || (row['Name'] || row['name'] || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
                         const name = row['Name'] || row['name'] || '';
                         if (!name) return; // skip if no name
                         const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
@@ -445,7 +455,7 @@
         }
         
         if (!id) {
-            id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            id = normalizeValue(name);
         }
         
         if (inventory[id]) {
@@ -824,7 +834,7 @@
                     importedData = {};
                     parsed.data.forEach(row => {
                         // Normalize headers
-                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || (row['Name'] || row['name'] || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
                         const name = row['Name'] || row['name'] || '';
                         if (!name) return; // skip if no name
                         const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;

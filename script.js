@@ -351,28 +351,30 @@
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
 
-        // --- In showEditPartModal(partId), render a scrollable list of projects with name, -, number, + buttons ---
+        // --- In showEditPartModal(partId), render a project list styled like inventory items ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         projectsDropdownSection.innerHTML = '';
         if (Object.keys(projects).length === 0) {
             projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
         } else {
-            let html = '<div class="nord-project-scroll-list">';
+            let html = '<div class="nord-project-inv-list">';
             for (const projectId in projects) {
                 const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 0;
                 html += `
-                    <div class="nord-project-scroll-row" data-project-id="${projectId}">
-                        <span class="nord-project-list-name">${projects[projectId].name}</span>
-                        <button type="button" class="nord-project-qty-btn" data-action="decrement">-</button>
-                        <input type="number" min="0" class="edit-project-qty nord-project-qty" data-project-qty="${projectId}" value="${qty}" />
-                        <button type="button" class="nord-project-qty-btn" data-action="increment">+</button>
+                    <div class="nord-project-inv-row" data-project-id="${projectId}">
+                        <span class="nord-project-inv-name">${projects[projectId].name}</span>
+                        <div class="item-quantity" style="margin-left:auto;">
+                            <button type="button" class="quantity-btn" data-action="decrement">-</button>
+                            <input type="number" min="0" class="quantity-input-inline edit-project-qty" data-project-qty="${projectId}" value="${qty}" />
+                            <button type="button" class="quantity-btn" data-action="increment">+</button>
+                        </div>
                     </div>
                 `;
             }
             html += '</div>';
             projectsDropdownSection.innerHTML = html;
             // Add event listeners for + and - buttons
-            projectsDropdownSection.querySelectorAll('.nord-project-scroll-row').forEach(row => {
+            projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
                 const projectId = row.dataset.projectId;
                 const qtyInput = row.querySelector('.edit-project-qty');
                 row.querySelector('[data-action="decrement"]').addEventListener('click', () => {
@@ -445,7 +447,7 @@
         // --- In saveEditPart(), update to use the new UI ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         const newProjects = {};
-        projectsDropdownSection.querySelectorAll('.nord-project-scroll-row').forEach(row => {
+        projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
             const projectId = row.dataset.projectId;
             const qtyInput = row.querySelector('.edit-project-qty');
             const qty = Math.max(0, parseInt(qtyInput.value) || 0);

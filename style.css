@@ -1912,49 +1912,31 @@
       color: #ECEFF4;
     }
 
-    /* Nord styling for project list in Edit Part modal */
-    .nord-project-list {
+    /* Nord styling for inventory-style project list in Edit Part modal */
+    .nord-project-inv-list {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
       margin-top: 8px;
+      max-height: 220px;
+      overflow-y: auto;
     }
-    .nord-project-list-row {
+    .nord-project-inv-row {
       display: flex;
       align-items: center;
-      background: #3B4252;
-      border-radius: 4px;
-      padding: 6px 10px;
-      margin-bottom: 2px;
+      padding: 4px 0;
       font-family: 'JetBrains Mono', monospace;
+      border-bottom: 1px solid #4C566A;
     }
-    .nord-project-checkbox {
-      accent-color: #EBCB8B;
-      margin-right: 10px;
-      width: 18px;
-      height: 18px;
+    .nord-project-inv-row:last-child {
+      border-bottom: none;
     }
-    .nord-project-list-name {
+    .nord-project-inv-name {
       color: #EBCB8B;
       font-size: 14px;
       margin-right: 12px;
       min-width: 120px;
       flex: 1;
-    }
-    .nord-project-qty {
-      background: #2E3440;
-      color: #E5E9F0;
-      border: 1.5px solid #4C566A;
-      border-radius: 4px;
-      font-size: 13px;
       font-family: 'JetBrains Mono', monospace;
-      width: 50px;
-      margin-left: 0;
-      margin-right: 8px;
-      padding: 2px 6px;
     }
-    .nord-project-qty:focus {
-      outline: none;
-      border-color: #88C0D0;
-      box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-    }
+    /* Use .item-quantity, .quantity-btn, .quantity-input-inline from inventory for controls */

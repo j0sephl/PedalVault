@@ -792,6 +792,10 @@
             updateProjectFilter();
             displayInventory();
             showNotification(`Created project: ${projectName}`);
+            // If Edit Part modal is open, refresh it to show the new project
+            if (document.getElementById('editPartModal').style.display === 'block' && editingPartId) {
+                showEditPartModal(editingPartId);
+            }
         }
         hideProjectNameModal();
     }

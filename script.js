@@ -351,14 +351,15 @@
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
 
-        // Replace project checkboxes/inputs with dropdown and dynamic qty inputs
+        // --- In showEditPartModal(partId), use Choices.js for project selection ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         projectsDropdownSection.innerHTML = '';
         if (Object.keys(projects).length === 0) {
             projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
         } else {
-            // Multi-select dropdown
-            let dropdownHtml = '<label for="editPartProjectsDropdown">Projects:</label><select id="editPartProjectsDropdown" multiple style="width:100%;margin-bottom:8px;">';
+            // Choices.js multi-select
+            let dropdownHtml = '<label for="editPartProjectsDropdown">Projects:</label>';
+            dropdownHtml += '<select id="editPartProjectsDropdown" multiple style="width:100%;margin-bottom:8px;">';
             for (const projectId in projects) {
                 const selected = part.projects && part.projects[projectId] ? 'selected' : '';
                 dropdownHtml += `<option value="${projectId}" ${selected}>${projects[projectId].name}</option>`;
@@ -367,8 +368,19 @@
             dropdownHtml += '<div id="editPartProjectsQtyInputs"></div>';
             projectsDropdownSection.innerHTML = dropdownHtml;
 
-            // Render initial qty inputs
-            function renderQtyInputs() {
+            // Initialize Choices.js
+            if (window.editPartProjectsChoices) {
+                window.editPartProjectsChoices.destroy();
+            }
+            window.editPartProjectsChoices = new Choices('#editPartProjectsDropdown', {
+                removeItemButton: true,
+                shouldSort: false,
+                placeholder: true,
+                placeholderValue: 'Select projects...'
+            });
+
+            // Render qty inputs for selected projects
+            function renderQtyInputsChoices() {
                 const selectedProjects = Array.from(document.getElementById('editPartProjectsDropdown').selectedOptions).map(opt => opt.value);
                 const qtyInputsDiv = document.getElementById('editPartProjectsQtyInputs');
                 qtyInputsDiv.innerHTML = '';
@@ -382,8 +394,8 @@
                     `;
                 });
             }
-            renderQtyInputs();
-            document.getElementById('editPartProjectsDropdown').addEventListener('change', renderQtyInputs);
+            renderQtyInputsChoices();
+            document.getElementById('editPartProjectsDropdown').addEventListener('change', renderQtyInputsChoices);
         }
     }
 
@@ -442,7 +454,7 @@
             selectPart(editingPartId);
         }
         
-        // Update project tags and BOMs
+        // --- In saveEditPart(), update to use Choices.js dropdown and qty inputs ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         const newProjects = {};
         const selectedProjects = projectsDropdownSection.querySelector('#editPartProjectsDropdown')

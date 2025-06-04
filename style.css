@@ -1889,27 +1889,6 @@
       flex: 1;
       font-family: 'JetBrains Mono', monospace;
     }
-    .nord-project-inv-list .quantity-input-inline,
-    .nord-project-inv-list .edit-project-qty {
-      background: none !important;
-      border-radius: 0 !important;
-      padding: 4px 8px !important;
-      height: 32px !important;
-      font-size: 14px !important;
-      color: #E5E9F0 !important;
-      border: 1.5px solid #4C566A !important;
-      font-family: 'JetBrains Mono', monospace !important;
-      box-shadow: none !important;
-      width: 56px !important;
-      min-width: 0 !important;
-    }
-    .nord-project-inv-list .quantity-input-inline:focus,
-    .nord-project-inv-list .edit-project-qty:focus {
-      outline: none !important;
-      border-color: #88C0D0 !important;
-      box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2) !important;
-    }
-
     .modal-item-quantity {
       display: flex;
       align-items: center;
@@ -1936,24 +1915,4 @@
     .modal-item-quantity .quantity-btn:hover {
       background: #5E81AC;
       color: #ECEFF4;
-    }
-    .modal-item-quantity .quantity-input-inline,
-    .modal-item-quantity .edit-project-qty {
-      background: none !important;
-      border-radius: 0 !important;
-      padding: 4px 8px !important;
-      height: 32px !important;
-      font-size: 14px !important;
-      color: #E5E9F0 !important;
-      border: 1.5px solid #4C566A !important;
-      font-family: 'JetBrains Mono', monospace !important;
-      box-shadow: none !important;
-      width: 56px !important;
-      min-width: 0 !important;
-    }
-    .modal-item-quantity .quantity-input-inline:focus,
-    .modal-item-quantity .edit-project-qty:focus {
-      outline: none !important;
-      border-color: #88C0D0 !important;
-      box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2) !important;
     }

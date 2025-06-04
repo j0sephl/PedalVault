@@ -796,6 +796,10 @@
             if (document.getElementById('editPartModal').style.display === 'block' && editingPartId) {
                 showEditPartModal(editingPartId);
             }
+            // If Project Management modal is open, refresh it to show the new project
+            if (document.getElementById('projectManagementModal').style.display === 'block') {
+                showProjectManagementModal();
+            }
         }
         hideProjectNameModal();
     }

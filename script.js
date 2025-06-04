@@ -782,6 +782,16 @@
         if (pendingBomData) {
             createProjectFromBom(projectName, projectId, pendingBomData);
             pendingBomData = null;
+        } else {
+            // Create an empty project
+            projects[projectId] = {
+                name: projectName,
+                bom: {}
+            };
+            saveProjects();
+            updateProjectFilter();
+            displayInventory();
+            showNotification(`Created project: ${projectName}`);
         }
         hideProjectNameModal();
     }

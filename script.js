@@ -363,7 +363,7 @@
                 html += `
                     <div class="nord-project-inv-row" data-project-id="${projectId}">
                         <span class="nord-project-inv-name">${projects[projectId].name}</span>
-                        <div class="item-quantity" style="margin-left:auto;">
+                        <div class="modal-item-quantity" style="margin-left:auto;">
                             <button type="button" class="quantity-btn" data-action="decrement">-</button>
                             <input type="number" min="0" class="quantity-input-inline edit-project-qty" data-project-qty="${projectId}" value="${qty}" />
                             <button type="button" class="quantity-btn" data-action="increment">+</button>

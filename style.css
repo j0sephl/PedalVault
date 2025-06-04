@@ -1,1920 +1,1921 @@
 @font-face {
-  font-family: 'JetBrains Mono';
-  src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'),
-       url('fonts/JetBrainsMono-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'),
-       url('fonts/JetBrainsMono-Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+         url('fonts/JetBrainsMono-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'),
+         url('fonts/JetBrainsMono-Bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+  
+      body {
+          font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: #2E3440;
+          min-height: 100vh;
+          padding: 20px;
+      }
+  
+      .container {
+          max-width: 1200px;
+          width: 100%;
+          margin: 0 auto;
+          background: #3B4252;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+      }
+  
+      .header {
+          background: #3B4252;
+          color: #E5E9F0;
+          padding: 20px 20px 0px;
+          text-align: left;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+      }
+  
+      .header-content {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+      }
+  
+      .logo canvas {
+          width: 100px;
+          height: 100px;
+          display: block;
+          image-rendering: -webkit-optimize-contrast;
+      }
+  
+      .header h1 {
+          font-size: 39px;
+          font-family: 'Goldman', 'JetBrains Mono', monospace;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: #EBCB8B;
+      }
+  
+      .header p {
+          opacity: 0.9;
+          font-size: 16px;
+          color:#EBCB8B;
+          margin-left: 5px;
+      }
+  
+      .content {
+          padding: 15px 0px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+      }
+  
+      .main-content {
+          display: flex;
+          flex-wrap: wrap;
+      }
+  
+      .left-panel {
+          flex: 1;
+          min-width: 300px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          position: relative;
+      }
+  
+      .right-panel {
+          flex: 2;
+          min-width: 300px;
+      }
+  
+      .part-info {
+          display: none;
+      }
+  
+      .current-stock {
+          font-size: 36px;
+          font-weight: 700;
+          color: #A3BE8C;
+          margin: 15px 0;
+          transition: color 0.2s;
+      }
+  
+      .current-stock.low {
+          color: #BF616A;
+      }
+  
+      .stock-label {
+          color: #E5E9F0;
+          font-size: 16px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+      }
+  
+      .controls {
+          display: flex;
+          gap: 15px;
+          height: 0;
+          opacity: 0;
+          overflow: hidden;
+          transition: height 0.3s, opacity 0.3s;
+          z-index: 1;
+      }
+  
+      .controls:not(.hidden) {
+          height: auto;
+          opacity: 1;
+      }
+  
+      .quantity-input {
+          flex: 1;
+          padding: 15px;
+          border: 2px solid #4C566A;
+          border-radius: 0;
+          font-size: 18px;
+          text-align: center;
+          background: #2E3440;
+          color: #E5E9F0;
+      }
+  
+      .quantity-input:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+  
+      .action-buttons {
+          display: flex;
+          gap: 15px;
+          height: 0;
+          opacity: 0;
+          overflow: hidden;
+          transition: height 0.3s, opacity 0.3s;
+          z-index: 1;
+          margin-bottom: 56px
+      }
+  
+      .action-buttons:not(.hidden) {
+          height: auto;
+          opacity: 1;
+      }
+  
+      .btn {
+          flex: 1;
+          padding: 15px;
+          border: none;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: 'JetBrains Mono', monospace;
+          text-align: left;
+      }
+  
+      .btn-add {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+  
+      .btn-add:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      .btn-remove {
+          background: #BF616A;
+          color: #E5E9F0;
+      }
+  
+      .btn-remove:hover {
+          background: #D08770;
+          color: #ECEFF4;
+      }
+  
+      .inventory-list {
+          background: #2E3440;
+          padding: 0px 10px;
+          max-height: 600px;
+          overflow-y: auto;
+          position: relative;
+      }
+  
+      .inventory-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 15px;
+          flex-wrap: wrap;
+          gap: 10px;
+          width: 100%;
+          position: sticky;
+          top: 0;
+          background: #434C5E;
+          padding: 10px 14px;
+          z-index: 10;
+          border-bottom: 2px solid #4C566A;
+          box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+          margin: 0px -20px 0px 0px;
+      }
+  
+      .inventory-header h3 {
+          color: #E5E9F0;
+          margin: 0;
+          font-size: 20px;
+      }
+  
+      #inventoryItems {
+          padding-top: 10px;
+          background: #2E3440;
+      }
+  
+      .inventory-controls {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+      }
+  
+      .sort-dropdown {
+          padding: 8px 12px;
+          border: 1px solid #4C566A;
+          font-size: 14px;
+          background: #2E3440;
+          color: #E5E9F0;
+          cursor: pointer;
+          min-width: 150px;
+          font-family: 'JetBrains Mono', monospace;
+          text-align: left;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E5E9F0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 8px center;
+          background-size: 16px;
+          padding-right: 32px;
+      }
+  
+      .sort-dropdown:focus {
+          outline: none;
+          border-color: #88C0D0;
+          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+      }
+  
+      /* Safari-specific fixes */
+      @supports (-webkit-touch-callout: none) {
+          .sort-dropdown {
+              background-color: #2E3440;
+              border-radius: 0;
+          }
+          
+          .sort-dropdown option {
+              background-color: #2E3440;
+              color: #E5E9F0;
+          }
+      }
+  
+      /* Firefox-specific fixes */
+      @-moz-document url-prefix() {
+          .sort-dropdown {
+              background-color: #2E3440;
+              color: #E5E9F0;
+          }
+          
+          .sort-dropdown option {
+              background-color: #2E3440;
+              color: #E5E9F0;
+          }
+      }
+  
+      .inventory-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 8px;
+          border-bottom: 1px solid #4C566A;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+          font-size: 8px;
+      }
+  
+      .inventory-item:hover {
+          background-color: #434C5E;
+      }
+  
+      .inventory-item:last-child {
+          border-bottom: none;
+      }
+  
+      .item-info {
+          flex: 1;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-right: 15px;
+          flex-wrap: wrap;
+          gap: 4px;
+      }
+  
+      .item-name {
+          font-weight: 300;
+          color: #F8F8F2;
+          font-size: 14px;
+          font-family: 'JetBrains Mono Light', 'JetBrains Mono', monospace;
+          margin-right: 8px;
+      }
+  
+      .item-quantity {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #5E81AC;
+          color: #E5E9F0;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+      }
+  
+      .item-quantity.low {
+          background: #BF616A;
+      }
+  
+      .quantity-controls {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+      }
+  
+      .quantity-btn {
+          background: none;
+          border: none;
+          color: #E5E9F0;
+          cursor: pointer;
+          padding: 2px 6px;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+      }
+  
+      .quantity-btn:hover {
+          color: #ECEFF4;
+          background: rgba(236, 239, 244, 0.1);
+          border-radius: 4px;
+      }
+  
+      .quantity-btn:active {
+          transform: scale(0.95);
+      }
+  
+      .item-actions {
+          display: flex;
+          gap: 8px;
+      }
+  
+      .action-icon {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+      }
+  
+      .action-icon svg {
+          width: 16px;
+          height: 16px;
+          fill: currentColor;
+      }
+  
+      .edit-icon {
+          color: #88C0D0;
+      }
+  
+      .edit-icon:hover {
+          background: rgba(136, 192, 208, 0.1);
+      }
+  
+      .delete-icon {
+          color: #BF616A;
+      }
+  
+      .delete-icon:hover {
+          background: rgba(191, 97, 106, 0.1);
+      }
+  
+      .shop-icon {
+          color: #A3BE8C;
+      }
+  
+      .shop-icon:hover {
+          background: rgba(163, 190, 140, 0.1);
+      }
+  
+      /* Status Icons */
+      .status-icon {
+          width: 16px;
+          height: 16px;
+          display: inline-block;
+          vertical-align: middle;
+          margin-right: 4px;
+      }
+  
+      .status-icon svg {
+          width: 100%;
+          height: 100%;
+          fill: currentColor;
+      }
+  
+      .status-success {
+          color: #A3BE8C;
+      }
+  
+      .status-warning {
+          color: #EBCB8B;
+      }
+  
+      .status-error {
+          color: #BF616A;
+      }
+  
+      .reorder-btn {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          background: #A3BE8C;
+          color: #E5E9F0;
+          border: none;
+          padding: 8px 15px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-block;
+          transition: all 0.3s ease;
+      }
+  
+      .reorder-btn:hover {
+          background: #8FBCBB;
+      }
+  
+      .low-stock-warning {
+          background: #BF616A;
+          color: #E5E9F0;
+          padding: 10px 15px;
+          margin-bottom: 20px;
+          margin-top: 20px;
+          font-size: 14px;
+          font-weight: 600;
+          animation: pulse 2s infinite;
+      }
+  
+      @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.8; }
+          100% { opacity: 1; }
+      }
+  
+      .sync-buttons {
+          display: flow;
+          position: relative;
+          z-index: 2;
+      }
+  
+      .sync-icon {
+          width: 18px;
+          height: 18px;
+          margin-right: 8px;
+          vertical-align: middle;
+          fill: currentColor;
+      }
+  
+      .sync-btn {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          flex: 1;
+          min-width: 150px;
+          padding: 12px;
+          border: none;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          background: #4C566A;
+          color: #E5E9F0;
+          font-family: 'JetBrains Mono', monospace;
+      }
+  
+      .sync-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      .add-part-btn {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+          background: #4C566A;
+          color: #E5E9F0;
+          border: none;
+          padding: 15px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: 'JetBrains Mono', monospace;
+      }
+  
+      .add-part-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      .export-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+  
+      .export-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      .import-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+  
+      .import-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      #importFile {
+          display: none;
+      }
+  
+      .modal {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(46, 52, 64, 0.8);
+          z-index: 1000;
+          padding: 20px;
+          overflow-y: auto;
+      }
+  
+      .modal-content {
+          position: relative;
+          background: #3B4252;
+          padding: 20px;
+          border-radius: 0;
+          width: 100%;
+          max-width: 500px;
+          margin: 20px auto;
+          box-shadow: 0 8px 32px 0 #2E3440cc;
+          border: 2px solid #4C566A;
+      }
+  
+      .modal-content-wide {
+          max-width: 600px;
+      }
+  
+      .modal h2 {
+          margin-bottom: 15px;
+          color: #88C0D0;
+          font-size: 20px;
+          letter-spacing: 1px;
+      }
+  
+      .modal input {
+          width: 100%;
+          padding: 10px;
+          border: 2px solid #4C566A;
+          border-radius: 0;
+          margin-bottom: 12px;
+          font-size: 14px;
+          background: #2E3440;
+          color: #D8DEE9;
+      }
+  
+      .modal input::placeholder {
+          color: #4C566A;
+      }
+  
+      .modal input:focus {
+          outline: none;
+          border-color: #81A1C1;
+      }
+  
+      .modal p {
+          color: #D8DEE9;
+          margin-bottom: 15px;
+          font-size: 14px;
+      }
+  
+      .modal-buttons {
+          display: flex;
+          gap: 8px;
+          margin-top: 15px;
+      }
+  
+      .modal-buttons button {
+          padding: 8px 12px;
+          font-size: 13px;
+      }
+  
+      .notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #A3BE8C;
+          color: #E5E9F0;
+          padding: 15px 25px;
+          border-radius: 10px;
+          transform: translateX(400px);
+          transition: transform 0.3s ease;
+          z-index: 1001;
+      }
+  
+      .notification.show {
+          transform: translateX(0);
+      }
+  
+      .notification.error {
+          background: #BF616A;
+      }
+  
+      @media (max-width: 768px) {
+          .container {
+              max-width: 100%;
+              border-radius: 0;
+          }
+  
+          .content {
+              padding: 20px 15px;
+          }
+  
+          .main-content {
+              flex-direction: column;
+              gap: 0px;
+          }
+  
+          .left-panel, .right-panel {
+              width: 100%;
+          }
+  
+          .inventory-list {
+              max-height: 400px;
+          }
+  
+          .header {
+              flex-direction: column;
+              align-items: center;
+              padding: 15px 15px 0px;
+              gap: 8px;
+              text-align: center;
+          }
+  
+          .header-content {
+              align-items: center;
+          }
+  
+          .header h1 {
+              font-size: 35px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 4px;
+              text-align: center;
+          }
+  
+          .header p {
+              font-size: 14px;
+              opacity: 0.8;
+              margin-bottom: 8px;
+              text-align: center;
+          }
+  
+          .logo canvas {
+              width: 120px;
+              height: 120px;
+              margin-bottom: 8px;
+              margin-left: auto;
+              margin-right: auto;
+          }
+  
+          .part-name {
+              font-size: 20px;
+          }
+  
+          .current-stock {
+              font-size: 32px;
+          }
+  
+          .sync-buttons {
+              flex-direction: column;
+          }
+  
+          .sync-icon {
+              width: 16px;
+              height: 16px;
+              margin-right: 6px;
+          }
+          
+          .sync-btn, .add-part-btn {
+              padding: 10px;
+              font-size: 13px;
+          }
+  
+          .inventory-controls {
+              flex-direction: column;
+              width: 100%;
+          }
+  
+          .inventory-controls select,
+          .inventory-controls button {
+              width: 100%;
+          }
+  
+          .item-info {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 6px;
+          }
+  
+          .item-name {
+              margin-right: 0;
+              margin-bottom: 4px;
+          }
+  
+          .item-quantity {
+              width: 100%;
+              justify-content: space-between;
+          }
+  
+          .quantity-controls {
+              gap: 8px;
+          }
+  
+          .quantity-btn {
+              padding: 4px 8px;
+          }
+  
+          .project-tag {
+              font-size: 9px;
+              padding: 1px 4px;
+              max-width: 100px;
+          }
+  
+          .inventory-item {
+              padding: 12px 8px;
+          }
+  
+          .coffee-link {
+              margin-top: 12px;
+          }
+  
+          .modal {
+              padding: 10px;
+          }
+  
+          .modal-content {
+              padding: 15px;
+              margin: 10px auto;
+          }
+  
+          .modal-content-wide {
+              max-width: 100%;
+          }
+  
+          .modal h2 {
+              font-size: 18px;
+              margin-bottom: 12px;
+          }
+  
+          .modal input {
+              padding: 8px;
+              font-size: 13px;
+              margin-bottom: 10px;
+          }
+  
+          .modal-buttons {
+              flex-direction: column;
+              gap: 6px;
+          }
+  
+          .modal-buttons button {
+              width: 100%;
+              padding: 10px;
+          }
+  
+          #projectDetailsModal .modal-content,
+          #allProjectRequirementsModal .modal-content {
+              max-width: 100%;
+          }
+  
+          .bom-results {
+              max-height: 200px;
+          }
+  
+          #projectParts .project-list-item {
+              flex-direction: column;
+              gap: 8px;
+          }
+  
+          #projectParts .project-actions {
+              width: 100%;
+              justify-content: flex-end;
+          }
+      }
+  
+      /* Project Management Modal */
+      #projectList {
+          background: #2E3440;
+          padding: 15px;
+          border: 1px solid #4C566A;
+          max-height: 400px;
+          overflow-y: auto;
+      }
+  
+      #projectList .project-list-item {
+          padding: 15px;
+          border-bottom: 1px solid #4C566A;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+  
+      #projectList .project-list-item:last-child {
+          border-bottom: none;
+      }
+  
+      #projectList strong {
+          color: #ECEFF4;
+          font-size: 16px;
+          display: block;
+          margin-bottom: 5px;
+      }
+  
+      #projectList .project-info {
+          color: #D8DEE9;
+          font-size: 14px;
+      }
+  
+      .project-delete-btn {
+          background: #BF616A;
+          color: #E5E9F0;
+          border: none;
+          padding: 8px 16px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'JetBrains Mono', monospace;
+      }
+  
+      .project-delete-btn:hover {
+          background: #D08770;
+      }
+  
+      /* Project Details Modal */
+      #projectDetailsModal .modal-content {
+          max-width: 600px;
+      }
+  
+      #projectStatus {
+          background: #2E3440;
+          padding: 15px;
+          margin-bottom: 20px;
+          border: 1px solid #4C566A;
+          border-radius: 0;
+      }
+  
+      #projectStatus .project-header {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 15px;
+          color: #88C0D0;
+          font-size: 16px;
+      }
+  
+      #projectParts {
+          background: #2E3440;
+          padding: 15px;
+          border: 1px solid #4C566A;
+          max-height: 400px;
+          overflow-y: auto;
+          border-radius: 0;
+      }
+  
+      #projectParts .project-list-item {
+          padding: 12px;
+          border-bottom: 1px solid #4C566A;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-radius: 0;
+      }
+  
+      #projectParts .project-list-item:last-child {
+          border-bottom: none;
+      }
+  
+      #projectParts .project-info {
+          color: #D8DEE9;
+          font-size: 14px;
+          margin-top: 5px;
+      }
+  
+      #projectParts .project-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+      }
+  
+      #projectParts .project-remove-btn {
+          background: #BF616A;
+          color: #E5E9F0;
+          border: none;
+          padding: 6px 12px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'JetBrains Mono', monospace;
+          border-radius: 0;
+      }
+  
+      #projectParts .project-remove-btn:hover {
+          background: #D08770;
+      }
+  
+      /* Modal Buttons */
+      .modal-buttons-top {
+          position: sticky;
+          bottom: 0;
+          background: #3B4252;
+          padding: 15px;
+          margin: 0 -20px -20px;
+          border-top: 1px solid #4C566A;
+      }
+  
+      .add-missing-btn {
+          background: #A3BE8C;
+          color: #2E3440;
+          font-weight: 600;
+      }
+  
+      .add-missing-btn:hover {
+          background: #8FBCBB;
+      }
+  
+      /* Additional utility classes */
+      .hidden {
+          display: none !important;
+      }
+  
+      .full-width {
+          width: 100%;
+      }
+  
+      .flex-1 {
+          flex: 1;
+      }
+  
+      .project-tag {
+          color: #2E3440; /* Nord Dark */
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+          white-space: nowrap;
+          display: inline-block;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-weight: 500; /* Slightly bolder for better readability */
+      }
+  
+      .project-tag:nth-child(4n+1) {
+          background: #81A1C1; /* Nord Blue */
+      }
+  
+      .project-tag:nth-child(4n+2) {
+          background: #A3BE8C; /* Nord Green */
+      }
+  
+      .project-tag:nth-child(4n+3) {
+          background: #EBCB8B; /* Nord Yellow */
+      }
+  
+      .project-tag:nth-child(4n+4) {
+          background: #B48EAD; /* Nord Purple */
+      }
+  
+      .project-tag:hover {
+          filter: brightness(1.1);
+      }
+  
+      .project-status {
+          margin-bottom: 20px;
+          padding: 15px;
+          background: #f8f9fa;
+          border-radius: 10px;
+      }
+  
+      .project-parts {
+          max-height: 400px;
+          overflow-y: auto;
+      }
+  
+      .project-list {
+          max-height: 300px;
+          overflow-y: auto;
+          margin-bottom: 20px;
+      }
+  
+      /* BOM Results Styling */
+      .bom-results {
+          max-height: 400px;
+          overflow-y: auto;
+          background: #2E3440;
+          padding: 15px;
+          margin-bottom: 20px;
+          border: 1px solid #4C566A;
+          color: #D8DEE9;
+      }
+  
+      .bom-results .project-header {
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #4C566A;
+          color: #88C0D0;
+          font-size: 16px;
+          display: flex;
+          gap: 20px;
+      }
+  
+      .bom-results .project-info {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          flex: 1;
+      }
+  
+      .bom-results .project-info li {
+          padding: 12px;
+          border-bottom: 1px solid #4C566A;
+          display: flex;
+          align-items: flex-start;
+          gap: 0;
+          color: #D8DEE9;
+          font-size: 13px;
+          line-height: 1.4;
+      }
+  
+      .bom-part-label {
+          display: flex;
+          align-items: flex-start;
+          min-width: 0;
+          flex: 1 1 60%;
+          gap: 8px;
+          word-break: break-word;
+      }
+  
+      .bom-part-status {
+          flex: 1 1 40%;
+          text-align: left;
+          padding-left: 12px;
+          min-width: 120px;
+          word-break: break-word;
+      }
+  
+      .bom-results .project-info li strong {
+          color: #ECEFF4;
+          font-weight: 600;
+          font-size: 14px;
+          margin-right: 4px;
+          display: inline-block;
+      }
+  
+      .bom-results .status-icon {
+          width: 18px;
+          height: 18px;
+          flex-shrink: 0;
+          display: flex;
+          align-items: flex-start;
+          margin-top: 2px;
+      }
+  
+      .bom-results .status-icon svg {
+          width: 100%;
+          height: 100%;
+      }
+  
+      .bom-results .project-info li > div {
+          flex: 1;
+          min-width: 0;
+      }
+  
+      .bom-results .status-success {
+          color: #A3BE8C;
+      }
+  
+      .bom-results .status-warning {
+          color: #EBCB8B;
+      }
+  
+      .bom-results .status-error {
+          color: #BF616A;
+      }
+  
+      @media (max-width: 768px) {
+          .bom-results .project-info li {
+              font-size: 12px;
+              padding: 14px 8px;
+              flex-direction: column;
+              gap: 4px;
+          }
+          .bom-part-label, .bom-part-status {
+              flex: unset;
+              min-width: 0;
+              padding-left: 0;
+              text-align: left;
+          }
+          .bom-part-status {
+              margin-top: 2px;
+          }
+          .bom-results .status-icon {
+              width: 16px;
+              height: 16px;
+              margin-top: 1px;
+          }
+      }
+  
+      /* Export/Import Modals */
+      .export-format-text {
+          margin-bottom: 15px;
+          font-size: 14px;
+      }
+  
+      /* All Projects Modal */
+      #allProjectRequirementsModal .modal-content {
+          max-width: 500px;
+      }
+  
+      #allProjectRequirementsModal h2 {
+          font-size: 20px;
+          margin-bottom: 15px;
+      }
+  
+      #allProjectRequirementsTable {
+          font-size: 13px;
+      }
+  
+      #allProjectRequirementsTable th, 
+      #allProjectRequirementsTable td {
+          padding: 6px 8px;
+      }
+  
+      /* Project Name Modal */
+      #projectNameModal {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(46, 52, 64, 0.8);
+          z-index: 1000;
+      }
+  
+      #projectNameModal.show {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+      }
+  
+      #projectNameModal .modal-content {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: #2E3440;
+          padding: 20px;
+          border: 1px solid #4C566A;
+          border-radius: 8px;
+          width: 90%;
+          max-width: 500px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          margin: 0;
+      }
+  
+      .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #4C566A;
+      }
+  
+      .modal-header h2 {
+          color: #ECEFF4;
+          margin: 0;
+          font-size: 1.5rem;
+      }
+  
+      .modal-body {
+          margin-bottom: 20px;
+      }
+  
+      .modal-body input {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #4C566A;
+          border-radius: 4px;
+          background-color: #3B4252;
+          color: #ECEFF4;
+          font-size: 1rem;
+      }
+  
+      .modal-body input:focus {
+          outline: none;
+          border-color: #81A1C1;
+          box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
+      }
+  
+      .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+      }
+  
+      .modal-footer button {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+      }
+  
+      .modal-footer button:first-child {
+          background-color: #4C566A;
+          color: #ECEFF4;
+      }
+  
+      .modal-footer button:last-child {
+          background-color: #81A1C1;
+          color: #2E3440;
+      }
+  
+      .modal-footer button:hover {
+          filter: brightness(1.1);
+      }
+  
+      @media (max-width: 768px) {
+          .modal-content {
+              margin: 20% auto;
+              width: 95%;
+          }
+          
+          .modal-header h2 {
+              font-size: 1.2rem;
+          }
+          
+          .modal-body input {
+              font-size: 0.9rem;
+          }
+          
+          .modal-footer button {
+              padding: 6px 12px;
+              font-size: 0.8rem;
+          }
+      }
+  
+      .footer {
+          background: #2E3440;
+          padding: 15px;
+          text-align: right;
+          border-top: 2px solid #4C566A;
+          margin-top: auto;
+      }
+  
+      .footer-content {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 16px;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 20px;
+      }
+  
+      .version {
+          color: #4C566A;
+          font-size: 13px;
+          font-family: 'JetBrains Mono', monospace;
+      }
+  
+      .coffee-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #EBCB8B;
+          text-decoration: none;
+          font-size: 14px;
+          padding: 8px 16px;
+          border-radius: 4px;
+          background: rgba(235, 203, 139, 0.1);
+          transition: all 0.2s ease;
+      }
+  
+      .coffee-link:hover {
+          background: rgba(235, 203, 139, 0.2);
+          color: #EBCB8B;
+          transform: translateY(-1px);
+      }
+  
+      .coffee-icon {
+          width: 18px;
+          height: 18px;
+          fill: currentColor;
+      }
+  
+      @media (max-width: 768px) {
+          .footer {
+              padding: 12px;
+              text-align: center;
+          }
+  
+          .footer-content {
+              flex-direction: column;
+              gap: 8px;
+              justify-content: center;
+              padding: 0 10px;
+          }
+  
+          .coffee-link {
+              font-size: 13px;
+              padding: 6px 12px;
+          }
+  
+          .version {
+              font-size: 12px;
+          }
+      }
+  
+      /* Nord Scrollbar Styling - Square Corners */
+      ::-webkit-scrollbar {
+          width: 12px;
+          background: #2E3440;
+      }
+      ::-webkit-scrollbar-thumb {
+          background: #4C566A;
+          border-radius: 0;
+          border: 2px solid #2E3440;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+          background: #5E81AC;
+      }
+      * {
+          scrollbar-width: thin;
+          scrollbar-color: #4C566A #2E3440;
+      }
+  
+      /* All Projects Modal Styling */
+      #allProjectRequirementsModal .modal-content {
+          background: #2E3440;
+          border: 2px solid #4C566A;
+          color: #E5E9F0;
+          box-shadow: 0 8px 32px 0 #2E3440cc;
+          border-radius: 0;
+          max-width: 700px;
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
+      }
+  
+      #allProjectRequirementsModal h2 {
+          color: #88C0D0;
+          font-size: 22px;
+          margin-bottom: 18px;
+      }
+  
+      #allProjectRequirements {
+          overflow-y: auto;
+          margin-bottom: 60px; /* Add space for the sticky button */
+      }
+  
+      #allProjectRequirementsTable {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+      }
+  
+      #allProjectRequirementsTable th, #allProjectRequirementsTable td {
+          border: 1px solid #4C566A;
+          padding: 8px 10px;
+          text-align: left;
+      }
+  
+      #allProjectRequirementsTable th {
+          background: #3B4252;
+          color: #88C0D0;
+      }
+  
+      #allProjectRequirementsTable td {
+          background: #2E3440;
+      }
+  
+      #allProjectRequirementsTable .low-stock {
+          color: #BF616A;
+          font-weight: bold;
+      }
+  
+      #allProjectRequirementsModal .close-btn {
+          background: #4C566A;
+          color: #D8DEE9;
+          border: 1.5px solid #434C5E;
+          border-radius: 0;
+          transition: background 0.2s, color 0.2s;
+          padding: 10px 18px;
+          cursor: pointer;
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: calc(100% - 40px);
+          max-width: 200px;
+      }
+  
+      #allProjectRequirementsModal .close-btn:hover {
+          background: #434C5E;
+          color: #ECEFF4;
+      }
+  
+      /* Project Name Modal */
+      #projectNameModal {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(46, 52, 64, 0.8);
+          z-index: 1000;
+      }
+  
+      #projectNameModal.show {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+      }
+  
+      #projectNameModal .modal-content {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: #2E3440;
+          padding: 20px;
+          border: 1px solid #4C566A;
+          border-radius: 8px;
+          width: 90%;
+          max-width: 500px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          margin: 0;
+      }
+  
+      .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid #4C566A;
+      }
+  
+      .modal-header h2 {
+          color: #ECEFF4;
+          margin: 0;
+          font-size: 1.5rem;
+      }
+  
+      .modal-body {
+          margin-bottom: 20px;
+      }
+  
+      .modal-body input {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #4C566A;
+          border-radius: 4px;
+          background-color: #3B4252;
+          color: #ECEFF4;
+          font-size: 1rem;
+      }
+  
+      .modal-body input:focus {
+          outline: none;
+          border-color: #81A1C1;
+          box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
+      }
+  
+      .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+      }
+  
+      .modal-footer button {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+      }
+  
+      .modal-footer button:first-child {
+          background-color: #4C566A;
+          color: #ECEFF4;
+      }
+  
+      .modal-footer button:last-child {
+          background-color: #81A1C1;
+          color: #2E3440;
+      }
+  
+      .modal-footer button:hover {
+          filter: brightness(1.1);
+      }
+  
+      @media (max-width: 768px) {
+          .modal-content {
+              margin: 20% auto;
+              width: 95%;
+          }
+          
+          .modal-header h2 {
+              font-size: 1.2rem;
+          }
+          
+          .modal-body input {
+              font-size: 0.9rem;
+          }
+          
+          .modal-footer button {
+              padding: 6px 12px;
+              font-size: 0.8rem;
+          }
+      }
+  
+      .coffee-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #EBCB8B;
+          text-decoration: none;
+          font-size: 14px;
+          padding: 6px 12px;
+          border-radius: 4px;
+          background: rgba(235, 203, 139, 0.1);
+          transition: all 0.2s ease;
+          margin-top: 8px;
+      }
+  
+      .coffee-link:hover {
+          background: rgba(235, 203, 139, 0.2);
+          color: #EBCB8B;
+      }
+  
+      .coffee-icon {
+          width: 18px;
+          height: 18px;
+          fill: currentColor;
+      }
+  
+      .manage-projects-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+          border: none;
+          padding: 8px 12px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'JetBrains Mono', monospace;
+          white-space: nowrap;
+      }
+  
+      .manage-projects-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
+      }
+  
+      @media (max-width: 768px) {
+          .inventory-header {
+              flex-direction: column;
+              align-items: stretch;
+              padding: 10px;
+          }
+  
+          .manage-projects-btn {
+              width: 100%;
+              text-align: center;
+          }
+  
+          .inventory-controls {
+              width: 100%;
+          }
+  
+          .inventory-controls select {
+              width: 100%;
+          }
+      }
+  
+      .quantity-number {
+          cursor: pointer;
+          padding: 0 4px;
+          min-width: 24px;
+          text-align: center;
+          display: inline-block;
+      }
+  
+      .quantity-number:hover {
+          background: rgba(236, 239, 244, 0.1);
+          border-radius: 4px;
+      }
+  
+      .quantity-input-inline {
+          width: 50px;
+          padding: 2px 4px;
+          border: 1px solid #4C566A;
+          background: #2E3440;
+          color: #E5E9F0;
+          font-size: 12px;
+          text-align: center;
+          border-radius: 4px;
+          margin: 15px 0px;
+      }
+  
+      .quantity-input-inline:focus {
+          outline: none;
+          border-color: #88C0D0;
+          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+      }
+  
+      .quantity-input-inline::-webkit-inner-spin-button,
+      .quantity-input-inline::-webkit-outer-spin-button {
+          opacity: 1;
+          height: 20px;
+      }
+  
+      @media (max-width: 768px) {
+          .quantity-input-inline {
+              width: 60px;
+              font-size: 14px;
+              padding: 4px;
+          }
+      }
+  
+      .search-input {
+          padding: 8px 12px;
+          border: 1px solid #4C566A;
+          font-size: 14px;
+          background: #2E3440;
+          color: #E5E9F0;
+          min-width: 200px;
+          font-family: 'JetBrains Mono', monospace;
+          border-radius: 0;
+      }
+  
+      .search-input:focus {
+          outline: none;
+          border-color: #88C0D0;
+          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+      }
+  
+      .search-input::placeholder {
+          color: #4C566A;
+      }
+  
+      @media (max-width: 768px) {
+          .search-input {
+              width: 100%;
+              min-width: unset;
+          }
+      }
+  
+      /* Project Details Modal */
+      #projectParts strong {
+          color: #ECEFF4;
+          font-weight: 600;
+          font-size: 15px;
+      }
+  
+      #projectParts .project-info {
+          color: #D8DEE9;
+          font-size: 14px;
+          margin-top: 5px;
+      }
+  
+      @media (max-width: 768px) {
+          #projectParts .project-list-item {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 12px;
+              padding: 15px;
+              border-radius: 0;
+          }
+  
+          #projectParts .project-actions {
+              width: 100%;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+          }
+  
+          #projectParts strong {
+              display: block;
+              margin-bottom: 4px;
+              font-size: 15px;
+          }
+  
+          #projectParts .project-info {
+              font-size: 13px;
+              margin-top: 4px;
+          }
+  
+          #projectParts .project-remove-btn {
+              padding: 6px 12px;
+              font-size: 12px;
+              border-radius: 0;
+          }
+  
+          #projectStatus .project-header {
+              flex-direction: column;
+              gap: 8px;
+              font-size: 14px;
+          }
+      }
+  
+      .wordmark-svg {
+          width: 100%;
+          max-width: 350px;
+          height: auto;
+          display: block;
+          margin-bottom: 4px;
+      }
+      @media (max-width: 768px) {
+          .wordmark-svg {
+              max-width: 250px;
+          }
+      }
+  
+      /* Nord theme overrides for Choices.js */
+      .choices {
         background: #2E3440;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .container {
-        max-width: 1200px;
-        width: 100%;
-        margin: 0 auto;
-        background: #3B4252;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .header {
-        background: #3B4252;
         color: #E5E9F0;
-        padding: 20px 20px 0px;
-        text-align: left;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .header-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .logo canvas {
-        width: 100px;
-        height: 100px;
-        display: block;
-        image-rendering: -webkit-optimize-contrast;
-    }
-
-    .header h1 {
-        font-size: 39px;
-        font-family: 'Goldman', 'JetBrains Mono', monospace;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #EBCB8B;
-    }
-
-    .header p {
-        opacity: 0.9;
-        font-size: 16px;
-        color:#EBCB8B;
-        margin-left: 5px;
-    }
-
-    .content {
-        padding: 15px 0px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .main-content {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .left-panel {
-        flex: 1;
-        min-width: 300px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        position: relative;
-    }
-
-    .right-panel {
-        flex: 2;
-        min-width: 300px;
-    }
-
-    .part-info {
-        display: none;
-    }
-
-    .current-stock {
-        font-size: 36px;
-        font-weight: 700;
-        color: #A3BE8C;
-        margin: 15px 0;
-        transition: color 0.2s;
-    }
-
-    .current-stock.low {
-        color: #BF616A;
-    }
-
-    .stock-label {
-        color: #E5E9F0;
-        font-size: 16px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .controls {
-        display: flex;
-        gap: 15px;
-        height: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: height 0.3s, opacity 0.3s;
-        z-index: 1;
-    }
-
-    .controls:not(.hidden) {
-        height: auto;
-        opacity: 1;
-    }
-
-    .quantity-input {
-        flex: 1;
-        padding: 15px;
-        border: 2px solid #4C566A;
+        border: 1.5px solid #4C566A;
         border-radius: 0;
-        font-size: 18px;
-        text-align: center;
-        background: #2E3440;
-        color: #E5E9F0;
-    }
-
-    .quantity-input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 15px;
-        height: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: height 0.3s, opacity 0.3s;
-        z-index: 1;
-        margin-bottom: 56px
-    }
-
-    .action-buttons:not(.hidden) {
-        height: auto;
-        opacity: 1;
-    }
-
-    .btn {
-        flex: 1;
-        padding: 15px;
-        border: none;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
         font-family: 'JetBrains Mono', monospace;
-        text-align: left;
-    }
-
-    .btn-add {
-        background: #4C566A;
-        color: #E5E9F0;
-    }
-
-    .btn-add:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    .btn-remove {
-        background: #BF616A;
-        color: #E5E9F0;
-    }
-
-    .btn-remove:hover {
-        background: #D08770;
-        color: #ECEFF4;
-    }
-
-    .inventory-list {
-        background: #2E3440;
-        padding: 0px 10px;
-        max-height: 600px;
-        overflow-y: auto;
-        position: relative;
-    }
-
-    .inventory-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-        gap: 10px;
-        width: 100%;
-        position: sticky;
-        top: 0;
-        background: #434C5E;
-        padding: 10px 14px;
-        z-index: 10;
-        border-bottom: 2px solid #4C566A;
-        box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-        margin: 0px -20px 0px 0px;
-    }
-
-    .inventory-header h3 {
-        color: #E5E9F0;
-        margin: 0;
-        font-size: 20px;
-    }
-
-    #inventoryItems {
-        padding-top: 10px;
-        background: #2E3440;
-    }
-
-    .inventory-controls {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .sort-dropdown {
-        padding: 8px 12px;
-        border: 1px solid #4C566A;
-        font-size: 14px;
+      }
+  
+      .choices__inner {
         background: #2E3440;
         color: #E5E9F0;
-        cursor: pointer;
-        min-width: 150px;
-        font-family: 'JetBrains Mono', monospace;
-        text-align: left;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E5E9F0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 16px;
-        padding-right: 32px;
-    }
-
-    .sort-dropdown:focus {
-        outline: none;
-        border-color: #88C0D0;
-        box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-    }
-
-    /* Safari-specific fixes */
-    @supports (-webkit-touch-callout: none) {
-        .sort-dropdown {
-            background-color: #2E3440;
-            border-radius: 0;
-        }
-        
-        .sort-dropdown option {
-            background-color: #2E3440;
-            color: #E5E9F0;
-        }
-    }
-
-    /* Firefox-specific fixes */
-    @-moz-document url-prefix() {
-        .sort-dropdown {
-            background-color: #2E3440;
-            color: #E5E9F0;
-        }
-        
-        .sort-dropdown option {
-            background-color: #2E3440;
-            color: #E5E9F0;
-        }
-    }
-
-    .inventory-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 8px;
-        border-bottom: 1px solid #4C566A;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        font-size: 8px;
-    }
-
-    .inventory-item:hover {
-        background-color: #434C5E;
-    }
-
-    .inventory-item:last-child {
-        border-bottom: none;
-    }
-
-    .item-info {
-        flex: 1;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-right: 15px;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
-
-    .item-name {
-        font-weight: 300;
-        color: #F8F8F2;
-        font-size: 14px;
-        font-family: 'JetBrains Mono Light', 'JetBrains Mono', monospace;
-        margin-right: 8px;
-    }
-
-    .item-quantity {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: #5E81AC;
-        color: #E5E9F0;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .item-quantity.low {
-        background: #BF616A;
-    }
-
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .quantity-btn {
-        background: none;
         border: none;
-        color: #E5E9F0;
-        cursor: pointer;
-        padding: 2px 6px;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .quantity-btn:hover {
-        color: #ECEFF4;
-        background: rgba(236, 239, 244, 0.1);
-        border-radius: 4px;
-    }
-
-    .quantity-btn:active {
-        transform: scale(0.95);
-    }
-
-    .item-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .action-icon {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .action-icon svg {
-        width: 16px;
-        height: 16px;
-        fill: currentColor;
-    }
-
-    .edit-icon {
-        color: #88C0D0;
-    }
-
-    .edit-icon:hover {
-        background: rgba(136, 192, 208, 0.1);
-    }
-
-    .delete-icon {
-        color: #BF616A;
-    }
-
-    .delete-icon:hover {
-        background: rgba(191, 97, 106, 0.1);
-    }
-
-    .shop-icon {
-        color: #A3BE8C;
-    }
-
-    .shop-icon:hover {
-        background: rgba(163, 190, 140, 0.1);
-    }
-
-    /* Status Icons */
-    .status-icon {
-        width: 16px;
-        height: 16px;
-        display: inline-block;
-        vertical-align: middle;
-        margin-right: 4px;
-    }
-
-    .status-icon svg {
-        width: 100%;
-        height: 100%;
-        fill: currentColor;
-    }
-
-    .status-success {
-        color: #A3BE8C;
-    }
-
-    .status-warning {
-        color: #EBCB8B;
-    }
-
-    .status-error {
-        color: #BF616A;
-    }
-
-    .reorder-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: #A3BE8C;
-        color: #E5E9F0;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-
-    .reorder-btn:hover {
-        background: #8FBCBB;
-    }
-
-    .low-stock-warning {
-        background: #BF616A;
-        color: #E5E9F0;
-        padding: 10px 15px;
-        margin-bottom: 20px;
-        margin-top: 20px;
-        font-size: 14px;
-        font-weight: 600;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.8; }
-        100% { opacity: 1; }
-    }
-
-    .sync-buttons {
-        display: flow;
-        position: relative;
-        z-index: 2;
-    }
-
-    .sync-icon {
-        width: 18px;
-        height: 18px;
-        margin-right: 8px;
-        vertical-align: middle;
-        fill: currentColor;
-    }
-
-    .sync-btn {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        flex: 1;
-        min-width: 150px;
-        padding: 12px;
-        border: none;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #4C566A;
-        color: #E5E9F0;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .sync-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    .add-part-btn {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        width: 100%;
-        background: #4C566A;
-        color: #E5E9F0;
-        border: none;
-        padding: 15px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .add-part-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    .export-btn {
-        background: #4C566A;
-        color: #E5E9F0;
-    }
-
-    .export-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    .import-btn {
-        background: #4C566A;
-        color: #E5E9F0;
-    }
-
-    .import-btn:hover {
-        background: #5E81AC;
-        color: #ECEFF4;
-    }
-
-    #importFile {
-        display: none;
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(46, 52, 64, 0.8);
-        z-index: 1000;
-        padding: 20px;
-        overflow-y: auto;
-    }
-
-    .modal-content {
-        position: relative;
-        background: #3B4252;
-        padding: 20px;
         border-radius: 0;
-        width: 100%;
-        max-width: 500px;
-        margin: 20px auto;
-        box-shadow: 0 8px 32px 0 #2E3440cc;
-        border: 2px solid #4C566A;
-    }
-
-    .modal-content-wide {
-        max-width: 600px;
-    }
-
-    .modal h2 {
-        margin-bottom: 15px;
-        color: #88C0D0;
-        font-size: 20px;
-        letter-spacing: 1px;
-    }
-
-    .modal input {
-        width: 100%;
-        padding: 10px;
-        border: 2px solid #4C566A;
-        border-radius: 0;
-        margin-bottom: 12px;
-        font-size: 14px;
-        background: #2E3440;
-        color: #D8DEE9;
-    }
-
-    .modal input::placeholder {
-        color: #4C566A;
-    }
-
-    .modal input:focus {
-        outline: none;
-        border-color: #81A1C1;
-    }
-
-    .modal p {
-        color: #D8DEE9;
-        margin-bottom: 15px;
-        font-size: 14px;
-    }
-
-    .modal-buttons {
-        display: flex;
-        gap: 8px;
-        margin-top: 15px;
-    }
-
-    .modal-buttons button {
-        padding: 8px 12px;
-        font-size: 13px;
-    }
-
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #A3BE8C;
-        color: #E5E9F0;
-        padding: 15px 25px;
-        border-radius: 10px;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        z-index: 1001;
-    }
-
-    .notification.show {
-        transform: translateX(0);
-    }
-
-    .notification.error {
-        background: #BF616A;
-    }
-
-    @media (max-width: 768px) {
-        .container {
-            max-width: 100%;
-            border-radius: 0;
-        }
-
-        .content {
-            padding: 20px 15px;
-        }
-
-        .main-content {
-            flex-direction: column;
-            gap: 0px;
-        }
-
-        .left-panel, .right-panel {
-            width: 100%;
-        }
-
-        .inventory-list {
-            max-height: 400px;
-        }
-
-        .header {
-            flex-direction: column;
-            align-items: center;
-            padding: 15px 15px 0px;
-            gap: 8px;
-            text-align: center;
-        }
-
-        .header-content {
-            align-items: center;
-        }
-
-        .header h1 {
-            font-size: 35px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-            text-align: center;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        .logo canvas {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 8px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .part-name {
-            font-size: 20px;
-        }
-
-        .current-stock {
-            font-size: 32px;
-        }
-
-        .sync-buttons {
-            flex-direction: column;
-        }
-
-        .sync-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-        }
-        
-        .sync-btn, .add-part-btn {
-            padding: 10px;
-            font-size: 13px;
-        }
-
-        .inventory-controls {
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .inventory-controls select,
-        .inventory-controls button {
-            width: 100%;
-        }
-
-        .item-info {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-        }
-
-        .item-name {
-            margin-right: 0;
-            margin-bottom: 4px;
-        }
-
-        .item-quantity {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .quantity-controls {
-            gap: 8px;
-        }
-
-        .quantity-btn {
-            padding: 4px 8px;
-        }
-
-        .project-tag {
-            font-size: 9px;
-            padding: 1px 4px;
-            max-width: 100px;
-        }
-
-        .inventory-item {
-            padding: 12px 8px;
-        }
-
-        .coffee-link {
-            margin-top: 12px;
-        }
-
-        .modal {
-            padding: 10px;
-        }
-
-        .modal-content {
-            padding: 15px;
-            margin: 10px auto;
-        }
-
-        .modal-content-wide {
-            max-width: 100%;
-        }
-
-        .modal h2 {
-            font-size: 18px;
-            margin-bottom: 12px;
-        }
-
-        .modal input {
-            padding: 8px;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-
-        .modal-buttons {
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .modal-buttons button {
-            width: 100%;
-            padding: 10px;
-        }
-
-        #projectDetailsModal .modal-content,
-        #allProjectRequirementsModal .modal-content {
-            max-width: 100%;
-        }
-
-        .bom-results {
-            max-height: 200px;
-        }
-
-        #projectParts .project-list-item {
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        #projectParts .project-actions {
-            width: 100%;
-            justify-content: flex-end;
-        }
-    }
-
-    /* Project Management Modal */
-    #projectList {
-        background: #2E3440;
-        padding: 15px;
-        border: 1px solid #4C566A;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    #projectList .project-list-item {
-        padding: 15px;
-        border-bottom: 1px solid #4C566A;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    #projectList .project-list-item:last-child {
-        border-bottom: none;
-    }
-
-    #projectList strong {
-        color: #ECEFF4;
-        font-size: 16px;
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    #projectList .project-info {
-        color: #D8DEE9;
-        font-size: 14px;
-    }
-
-    .project-delete-btn {
-        background: #BF616A;
-        color: #E5E9F0;
-        border: none;
-        padding: 8px 16px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .project-delete-btn:hover {
-        background: #D08770;
-    }
-
-    /* Project Details Modal */
-    #projectDetailsModal .modal-content {
-        max-width: 600px;
-    }
-
-    #projectStatus {
-        background: #2E3440;
-        padding: 15px;
-        margin-bottom: 20px;
-        border: 1px solid #4C566A;
-        border-radius: 0;
-    }
-
-    #projectStatus .project-header {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 15px;
-        color: #88C0D0;
-        font-size: 16px;
-    }
-
-    #projectParts {
-        background: #2E3440;
-        padding: 15px;
-        border: 1px solid #4C566A;
-        max-height: 400px;
-        overflow-y: auto;
-        border-radius: 0;
-    }
-
-    #projectParts .project-list-item {
-        padding: 12px;
-        border-bottom: 1px solid #4C566A;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 0;
-    }
-
-    #projectParts .project-list-item:last-child {
-        border-bottom: none;
-    }
-
-    #projectParts .project-info {
-        color: #D8DEE9;
-        font-size: 14px;
-        margin-top: 5px;
-    }
-
-    #projectParts .project-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    #projectParts .project-remove-btn {
-        background: #BF616A;
-        color: #E5E9F0;
-        border: none;
-        padding: 6px 12px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: 'JetBrains Mono', monospace;
-        border-radius: 0;
-    }
-
-    #projectParts .project-remove-btn:hover {
-        background: #D08770;
-    }
-
-    /* Modal Buttons */
-    .modal-buttons-top {
-        position: sticky;
-        bottom: 0;
-        background: #3B4252;
-        padding: 15px;
-        margin: 0 -20px -20px;
-        border-top: 1px solid #4C566A;
-    }
-
-    .add-missing-btn {
-        background: #A3BE8C;
-        color: #2E3440;
-        font-weight: 600;
-    }
-
-    .add-missing-btn:hover {
-        background: #8FBCBB;
-    }
-
-    /* Additional utility classes */
-    .hidden {
-        display: none !important;
-    }
-
-    .full-width {
-        width: 100%;
-    }
-
-    .flex-1 {
-        flex: 1;
-    }
-
-    .project-tag {
-        color: #2E3440; /* Nord Dark */
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s;
-        white-space: nowrap;
-        display: inline-block;
-        max-width: 120px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-weight: 500; /* Slightly bolder for better readability */
-    }
-
-    .project-tag:nth-child(4n+1) {
-        background: #81A1C1; /* Nord Blue */
-    }
-
-    .project-tag:nth-child(4n+2) {
-        background: #A3BE8C; /* Nord Green */
-    }
-
-    .project-tag:nth-child(4n+3) {
-        background: #EBCB8B; /* Nord Yellow */
-    }
-
-    .project-tag:nth-child(4n+4) {
-        background: #B48EAD; /* Nord Purple */
-    }
-
-    .project-tag:hover {
-        filter: brightness(1.1);
-    }
-
-    .project-status {
-        margin-bottom: 20px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 10px;
-    }
-
-    .project-parts {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .project-list {
-        max-height: 300px;
-        overflow-y: auto;
-        margin-bottom: 20px;
-    }
-
-    /* BOM Results Styling */
-    .bom-results {
-        max-height: 400px;
-        overflow-y: auto;
-        background: #2E3440;
-        padding: 15px;
-        margin-bottom: 20px;
-        border: 1px solid #4C566A;
-        color: #D8DEE9;
-    }
-
-    .bom-results .project-header {
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #4C566A;
-        color: #88C0D0;
-        font-size: 16px;
-        display: flex;
-        gap: 20px;
-    }
-
-    .bom-results .project-info {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        flex: 1;
-    }
-
-    .bom-results .project-info li {
-        padding: 12px;
-        border-bottom: 1px solid #4C566A;
-        display: flex;
-        align-items: flex-start;
-        gap: 0;
-        color: #D8DEE9;
-        font-size: 13px;
-        line-height: 1.4;
-    }
-
-    .bom-part-label {
-        display: flex;
-        align-items: flex-start;
-        min-width: 0;
-        flex: 1 1 60%;
-        gap: 8px;
-        word-break: break-word;
-    }
-
-    .bom-part-status {
-        flex: 1 1 40%;
-        text-align: left;
-        padding-left: 12px;
-        min-width: 120px;
-        word-break: break-word;
-    }
-
-    .bom-results .project-info li strong {
-        color: #ECEFF4;
-        font-weight: 600;
-        font-size: 14px;
-        margin-right: 4px;
-        display: inline-block;
-    }
-
-    .bom-results .status-icon {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        display: flex;
-        align-items: flex-start;
-        margin-top: 2px;
-    }
-
-    .bom-results .status-icon svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .bom-results .project-info li > div {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .bom-results .status-success {
-        color: #A3BE8C;
-    }
-
-    .bom-results .status-warning {
-        color: #EBCB8B;
-    }
-
-    .bom-results .status-error {
-        color: #BF616A;
-    }
-
-    @media (max-width: 768px) {
-        .bom-results .project-info li {
-            font-size: 12px;
-            padding: 14px 8px;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .bom-part-label, .bom-part-status {
-            flex: unset;
-            min-width: 0;
-            padding-left: 0;
-            text-align: left;
-        }
-        .bom-part-status {
-            margin-top: 2px;
-        }
-        .bom-results .status-icon {
-            width: 16px;
-            height: 16px;
-            margin-top: 1px;
-        }
-    }
-
-    /* Export/Import Modals */
-    .export-format-text {
-        margin-bottom: 15px;
-        font-size: 14px;
-    }
-
-    /* All Projects Modal */
-    #allProjectRequirementsModal .modal-content {
-        max-width: 500px;
-    }
-
-    #allProjectRequirementsModal h2 {
-        font-size: 20px;
-        margin-bottom: 15px;
-    }
-
-    #allProjectRequirementsTable {
-        font-size: 13px;
-    }
-
-    #allProjectRequirementsTable th, 
-    #allProjectRequirementsTable td {
-        padding: 6px 8px;
-    }
-
-    /* Project Name Modal */
-    #projectNameModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(46, 52, 64, 0.8);
-        z-index: 1000;
-    }
-
-    #projectNameModal.show {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #projectNameModal .modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #2E3440;
-        padding: 20px;
-        border: 1px solid #4C566A;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 0;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #4C566A;
-    }
-
-    .modal-header h2 {
-        color: #ECEFF4;
-        margin: 0;
-        font-size: 1.5rem;
-    }
-
-    .modal-body {
-        margin-bottom: 20px;
-    }
-
-    .modal-body input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #4C566A;
-        border-radius: 4px;
-        background-color: #3B4252;
-        color: #ECEFF4;
-        font-size: 1rem;
-    }
-
-    .modal-body input:focus {
-        outline: none;
-        border-color: #81A1C1;
-        box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .modal-footer button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .modal-footer button:first-child {
+        min-height: 44px;
+      }
+  
+      .choices__list--multiple .choices__item {
         background-color: #4C566A;
-        color: #ECEFF4;
-    }
-
-    .modal-footer button:last-child {
-        background-color: #81A1C1;
-        color: #2E3440;
-    }
-
-    .modal-footer button:hover {
-        filter: brightness(1.1);
-    }
-
-    @media (max-width: 768px) {
-        .modal-content {
-            margin: 20% auto;
-            width: 95%;
-        }
-        
-        .modal-header h2 {
-            font-size: 1.2rem;
-        }
-        
-        .modal-body input {
-            font-size: 0.9rem;
-        }
-        
-        .modal-footer button {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-    }
-
-    .footer {
-        background: #2E3440;
-        padding: 15px;
-        text-align: right;
-        border-top: 2px solid #4C566A;
-        margin-top: auto;
-    }
-
-    .footer-content {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 16px;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    .version {
-        color: #4C566A;
+        color: #EBCB8B;
+        border: none;
+        margin: 2px 4px 2px 0;
         font-size: 13px;
         font-family: 'JetBrains Mono', monospace;
-    }
-
-    .coffee-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: #EBCB8B;
-        text-decoration: none;
-        font-size: 14px;
-        padding: 8px 16px;
-        border-radius: 4px;
-        background: rgba(235, 203, 139, 0.1);
-        transition: all 0.2s ease;
-    }
-
-    .coffee-link:hover {
-        background: rgba(235, 203, 139, 0.2);
-        color: #EBCB8B;
-        transform: translateY(-1px);
-    }
-
-    .coffee-icon {
-        width: 18px;
-        height: 18px;
-        fill: currentColor;
-    }
-
-    @media (max-width: 768px) {
-        .footer {
-            padding: 12px;
-            text-align: center;
-        }
-
-        .footer-content {
-            flex-direction: column;
-            gap: 8px;
-            justify-content: center;
-            padding: 0 10px;
-        }
-
-        .coffee-link {
-            font-size: 13px;
-            padding: 6px 12px;
-        }
-
-        .version {
-            font-size: 12px;
-        }
-    }
-
-    /* Nord Scrollbar Styling - Square Corners */
-    ::-webkit-scrollbar {
-        width: 12px;
-        background: #2E3440;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #4C566A;
-        border-radius: 0;
-        border: 2px solid #2E3440;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #5E81AC;
-    }
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: #4C566A #2E3440;
-    }
-
-    /* All Projects Modal Styling */
-    #allProjectRequirementsModal .modal-content {
-        background: #2E3440;
-        border: 2px solid #4C566A;
+      }
+  
+      .choices__list--dropdown,
+      .choices__list[aria-expanded] {
+        background: #3B4252;
         color: #E5E9F0;
-        box-shadow: 0 8px 32px 0 #2E3440cc;
+        border: 1.5px solid #4C566A;
         border-radius: 0;
-        max-width: 700px;
-        max-height: 80vh;
+      }
+  
+      .choices__item--selectable.is-highlighted {
+        background: #5E81AC;
+        color: #ECEFF4;
+      }
+  
+      .choices__input {
+        background: #2E3440;
+        color: #E5E9F0;
+        border: none;
+        font-family: 'JetBrains Mono', monospace;
+      }
+  
+      .choices__button {
+        color: #BF616A;
+        opacity: 0.8;
+      }
+      .choices__button:hover {
+        color: #D08770;
+        opacity: 1;
+      }
+  
+      .choices__placeholder {
+        color: #4C566A;
+        opacity: 1;
+      }
+  
+      /* Nord styling for inventory-style project list in Edit Part modal */
+      .nord-project-inv-list {
         display: flex;
         flex-direction: column;
-    }
-
-    #allProjectRequirementsModal h2 {
-        color: #88C0D0;
-        font-size: 22px;
-        margin-bottom: 18px;
-    }
-
-    #allProjectRequirements {
-        overflow-y: auto;
-        margin-bottom: 60px; /* Add space for the sticky button */
-    }
-
-    #allProjectRequirementsTable {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-
-    #allProjectRequirementsTable th, #allProjectRequirementsTable td {
-        border: 1px solid #4C566A;
-        padding: 8px 10px;
-        text-align: left;
-    }
-
-    #allProjectRequirementsTable th {
-        background: #3B4252;
-        color: #88C0D0;
-    }
-
-    #allProjectRequirementsTable td {
-        background: #2E3440;
-    }
-
-    #allProjectRequirementsTable .low-stock {
-        color: #BF616A;
-        font-weight: bold;
-    }
-
-    #allProjectRequirementsModal .close-btn {
-        background: #4C566A;
-        color: #D8DEE9;
-        border: 1.5px solid #434C5E;
-        border-radius: 0;
-        transition: background 0.2s, color 0.2s;
-        padding: 10px 18px;
-        cursor: pointer;
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 40px);
-        max-width: 200px;
-    }
-
-    #allProjectRequirementsModal .close-btn:hover {
-        background: #434C5E;
-        color: #ECEFF4;
-    }
-
-    /* Project Name Modal */
-    #projectNameModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(46, 52, 64, 0.8);
-        z-index: 1000;
-    }
-
-    #projectNameModal.show {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #projectNameModal .modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #2E3440;
-        padding: 20px;
-        border: 1px solid #4C566A;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 0;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #4C566A;
-    }
-
-    .modal-header h2 {
-        color: #ECEFF4;
-        margin: 0;
-        font-size: 1.5rem;
-    }
-
-    .modal-body {
-        margin-bottom: 20px;
-    }
-
-    .modal-body input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #4C566A;
-        border-radius: 4px;
-        background-color: #3B4252;
-        color: #ECEFF4;
-        font-size: 1rem;
-    }
-
-    .modal-body input:focus {
-        outline: none;
-        border-color: #81A1C1;
-        box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .modal-footer button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .modal-footer button:first-child {
-        background-color: #4C566A;
-        color: #ECEFF4;
-    }
-
-    .modal-footer button:last-child {
-        background-color: #81A1C1;
-        color: #2E3440;
-    }
-
-    .modal-footer button:hover {
-        filter: brightness(1.1);
-    }
-
-    @media (max-width: 768px) {
-        .modal-content {
-            margin: 20% auto;
-            width: 95%;
-        }
-        
-        .modal-header h2 {
-            font-size: 1.2rem;
-        }
-        
-        .modal-body input {
-            font-size: 0.9rem;
-        }
-        
-        .modal-footer button {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-    }
-
-    .coffee-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        color: #EBCB8B;
-        text-decoration: none;
-        font-size: 14px;
-        padding: 6px 12px;
-        border-radius: 4px;
-        background: rgba(235, 203, 139, 0.1);
-        transition: all 0.2s ease;
+        gap: 2px;
         margin-top: 8px;
-    }
-
-    .coffee-link:hover {
-        background: rgba(235, 203, 139, 0.2);
+        max-height: 220px;
+        overflow-y: auto;
+        background: #2E3440;
+        padding: 10px;
+      }
+      .nord-project-inv-row {
+        display: flex;
+        align-items: center;
+        padding: 4px 0;
+        font-family: 'JetBrains Mono', monospace;
+        border-bottom: 1px solid #4C566A;
+      }
+      .nord-project-inv-row:last-child {
+        border-bottom: none;
+      }
+      .nord-project-inv-name {
         color: #EBCB8B;
-    }
-
-    .coffee-icon {
-        width: 18px;
-        height: 18px;
-        fill: currentColor;
-    }
-
-    .manage-projects-btn {
-        background: #4C566A;
+        font-size: 14px;
+        margin-right: 12px;
+        min-width: 120px;
+        flex: 1;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .modal-item-quantity {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        margin-left: auto;
+      }
+      .modal-item-quantity .quantity-btn {
+        background: none;
         color: #E5E9F0;
         border: none;
-        padding: 8px 12px;
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 18px;
+        width: 28px;
+        height: 28px;
         cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: 'JetBrains Mono', monospace;
-        white-space: nowrap;
-    }
-
-    .manage-projects-btn:hover {
+        border-radius: 4px;
+        transition: background 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-item-quantity .quantity-btn:hover {
         background: #5E81AC;
         color: #ECEFF4;
-    }
-
-    @media (max-width: 768px) {
-        .inventory-header {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 10px;
-        }
-
-        .manage-projects-btn {
-            width: 100%;
-            text-align: center;
-        }
-
-        .inventory-controls {
-            width: 100%;
-        }
-
-        .inventory-controls select {
-            width: 100%;
-        }
-    }
-
-    .quantity-number {
-        cursor: pointer;
-        padding: 0 4px;
-        min-width: 24px;
-        text-align: center;
-        display: inline-block;
-    }
-
-    .quantity-number:hover {
-        background: rgba(236, 239, 244, 0.1);
-        border-radius: 4px;
-    }
-
-    .quantity-input-inline {
-        width: 50px;
-        padding: 2px 4px;
-        border: 1px solid #4C566A;
-        background: #2E3440;
-        color: #E5E9F0;
-        font-size: 12px;
-        text-align: center;
-        border-radius: 4px;
-        margin: 0 2px;
-    }
-
-    .quantity-input-inline:focus {
-        outline: none;
-        border-color: #88C0D0;
-        box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-    }
-
-    .quantity-input-inline::-webkit-inner-spin-button,
-    .quantity-input-inline::-webkit-outer-spin-button {
-        opacity: 1;
-        height: 20px;
-    }
-
-    @media (max-width: 768px) {
-        .quantity-input-inline {
-            width: 60px;
-            font-size: 14px;
-            padding: 4px;
-        }
-    }
-
-    .search-input {
-        padding: 8px 12px;
-        border: 1px solid #4C566A;
-        font-size: 14px;
-        background: #2E3440;
-        color: #E5E9F0;
-        min-width: 200px;
-        font-family: 'JetBrains Mono', monospace;
-        border-radius: 0;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #88C0D0;
-        box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-    }
-
-    .search-input::placeholder {
-        color: #4C566A;
-    }
-
-    @media (max-width: 768px) {
-        .search-input {
-            width: 100%;
-            min-width: unset;
-        }
-    }
-
-    /* Project Details Modal */
-    #projectParts strong {
-        color: #ECEFF4;
-        font-weight: 600;
-        font-size: 15px;
-    }
-
-    #projectParts .project-info {
-        color: #D8DEE9;
-        font-size: 14px;
-        margin-top: 5px;
-    }
-
-    @media (max-width: 768px) {
-        #projectParts .project-list-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 15px;
-            border-radius: 0;
-        }
-
-        #projectParts .project-actions {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #projectParts strong {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 15px;
-        }
-
-        #projectParts .project-info {
-            font-size: 13px;
-            margin-top: 4px;
-        }
-
-        #projectParts .project-remove-btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 0;
-        }
-
-        #projectStatus .project-header {
-            flex-direction: column;
-            gap: 8px;
-            font-size: 14px;
-        }
-    }
-
-    .wordmark-svg {
-        width: 100%;
-        max-width: 350px;
-        height: auto;
-        display: block;
-        margin-bottom: 4px;
-    }
-    @media (max-width: 768px) {
-        .wordmark-svg {
-            max-width: 250px;
-        }
-    }
-
-    /* Nord theme overrides for Choices.js */
-    .choices {
-      background: #2E3440;
-      color: #E5E9F0;
-      border: 1.5px solid #4C566A;
-      border-radius: 0;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .choices__inner {
-      background: #2E3440;
-      color: #E5E9F0;
-      border: none;
-      border-radius: 0;
-      min-height: 44px;
-    }
-
-    .choices__list--multiple .choices__item {
-      background-color: #4C566A;
-      color: #EBCB8B;
-      border: none;
-      margin: 2px 4px 2px 0;
-      font-size: 13px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .choices__list--dropdown,
-    .choices__list[aria-expanded] {
-      background: #3B4252;
-      color: #E5E9F0;
-      border: 1.5px solid #4C566A;
-      border-radius: 0;
-    }
-
-    .choices__item--selectable.is-highlighted {
-      background: #5E81AC;
-      color: #ECEFF4;
-    }
-
-    .choices__input {
-      background: #2E3440;
-      color: #E5E9F0;
-      border: none;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .choices__button {
-      color: #BF616A;
-      opacity: 0.8;
-    }
-    .choices__button:hover {
-      color: #D08770;
-      opacity: 1;
-    }
-
-    .choices__placeholder {
-      color: #4C566A;
-      opacity: 1;
-    }
-
-    /* Nord styling for inventory-style project list in Edit Part modal */
-    .nord-project-inv-list {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      margin-top: 8px;
-      max-height: 220px;
-      overflow-y: auto;
-      background: #2E3440;
-      padding: 10px;
-    }
-    .nord-project-inv-row {
-      display: flex;
-      align-items: center;
-      padding: 4px 0;
-      font-family: 'JetBrains Mono', monospace;
-      border-bottom: 1px solid #4C566A;
-    }
-    .nord-project-inv-row:last-child {
-      border-bottom: none;
-    }
-    .nord-project-inv-name {
-      color: #EBCB8B;
-      font-size: 14px;
-      margin-right: 12px;
-      min-width: 120px;
-      flex: 1;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .modal-item-quantity {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border-radius: 0;
-      padding: 0;
-      margin-left: auto;
-    }
-    .modal-item-quantity .quantity-btn {
-      background: none;
-      color: #E5E9F0;
-      border: none;
-      font-size: 18px;
-      width: 28px;
-      height: 28px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-item-quantity .quantity-btn:hover {
-      background: #5E81AC;
-      color: #ECEFF4;
-    }
+      }
+  

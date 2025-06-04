@@ -1822,7 +1822,6 @@
     .choices__list--multiple .choices__item {
       background-color: #4C566A;
       color: #EBCB8B;
-      border-radius: 4px;
       border: none;
       margin: 2px 4px 2px 0;
       font-size: 13px;
@@ -1911,4 +1910,51 @@
     .nord-project-remove:hover {
       background: #BF616A;
       color: #ECEFF4;
+    }
+
+    /* Nord styling for project list in Edit Part modal */
+    .nord-project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .nord-project-list-row {
+      display: flex;
+      align-items: center;
+      background: #3B4252;
+      border-radius: 4px;
+      padding: 6px 10px;
+      margin-bottom: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nord-project-checkbox {
+      accent-color: #EBCB8B;
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+    }
+    .nord-project-list-name {
+      color: #EBCB8B;
+      font-size: 14px;
+      margin-right: 12px;
+      min-width: 120px;
+      flex: 1;
+    }
+    .nord-project-qty {
+      background: #2E3440;
+      color: #E5E9F0;
+      border: 1.5px solid #4C566A;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      width: 50px;
+      margin-left: 0;
+      margin-right: 8px;
+      padding: 2px 6px;
+    }
+    .nord-project-qty:focus {
+      outline: none;
+      border-color: #88C0D0;
+      box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
     }

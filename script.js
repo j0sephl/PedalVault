@@ -156,6 +156,30 @@
                 } else if (typeof importedData === 'object' && importedData !== null) {
                     // Fallback for old format or CSV import
                     inventory = importedData;
+                    // --- Begin: Ensure projects are globally tagged and BOMs updated ---
+                    for (const partId in inventory) {
+                        const part = inventory[partId];
+                        if (part.projects) {
+                            for (const projectId in part.projects) {
+                                // Create project if missing
+                                if (!projects[projectId]) {
+                                    projects[projectId] = {
+                                        name: projectId,
+                                        bom: {}
+                                    };
+                                }
+                                // Add part to project BOM with correct quantity
+                                if (!projects[projectId].bom) projects[projectId].bom = {};
+                                projects[projectId].bom[partId] = {
+                                    name: part.name,
+                                    quantity: part.projects[projectId]
+                                };
+                            }
+                        }
+                    }
+                    saveProjects();
+                    updateProjectFilter();
+                    // --- End: Ensure projects are globally tagged and BOMs updated ---
                 } else {
                     throw new Error('Invalid file format');
                 }

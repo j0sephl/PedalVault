@@ -351,30 +351,37 @@
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
 
-        // --- In showEditPartModal(partId), render a Nord-styled list of all projects with checkboxes and quantity inputs ---
+        // --- In showEditPartModal(partId), render a scrollable list of projects with name, -, number, + buttons ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         projectsDropdownSection.innerHTML = '';
         if (Object.keys(projects).length === 0) {
             projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
         } else {
-            let html = '<div class="nord-project-list">';
+            let html = '<div class="nord-project-scroll-list">';
             for (const projectId in projects) {
-                const checked = part.projects && part.projects[projectId];
+                const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 0;
                 html += `
-                    <label class="nord-project-list-row">
-                        <input type="checkbox" class="nord-project-checkbox" data-project-id="${projectId}" ${checked ? 'checked' : ''}>
+                    <div class="nord-project-scroll-row" data-project-id="${projectId}">
                         <span class="nord-project-list-name">${projects[projectId].name}</span>
-                        <input type="number" min="1" class="edit-project-qty nord-project-qty" data-project-qty="${projectId}" value="${checked ? part.projects[projectId] : 1}" style="width:50px;margin-left:8px;" ${checked ? '' : 'disabled'}>
-                    </label>
+                        <button type="button" class="nord-project-qty-btn" data-action="decrement">-</button>
+                        <input type="number" min="0" class="edit-project-qty nord-project-qty" data-project-qty="${projectId}" value="${qty}" />
+                        <button type="button" class="nord-project-qty-btn" data-action="increment">+</button>
+                    </div>
                 `;
             }
             html += '</div>';
             projectsDropdownSection.innerHTML = html;
-            // Enable/disable qty input based on checkbox
-            projectsDropdownSection.querySelectorAll('.nord-project-checkbox').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const qtyInput = projectsDropdownSection.querySelector(`.edit-project-qty[data-project-qty='${cb.dataset.projectId}']`);
-                    qtyInput.disabled = !cb.checked;
+            // Add event listeners for + and - buttons
+            projectsDropdownSection.querySelectorAll('.nord-project-scroll-row').forEach(row => {
+                const projectId = row.dataset.projectId;
+                const qtyInput = row.querySelector('.edit-project-qty');
+                row.querySelector('[data-action="decrement"]').addEventListener('click', () => {
+                    let val = parseInt(qtyInput.value) || 0;
+                    if (val > 0) qtyInput.value = val - 1;
+                });
+                row.querySelector('[data-action="increment"]').addEventListener('click', () => {
+                    let val = parseInt(qtyInput.value) || 0;
+                    qtyInput.value = val + 1;
                 });
             });
         }
@@ -438,11 +445,11 @@
         // --- In saveEditPart(), update to use the new UI ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         const newProjects = {};
-        projectsDropdownSection.querySelectorAll('.nord-project-checkbox').forEach(cb => {
-            const projectId = cb.dataset.projectId;
-            const qtyInput = projectsDropdownSection.querySelector(`.edit-project-qty[data-project-qty='${projectId}']`);
-            if (cb.checked) {
-                const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+        projectsDropdownSection.querySelectorAll('.nord-project-scroll-row').forEach(row => {
+            const projectId = row.dataset.projectId;
+            const qtyInput = row.querySelector('.edit-project-qty');
+            const qty = Math.max(0, parseInt(qtyInput.value) || 0);
+            if (qty > 0) {
                 newProjects[projectId] = qty;
                 // Update project BOM
                 if (!projects[projectId].bom) projects[projectId].bom = {};

@@ -574,8 +574,39 @@
         const results = [];
         for (const id in bom) {
             totalParts++;
-            const required = bom[id].quantity;
             let part = inventory[id];
+            let matchedId = id;
+            let fuzzyNote = '';
+            if (!part) {
+                // Try normalized match
+                const normId = normalizeValue(id);
+                let found = false;
+                for (const invId in inventory) {
+                    if (normalizeValue(invId) === normId) {
+                        part = inventory[invId];
+                        matchedId = invId;
+                        fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                        found = true;
+                        break;
+                    }
+                }
+                // Try Levenshtein if not found
+                if (!found) {
+                    let bestId = null, bestDist = 99;
+                    for (const invId in inventory) {
+                        const dist = levenshtein(normId, normalizeValue(invId));
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestId = invId;
+                        }
+                    }
+                    if (bestDist <= 2 && bestId) {
+                        part = inventory[bestId];
+                        matchedId = bestId;
+                        fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    }
+                }
+            }
             if (!part || part.quantity === 0) {
                 // Missing entirely
                 missingParts++;
@@ -589,10 +620,10 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: Missing entirely (need ${required})</span>
+                        <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
                     </li>
                 `);
-            } else if (part.quantity < required) {
+            } else if (part.quantity < bom[id].quantity) {
                 // Low stock
                 lowStockParts++;
                 const have = part.quantity;
@@ -606,7 +637,7 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: Have ${have}, need ${required}</span>
+                        <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
                     </li>
                 `);
             } else {
@@ -621,7 +652,7 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${required})</span>
+                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
                     </li>
                 `);
             }
@@ -748,8 +779,39 @@
         const results = [];
         for (const id in bom) {
             totalParts++;
-            const required = bom[id].quantity;
             let part = inventory[id];
+            let matchedId = id;
+            let fuzzyNote = '';
+            if (!part) {
+                // Try normalized match
+                const normId = normalizeValue(id);
+                let found = false;
+                for (const invId in inventory) {
+                    if (normalizeValue(invId) === normId) {
+                        part = inventory[invId];
+                        matchedId = invId;
+                        fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                        found = true;
+                        break;
+                    }
+                }
+                // Try Levenshtein if not found
+                if (!found) {
+                    let bestId = null, bestDist = 99;
+                    for (const invId in inventory) {
+                        const dist = levenshtein(normId, normalizeValue(invId));
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            bestId = invId;
+                        }
+                    }
+                    if (bestDist <= 2 && bestId) {
+                        part = inventory[bestId];
+                        matchedId = bestId;
+                        fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    }
+                }
+            }
             if (!part || part.quantity === 0) {
                 // Missing entirely
                 missingParts++;
@@ -763,10 +825,10 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: Missing entirely (need ${required})</span>
+                        <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
                     </li>
                 `);
-            } else if (part.quantity < required) {
+            } else if (part.quantity < bom[id].quantity) {
                 // Low stock
                 lowStockParts++;
                 const have = part.quantity;
@@ -780,7 +842,7 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: Have ${have}, need ${required}</span>
+                        <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
                     </li>
                 `);
             } else {
@@ -795,7 +857,7 @@
                             </span>
                             <strong>${bom[id].name}</strong>
                         </span>
-                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${required})</span>
+                        <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
                     </li>
                 `);
             }
@@ -1263,6 +1325,26 @@
         }
         result.push(cur);
         return result;
+    }
+
+    // --- Add Levenshtein distance function near the top ---
+    function levenshtein(a, b) {
+        const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b[i - 1] === a[j - 1]) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // substitution
+                        matrix[i][j - 1] + 1,     // insertion
+                        matrix[i - 1][j] + 1      // deletion
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
     }
 
     initializeInventory();

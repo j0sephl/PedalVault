@@ -110,40 +110,23 @@
 
                 // Check if file is CSV
                 if (file.name.toLowerCase().endsWith('.csv')) {
-                    // Parse CSV
-                    const lines = fileContent.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim());
-                    
-                    // Find required column indices
-                    const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
-                    const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
-                    const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
-                    const urlIndex = headers.findIndex(h => h.toLowerCase().includes('url') || h.toLowerCase().includes('purchase'));
-                    const projectsIndex = headers.findIndex(h => h.toLowerCase().includes('project'));
-                    
-                    if (nameIndex === -1 || quantityIndex === -1) {
-                        throw new Error('CSV must contain name and quantity columns');
+                    // Use PapaParse to parse CSV
+                    const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+                    if (parsed.errors.length) {
+                        throw new Error('CSV parse error: ' + parsed.errors[0].message);
                     }
-
-                    // Process each line
                     importedData = {};
-                    for (let i = 1; i < lines.length; i++) {
-                        if (!lines[i].trim()) continue; // Skip empty lines
-                        
-                        const values = parseCsvLine(lines[i]).map(v => v.trim());
-                        const name = values[nameIndex];
-                        if (!name) {
-                            showNotification('Missing name for part on line ' + (i+1) + ', skipping.', 'error');
-                            continue;
-                        }
-                        const quantity = parseInt(values[quantityIndex]) || 0;
-                        
-                        // Generate ID from name if not provided
-                        const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                        const purchaseUrl = urlIndex !== -1 ? values[urlIndex] : '';
+                    parsed.data.forEach(row => {
+                        // Normalize headers
+                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || (row['Name'] || row['name'] || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        const name = row['Name'] || row['name'] || '';
+                        if (!name) return; // skip if no name
+                        const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
+                        const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
                         let projects = {};
-                        if (projectsIndex !== -1 && values[projectsIndex]) {
-                            values[projectsIndex].split(';').forEach(pair => {
+                        const projectsRaw = row['Projects'] || row['projects'] || '';
+                        if (projectsRaw) {
+                            projectsRaw.split(';').forEach(pair => {
                                 const [pid, qty] = pair.split(':').map(s => s.trim());
                                 if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
                             });
@@ -154,7 +137,7 @@
                             purchaseUrl: purchaseUrl,
                             projects: projects
                         };
-                    }
+                    });
                 } else {
                     // Parse JSON
                     importedData = JSON.parse(fileContent);
@@ -833,35 +816,34 @@
                 
                 // Check if file is CSV
                 if (file.name.toLowerCase().endsWith('.csv')) {
-                    // Parse CSV
-                    const lines = fileContent.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim());
-                    
-                    // Find required column indices
-                    const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
-                    const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
-                    const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
-                    
-                    if (nameIndex === -1 || quantityIndex === -1) {
-                        throw new Error('CSV must contain name and quantity columns');
+                    // Use PapaParse to parse CSV
+                    const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+                    if (parsed.errors.length) {
+                        throw new Error('CSV parse error: ' + parsed.errors[0].message);
                     }
-
-                    // Process each line
-                    for (let i = 1; i < lines.length; i++) {
-                        if (!lines[i].trim()) continue; // Skip empty lines
-                        
-                        const values = parseCsvLine(lines[i]).map(v => v.trim());
-                        const name = values[nameIndex];
-                        const quantity = parseInt(values[quantityIndex]) || 0;
-                        
-                        // Generate ID from name if not provided
-                        const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                        
-                        bom[id] = {
+                    importedData = {};
+                    parsed.data.forEach(row => {
+                        // Normalize headers
+                        const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || (row['Name'] || row['name'] || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        const name = row['Name'] || row['name'] || '';
+                        if (!name) return; // skip if no name
+                        const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
+                        const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
+                        let projects = {};
+                        const projectsRaw = row['Projects'] || row['projects'] || '';
+                        if (projectsRaw) {
+                            projectsRaw.split(';').forEach(pair => {
+                                const [pid, qty] = pair.split(':').map(s => s.trim());
+                                if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
+                            });
+                        }
+                        importedData[id] = {
                             name: name,
-                            quantity: quantity
+                            quantity: quantity,
+                            purchaseUrl: purchaseUrl,
+                            projects: projects
                         };
-                    }
+                    });
                 } else {
                     // Parse JSON
                     const parsedBom = JSON.parse(fileContent);

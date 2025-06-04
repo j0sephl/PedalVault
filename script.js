@@ -351,13 +351,13 @@
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
 
-        // --- In showEditPartModal(partId), use Choices.js for project selection ---
+        // --- In showEditPartModal(partId), use Choices.js only for selection, render custom tag+input rows for selected projects ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         projectsDropdownSection.innerHTML = '';
         if (Object.keys(projects).length === 0) {
             projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
         } else {
-            // Choices.js multi-select
+            // Choices.js multi-select for selection only
             let dropdownHtml = '<label for="editPartProjectsDropdown">Projects:</label>';
             dropdownHtml += '<select id="editPartProjectsDropdown" multiple style="width:100%;margin-bottom:8px;">';
             for (const projectId in projects) {
@@ -365,37 +365,58 @@
                 dropdownHtml += `<option value="${projectId}" ${selected}>${projects[projectId].name}</option>`;
             }
             dropdownHtml += '</select>';
-            dropdownHtml += '<div id="editPartProjectsQtyInputs"></div>';
+            dropdownHtml += '<div id="editPartProjectsCustomTags"></div>';
             projectsDropdownSection.innerHTML = dropdownHtml;
 
-            // Initialize Choices.js
+            // Initialize Choices.js (hide default tags)
             if (window.editPartProjectsChoices) {
                 window.editPartProjectsChoices.destroy();
             }
             window.editPartProjectsChoices = new Choices('#editPartProjectsDropdown', {
-                removeItemButton: true,
+                removeItemButton: false,
                 shouldSort: false,
                 placeholder: true,
                 placeholderValue: 'Select projects...'
             });
+            // Hide default tags
+            const choicesList = projectsDropdownSection.querySelector('.choices__list--multiple');
+            if (choicesList) choicesList.style.display = 'none';
 
-            // Render qty inputs for selected projects
-            function renderQtyInputsChoices() {
+            // Render custom tag+input rows
+            function renderCustomProjectTags() {
                 const selectedProjects = Array.from(document.getElementById('editPartProjectsDropdown').selectedOptions).map(opt => opt.value);
-                const qtyInputsDiv = document.getElementById('editPartProjectsQtyInputs');
-                qtyInputsDiv.innerHTML = '';
+                const tagsDiv = document.getElementById('editPartProjectsCustomTags');
+                tagsDiv.innerHTML = '';
                 selectedProjects.forEach(projectId => {
                     const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 1;
-                    qtyInputsDiv.innerHTML += `
-                        <div style="display:flex;align-items:center;margin-bottom:6px;">
-                            <span style="min-width:120px;">${projects[projectId].name}</span>
-                            <input type="number" min="1" class="edit-project-qty" data-project-qty="${projectId}" value="${qty}" style="width:50px;margin-left:8px;">
-                        </div>
+                    const tagRow = document.createElement('div');
+                    tagRow.className = 'nord-project-tag-row';
+                    tagRow.style.display = 'flex';
+                    tagRow.style.alignItems = 'center';
+                    tagRow.style.marginBottom = '6px';
+                    tagRow.innerHTML = `
+                        <span class="nord-project-tag">${projects[projectId].name}</span>
+                        <input type="number" min="1" class="edit-project-qty nord-project-qty" data-project-qty="${projectId}" value="${qty}" style="width:50px;margin-left:8px;">
+                        <button type="button" class="nord-project-remove" data-remove-project="${projectId}" title="Remove from project">&times;</button>
                     `;
+                    tagsDiv.appendChild(tagRow);
+                });
+                // Add remove event listeners
+                tagsDiv.querySelectorAll('.nord-project-remove').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        // Remove from dropdown selection
+                        const projectId = btn.dataset.removeProject;
+                        const select = document.getElementById('editPartProjectsDropdown');
+                        for (const opt of select.options) {
+                            if (opt.value === projectId) opt.selected = false;
+                        }
+                        // Trigger change event to re-render
+                        select.dispatchEvent(new Event('change'));
+                    });
                 });
             }
-            renderQtyInputsChoices();
-            document.getElementById('editPartProjectsDropdown').addEventListener('change', renderQtyInputsChoices);
+            renderCustomProjectTags();
+            document.getElementById('editPartProjectsDropdown').addEventListener('change', renderCustomProjectTags);
         }
     }
 
@@ -454,7 +475,7 @@
             selectPart(editingPartId);
         }
         
-        // --- In saveEditPart(), update to use Choices.js dropdown and qty inputs ---
+        // --- In saveEditPart(), update to use custom tag+input rows ---
         const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         const newProjects = {};
         const selectedProjects = projectsDropdownSection.querySelector('#editPartProjectsDropdown')

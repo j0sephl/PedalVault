@@ -46,7 +46,7 @@
         text-align: left;
         display: flex;
         align-items: center;
-        gap: 3px;
+        gap: 5px;
     }
 
     .header-content {
@@ -1800,4 +1800,65 @@
         .wordmark-svg {
             max-width: 250px;
         }
+    }
+
+    /* Nord theme overrides for Choices.js */
+    .choices {
+      background: #2E3440;
+      color: #E5E9F0;
+      border: 1.5px solid #4C566A;
+      border-radius: 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .choices__inner {
+      background: #2E3440;
+      color: #E5E9F0;
+      border: none;
+      border-radius: 0;
+      min-height: 44px;
+    }
+
+    .choices__list--multiple .choices__item {
+      background-color: #4C566A;
+      color: #EBCB8B;
+      border-radius: 4px;
+      border: none;
+      margin: 2px 4px 2px 0;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .choices__list--dropdown,
+    .choices__list[aria-expanded] {
+      background: #3B4252;
+      color: #E5E9F0;
+      border: 1.5px solid #4C566A;
+      border-radius: 0;
+    }
+
+    .choices__item--selectable.is-highlighted {
+      background: #5E81AC;
+      color: #ECEFF4;
+    }
+
+    .choices__input {
+      background: #2E3440;
+      color: #E5E9F0;
+      border: none;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .choices__button {
+      color: #BF616A;
+      opacity: 0.8;
+    }
+    .choices__button:hover {
+      color: #D08770;
+      opacity: 1;
+    }
+
+    .choices__placeholder {
+      color: #4C566A;
+      opacity: 1;
     }

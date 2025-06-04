@@ -124,6 +124,10 @@
                         
                         const values = lines[i].split(',').map(v => v.trim());
                         const name = values[nameIndex];
+                        if (!name) {
+                            showNotification('Missing name for part on line ' + (i+1) + ', skipping.', 'error');
+                            continue;
+                        }
                         const quantity = parseInt(values[quantityIndex]) || 0;
                         
                         // Generate ID from name if not provided

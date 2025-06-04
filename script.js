@@ -59,13 +59,14 @@
         if (format === 'csv') {
             filename = `guitar-pedal-inventory-${timestamp}.csv`;
             // Create CSV header
-            const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL'];
+            const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL', 'Projects'];
             // Create CSV rows
             const rows = Object.entries(inventory).map(([id, part]) => [
                 id,
                 part.name,
                 part.quantity,
-                part.purchaseUrl || ''
+                part.purchaseUrl || '',
+                part.projects ? Object.keys(part.projects).join(';') : ''
             ]);
             // Combine header and rows
             dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -96,7 +97,55 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const importedData = JSON.parse(e.target.result);
+                const fileContent = e.target.result;
+                let importedData;
+
+                // Check if file is CSV
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    // Parse CSV
+                    const lines = fileContent.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    
+                    // Find required column indices
+                    const nameIndex = headers.findIndex(h => h.toLowerCase().includes('name') || h.toLowerCase().includes('part'));
+                    const quantityIndex = headers.findIndex(h => h.toLowerCase().includes('quantity') || h.toLowerCase().includes('qty'));
+                    const idIndex = headers.findIndex(h => h.toLowerCase().includes('id') || h.toLowerCase().includes('part number'));
+                    const urlIndex = headers.findIndex(h => h.toLowerCase().includes('url') || h.toLowerCase().includes('purchase'));
+                    const projectsIndex = headers.findIndex(h => h.toLowerCase().includes('project'));
+                    
+                    if (nameIndex === -1 || quantityIndex === -1) {
+                        throw new Error('CSV must contain name and quantity columns');
+                    }
+
+                    // Process each line
+                    importedData = {};
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue; // Skip empty lines
+                        
+                        const values = lines[i].split(',').map(v => v.trim());
+                        const name = values[nameIndex];
+                        const quantity = parseInt(values[quantityIndex]) || 0;
+                        
+                        // Generate ID from name if not provided
+                        const id = idIndex !== -1 ? values[idIndex] : name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                        const purchaseUrl = urlIndex !== -1 ? values[urlIndex] : '';
+                        let projects = {};
+                        if (projectsIndex !== -1 && values[projectsIndex]) {
+                            values[projectsIndex].split(';').forEach(pid => {
+                                if (pid.trim()) projects[pid.trim()] = true;
+                            });
+                        }
+                        importedData[id] = {
+                            name: name,
+                            quantity: quantity,
+                            purchaseUrl: purchaseUrl,
+                            projects: projects
+                        };
+                    }
+                } else {
+                    // Parse JSON
+                    importedData = JSON.parse(fileContent);
+                }
                 
                 if (importedData.inventory && importedData.projects) {
                     inventory = importedData.inventory;
@@ -104,7 +153,7 @@
                     saveProjects();
                     updateProjectFilter();
                 } else if (typeof importedData === 'object' && importedData !== null) {
-                    // Fallback for old format
+                    // Fallback for old format or CSV import
                     inventory = importedData;
                 } else {
                     throw new Error('Invalid file format');

@@ -1872,6 +1872,7 @@
       overflow-y: auto;
       background: #2E3440;
       padding: 10px;
+      width: 150px;
     }
     .nord-project-inv-row {
       display: flex;

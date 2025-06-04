@@ -351,30 +351,40 @@
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
 
-        // Populate the projects section
-        const projectsSection = document.getElementById('editPartProjectsSection');
-        projectsSection.innerHTML = '';
+        // Replace project checkboxes/inputs with dropdown and dynamic qty inputs
+        const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
+        projectsDropdownSection.innerHTML = '';
         if (Object.keys(projects).length === 0) {
-            projectsSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
+            projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
         } else {
+            // Multi-select dropdown
+            let dropdownHtml = '<label for="editPartProjectsDropdown">Projects:</label><select id="editPartProjectsDropdown" multiple style="width:100%;margin-bottom:8px;">';
             for (const projectId in projects) {
-                const checked = part.projects && part.projects[projectId];
-                projectsSection.innerHTML += `
-                    <label style="display:block;margin-bottom:6px;">
-                        <input type="checkbox" class="edit-project-checkbox" data-project-id="${projectId}" ${checked ? 'checked' : ''}>
-                        ${projects[projectId].name}
-                        <input type="number" min="1" class="edit-project-qty" data-project-qty="${projectId}" value="${checked ? part.projects[projectId] : 1}" style="width:50px;margin-left:8px;" ${checked ? '' : 'disabled'}>
-                    </label>
-                `;
+                const selected = part.projects && part.projects[projectId] ? 'selected' : '';
+                dropdownHtml += `<option value="${projectId}" ${selected}>${projects[projectId].name}</option>`;
             }
+            dropdownHtml += '</select>';
+            dropdownHtml += '<div id="editPartProjectsQtyInputs"></div>';
+            projectsDropdownSection.innerHTML = dropdownHtml;
+
+            // Render initial qty inputs
+            function renderQtyInputs() {
+                const selectedProjects = Array.from(document.getElementById('editPartProjectsDropdown').selectedOptions).map(opt => opt.value);
+                const qtyInputsDiv = document.getElementById('editPartProjectsQtyInputs');
+                qtyInputsDiv.innerHTML = '';
+                selectedProjects.forEach(projectId => {
+                    const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 1;
+                    qtyInputsDiv.innerHTML += `
+                        <div style="display:flex;align-items:center;margin-bottom:6px;">
+                            <span style="min-width:120px;">${projects[projectId].name}</span>
+                            <input type="number" min="1" class="edit-project-qty" data-project-qty="${projectId}" value="${qty}" style="width:50px;margin-left:8px;">
+                        </div>
+                    `;
+                });
+            }
+            renderQtyInputs();
+            document.getElementById('editPartProjectsDropdown').addEventListener('change', renderQtyInputs);
         }
-        // Add event listeners to enable/disable qty input
-        projectsSection.querySelectorAll('.edit-project-checkbox').forEach(cb => {
-            cb.addEventListener('change', function() {
-                const qtyInput = projectsSection.querySelector(`.edit-project-qty[data-project-qty='${cb.dataset.projectId}']`);
-                qtyInput.disabled = !cb.checked;
-            });
-        });
     }
 
     function hideEditPartModal() {
@@ -433,25 +443,25 @@
         }
         
         // Update project tags and BOMs
-        const projectsSection = document.getElementById('editPartProjectsSection');
+        const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
         const newProjects = {};
-        projectsSection.querySelectorAll('.edit-project-checkbox').forEach(cb => {
-            const projectId = cb.dataset.projectId;
-            const qtyInput = projectsSection.querySelector(`.edit-project-qty[data-project-qty='${projectId}']`);
-            if (cb.checked) {
-                const qty = Math.max(1, parseInt(qtyInput.value) || 1);
-                newProjects[projectId] = qty;
-                // Update project BOM
-                if (!projects[projectId].bom) projects[projectId].bom = {};
-                projects[projectId].bom[newId] = { name: newName, quantity: qty };
-            } else {
-                // Remove from project BOM if present
-                if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[newId]) {
-                    delete projects[projectId].bom[newId];
-                }
-            }
+        const selectedProjects = projectsDropdownSection.querySelector('#editPartProjectsDropdown')
+            ? Array.from(projectsDropdownSection.querySelector('#editPartProjectsDropdown').selectedOptions).map(opt => opt.value)
+            : [];
+        selectedProjects.forEach(projectId => {
+            const qtyInput = projectsDropdownSection.querySelector(`.edit-project-qty[data-project-qty='${projectId}']`);
+            const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+            newProjects[projectId] = qty;
+            // Update project BOM
+            if (!projects[projectId].bom) projects[projectId].bom = {};
+            projects[projectId].bom[newId] = { name: newName, quantity: qty };
         });
-        // Assign to part
+        // Remove from BOMs if unselected
+        for (const projectId in projects) {
+            if (!selectedProjects.includes(projectId) && projects[projectId].bom && projects[projectId].bom[newId]) {
+                delete projects[projectId].bom[newId];
+            }
+        }
         inventory[newId].projects = newProjects;
         saveProjects();
         

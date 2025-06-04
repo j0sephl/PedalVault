@@ -350,6 +350,31 @@
         document.getElementById('editPartUrl').value = part.purchaseUrl || '';
         document.getElementById('editPartId').value = partId;
         document.getElementById('editPartModal').style.display = 'block';
+
+        // Populate the projects section
+        const projectsSection = document.getElementById('editPartProjectsSection');
+        projectsSection.innerHTML = '';
+        if (Object.keys(projects).length === 0) {
+            projectsSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
+        } else {
+            for (const projectId in projects) {
+                const checked = part.projects && part.projects[projectId];
+                projectsSection.innerHTML += `
+                    <label style="display:block;margin-bottom:6px;">
+                        <input type="checkbox" class="edit-project-checkbox" data-project-id="${projectId}" ${checked ? 'checked' : ''}>
+                        ${projects[projectId].name}
+                        <input type="number" min="1" class="edit-project-qty" data-project-qty="${projectId}" value="${checked ? part.projects[projectId] : 1}" style="width:50px;margin-left:8px;" ${checked ? '' : 'disabled'}>
+                    </label>
+                `;
+            }
+        }
+        // Add event listeners to enable/disable qty input
+        projectsSection.querySelectorAll('.edit-project-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const qtyInput = projectsSection.querySelector(`.edit-project-qty[data-project-qty='${cb.dataset.projectId}']`);
+                qtyInput.disabled = !cb.checked;
+            });
+        });
     }
 
     function hideEditPartModal() {
@@ -406,6 +431,29 @@
         if (currentPartId === editingPartId) {
             selectPart(editingPartId);
         }
+        
+        // Update project tags and BOMs
+        const projectsSection = document.getElementById('editPartProjectsSection');
+        const newProjects = {};
+        projectsSection.querySelectorAll('.edit-project-checkbox').forEach(cb => {
+            const projectId = cb.dataset.projectId;
+            const qtyInput = projectsSection.querySelector(`.edit-project-qty[data-project-qty='${projectId}']`);
+            if (cb.checked) {
+                const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+                newProjects[projectId] = qty;
+                // Update project BOM
+                if (!projects[projectId].bom) projects[projectId].bom = {};
+                projects[projectId].bom[newId] = { name: newName, quantity: qty };
+            } else {
+                // Remove from project BOM if present
+                if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[newId]) {
+                    delete projects[projectId].bom[newId];
+                }
+            }
+        });
+        // Assign to part
+        inventory[newId].projects = newProjects;
+        saveProjects();
         
         saveInventory();
         displayInventory();

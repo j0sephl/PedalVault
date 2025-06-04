@@ -154,6 +154,7 @@
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
             <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="editPartId" placeholder="NFC Tag ID" class="readonly-input">
+            <div id="editPartProjectsSection"></div>
             <div class="modal-buttons">
                 <button class="btn btn-add flex-1" onclick="saveEditPart()">Save Changes</button>
                 <button class="btn cancel-btn flex-1" onclick="hideEditPartModal()">Cancel</button>
@@ -204,6 +205,7 @@
     <div class="modal" id="projectManagementModal">
         <div class="modal-content">
             <h2>Project Management</h2>
+            <button class="btn btn-add flex-1" onclick="showProjectNameModal()">+ Create Project</button>
             <div id="projectList" class="project-list">
                 <!-- Projects will be listed here -->
             </div>

@@ -23,25 +23,37 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // First unregister any existing service workers
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for(let registration of registrations) {
-                        registration.unregister();
-                    }
-                    // Then register the new service worker
-                    navigator.serviceWorker.register('/sw.js')
-                        .then(registration => {
-                            console.log('ServiceWorker registration successful');
-                            // Force the service worker to update
-                            registration.update();
-                        })
-                        .catch(err => {
-                            console.log('ServiceWorker registration failed: ', err);
-                        });
-                });
+                // Only register service worker in production
+                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    // First unregister any existing service workers
+                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                        // Then register the new service worker
+                        navigator.serviceWorker.register('sw.js')
+                            .then(registration => {
+                                console.log('ServiceWorker registration successful');
+                                // Force the service worker to update
+                                registration.update();
+                            })
+                            .catch(err => {
+                                console.log('ServiceWorker registration failed: ', err);
+                            });
+                    });
+                }
             });
         }
     </script>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+    <link rel="preload" href="rive-logo.js" as="script">
+    <link rel="preload" href="gpi.riv" as="fetch" crossorigin>
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://unpkg.com">
 </head>
 <body>
     <div class="container">
@@ -86,24 +98,24 @@
             <div class="main-content">
                 <div class="left-panel">
                     <div class="sync-buttons"> 
-                        <button class="add-part-btn" onclick="showAddPartModal()">+ Add New Part</button>
-                        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">📋 Compare BOM</button>
-                        <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">📋 Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
-                        <button class="sync-btn export-btn full-width" onclick="showExportModal()">📤 Export Data</button>
+                        <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
+                        <button class="sync-btn import-btn full-width" id="compareBOMBtn">📋 Compare BOM</button>
+                        <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">📋 Export Project BOM</button>
+                        <button class="sync-btn import-btn full-width" id="importDataBtn">📥 Import Data</button>
+                        <button class="sync-btn export-btn full-width" id="exportDataBtn">📤 Export Data</button>
                     </div>
                 </div>
 
                 <div class="right-panel">
                     <div class="inventory-header">
-                        <button onclick="showProjectManagementModal()" class="manage-projects-btn">Manage Projects</button>
-                        <button onclick="showAllProjectRequirements()" class="manage-projects-btn">Compare All Projects</button>
+                        <button id="manageProjectsBtn" class="manage-projects-btn">Manage Projects</button>
+                        <button id="compareAllProjectsBtn" class="manage-projects-btn">Compare All Projects</button>
                         <div class="inventory-controls">
-                            <input type="text" id="searchInput" class="search-input" placeholder="Search parts..." oninput="searchParts()">
-                            <select class="sort-dropdown" id="projectFilter" onchange="filterByProject()">
+                            <input type="text" id="searchInput" class="search-input" placeholder="Search parts...">
+                            <select class="sort-dropdown" id="projectFilter">
                                 <option value="all">All Projects</option>
                             </select>
-                            <select class="sort-dropdown" id="sortDropdown" onchange="changeSortOrder()">
+                            <select class="sort-dropdown" id="sortDropdown">
                                 <option value="name-asc">Name A-Z</option>
                                 <option value="name-desc">Name Z-A</option>
                                 <option value="quantity-asc">Quantity Low-High</option>
@@ -280,5 +292,7 @@
     <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" class="hidden">
     <input type="file" id="importFile" accept=".json,.csv" onchange="importInventory(event)" class="hidden">
 
-    <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

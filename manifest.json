@@ -2,7 +2,7 @@
     "name": "Guitar Pedal Parts Inventory",
     "short_name": "GPI",
     "description": "NFC Inventory System for Guitar Pedal Parts",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#2E3440",
     "theme_color": "#3B4252",

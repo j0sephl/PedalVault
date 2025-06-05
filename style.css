@@ -229,7 +229,7 @@
           z-index: 10;
           border-bottom: 2px solid #4C566A;
           box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-          margin: 0px -20px 0px 0px;
+          margin: 0;
       }
   
       .inventory-header h3 {
@@ -238,16 +238,45 @@
           font-size: 20px;
       }
   
-      #inventoryItems {
-          padding-top: 10px;
-          background: #2E3440;
+      .manage-projects-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+          border: none;
+          padding: 8px 12px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'JetBrains Mono', monospace;
+          white-space: nowrap;
+      }
+  
+      .manage-projects-btn:hover {
+          background: #5E81AC;
+          color: #ECEFF4;
       }
   
       .inventory-controls {
           display: flex;
           gap: 10px;
           align-items: center;
-          flex-wrap: wrap;
+          justify-content: flex-end;
+      }
+  
+      .search-input {
+          padding: 8px 12px;
+          border: 1px solid #4C566A;
+          font-size: 14px;
+          background: #2E3440;
+          color: #E5E9F0;
+          min-width: 200px;
+          font-family: 'JetBrains Mono', monospace;
+          width: 100%;
+      }
+  
+      .search-input:focus {
+          outline: none;
+          border-color: #88C0D0;
+          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
       }
   
       .sort-dropdown {
@@ -337,6 +366,9 @@
           font-size: 14px;
           font-family: 'JetBrains Mono Light', 'JetBrains Mono', monospace;
           margin-right: 8px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
       }
   
       .item-quantity {
@@ -726,7 +758,6 @@
           .logo canvas {
               width: 120px;
               height: 120px;
-              margin-bottom: 8px;
               margin-left: auto;
               margin-right: auto;
           }
@@ -1008,8 +1039,15 @@
           flex: 1;
       }
   
+      .project-tags {
+          display: inline-flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          margin-left: 8px;
+      }
+  
       .project-tag {
-          color: #2E3440; /* Nord Dark */
+          color: #2E3440;
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 10px;
@@ -1020,27 +1058,39 @@
           max-width: 120px;
           overflow: hidden;
           text-overflow: ellipsis;
-          font-weight: 500; /* Slightly bolder for better readability */
+          font-weight: 500;
       }
   
       .project-tag:nth-child(4n+1) {
-          background: #81A1C1; /* Nord Blue */
+          background: #81A1C1;
       }
   
       .project-tag:nth-child(4n+2) {
-          background: #A3BE8C; /* Nord Green */
+          background: #A3BE8C;
       }
   
       .project-tag:nth-child(4n+3) {
-          background: #EBCB8B; /* Nord Yellow */
+          background: #EBCB8B;
       }
   
       .project-tag:nth-child(4n+4) {
-          background: #B48EAD; /* Nord Purple */
+          background: #B48EAD;
       }
   
       .project-tag:hover {
           filter: brightness(1.1);
+      }
+  
+      @media (max-width: 768px) {
+          .item-name {
+              font-size: 13px;
+              gap: 6px;
+          }
+          
+          .project-tag {
+              font-size: 9px;
+              padding: 1px 4px;
+          }
       }
   
       .project-status {
@@ -1480,260 +1530,6 @@
       #allProjectRequirementsModal .close-btn:hover {
           background: #434C5E;
           color: #ECEFF4;
-      }
-  
-      /* Project Name Modal */
-      #projectNameModal {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(46, 52, 64, 0.8);
-          z-index: 1000;
-      }
-  
-      #projectNameModal.show {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-      }
-  
-      #projectNameModal .modal-content {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background-color: #2E3440;
-          padding: 20px;
-          border: 1px solid #4C566A;
-          border-radius: 8px;
-          width: 90%;
-          max-width: 500px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          margin: 0;
-      }
-  
-      .modal-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #4C566A;
-      }
-  
-      .modal-header h2 {
-          color: #ECEFF4;
-          margin: 0;
-          font-size: 1.5rem;
-      }
-  
-      .modal-body {
-          margin-bottom: 20px;
-      }
-  
-      .modal-body input {
-          width: 100%;
-          padding: 10px;
-          border: 1px solid #4C566A;
-          border-radius: 4px;
-          background-color: #3B4252;
-          color: #ECEFF4;
-          font-size: 1rem;
-      }
-  
-      .modal-body input:focus {
-          outline: none;
-          border-color: #81A1C1;
-          box-shadow: 0 0 0 2px rgba(129, 161, 193, 0.2);
-      }
-  
-      .modal-footer {
-          display: flex;
-          justify-content: flex-end;
-          gap: 10px;
-      }
-  
-      .modal-footer button {
-          padding: 8px 16px;
-          border: none;
-          border-radius: 4px;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-      }
-  
-      .modal-footer button:first-child {
-          background-color: #4C566A;
-          color: #ECEFF4;
-      }
-  
-      .modal-footer button:last-child {
-          background-color: #81A1C1;
-          color: #2E3440;
-      }
-  
-      .modal-footer button:hover {
-          filter: brightness(1.1);
-      }
-  
-      @media (max-width: 768px) {
-          .modal-content {
-              margin: 20% auto;
-              width: 95%;
-          }
-          
-          .modal-header h2 {
-              font-size: 1.2rem;
-          }
-          
-          .modal-body input {
-              font-size: 0.9rem;
-          }
-          
-          .modal-footer button {
-              padding: 6px 12px;
-              font-size: 0.8rem;
-          }
-      }
-  
-      .coffee-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          color: #EBCB8B;
-          text-decoration: none;
-          font-size: 14px;
-          padding: 6px 12px;
-          border-radius: 4px;
-          background: rgba(235, 203, 139, 0.1);
-          transition: all 0.2s ease;
-          margin-top: 8px;
-      }
-  
-      .coffee-link:hover {
-          background: rgba(235, 203, 139, 0.2);
-          color: #EBCB8B;
-      }
-  
-      .coffee-icon {
-          width: 18px;
-          height: 18px;
-          fill: currentColor;
-      }
-  
-      .manage-projects-btn {
-          background: #4C566A;
-          color: #E5E9F0;
-          border: none;
-          padding: 8px 12px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-family: 'JetBrains Mono', monospace;
-          white-space: nowrap;
-      }
-  
-      .manage-projects-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-      }
-  
-      @media (max-width: 768px) {
-          .inventory-header {
-              flex-direction: column;
-              align-items: stretch;
-              padding: 10px;
-          }
-  
-          .manage-projects-btn {
-              width: 100%;
-              text-align: center;
-          }
-  
-          .inventory-controls {
-              width: 100%;
-          }
-  
-          .inventory-controls select {
-              width: 100%;
-          }
-      }
-  
-      .quantity-number {
-          cursor: pointer;
-          padding: 0 4px;
-          min-width: 24px;
-          text-align: center;
-          display: inline-block;
-      }
-  
-      .quantity-number:hover {
-          background: rgba(236, 239, 244, 0.1);
-          border-radius: 4px;
-      }
-  
-      .quantity-input-inline {
-          width: 50px;
-          padding: 2px 4px;
-          border: 1px solid #4C566A;
-          background: #2E3440;
-          color: #E5E9F0;
-          font-size: 12px;
-          text-align: center;
-          border-radius: 4px;
-          margin: 15px 0px;
-      }
-  
-      .quantity-input-inline:focus {
-          outline: none;
-          border-color: #88C0D0;
-          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-      }
-  
-      .quantity-input-inline::-webkit-inner-spin-button,
-      .quantity-input-inline::-webkit-outer-spin-button {
-          opacity: 1;
-          height: 20px;
-      }
-  
-      @media (max-width: 768px) {
-          .quantity-input-inline {
-              width: 60px;
-              font-size: 14px;
-              padding: 4px;
-          }
-      }
-  
-      .search-input {
-          padding: 8px 12px;
-          border: 1px solid #4C566A;
-          font-size: 14px;
-          background: #2E3440;
-          color: #E5E9F0;
-          min-width: 200px;
-          font-family: 'JetBrains Mono', monospace;
-          border-radius: 0;
-      }
-  
-      .search-input:focus {
-          outline: none;
-          border-color: #88C0D0;
-          box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-      }
-  
-      .search-input::placeholder {
-          color: #4C566A;
-      }
-  
-      @media (max-width: 768px) {
-          .search-input {
-              width: 100%;
-              min-width: unset;
-          }
       }
   
       /* Project Details Modal */

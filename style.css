@@ -14,6 +14,21 @@
     font-style: normal;
     font-display: swap;
   }
+
+:root {
+  --bg-dark: #2E3440;
+  --bg-light: #3B4252;
+  --fg: #E5E9F0;
+  --accent: #5E81AC;
+  --danger: #BF616A;
+  --success: #A3BE8C;
+  --warn: #EBCB8B;
+  --muted: #4C566A;
+  --muted-alt: #434C5E;
+  --info: #88C0D0;
+  --highlight: #ECEFF4;
+}
+
   
       * {
           margin: 0;

@@ -11,34 +11,6 @@ function debounce(func, wait) {
     };
 }
 
-function normalizeValue(str) {
-    if (!str) return '';
-    return str
-        .toLowerCase()
-        .replace(/[.,]/g, '') 
-        .replace(/([0-9]+)[ ]*([kmru])([0-9]*)/g, (m, p1, p2, p3) => p1 + p2 + (p3 || ''))
-        .replace(/[^a-z0-9]/g, '');
-}
-
-function levenshtein(a, b) {
-    const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
-    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-    for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-            if (b[i - 1] === a[j - 1]) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1, 
-                    matrix[i][j - 1] + 1,     
-                    matrix[i - 1][j] + 1      
-                );
-            }
-        }
-    }
-    return matrix[b.length][a.length];
-}
-
 // Cache DOM elements
 const DOM = {
     get: function(id) {
@@ -48,71 +20,80 @@ const DOM = {
     searchInput: document.getElementById('searchInput'),
     sortDropdown: document.getElementById('sortDropdown'),
     projectFilter: document.getElementById('projectFilter'),
-    syncButtonsContainer: document.getElementById('syncButtonsContainer'), // Added for createSyncButtons
+    inventoryList: document.querySelector('.inventory-list'),
     modals: {
         addPart: document.getElementById('addPartModal'),
         editPart: document.getElementById('editPartModal'),
         deletePart: document.getElementById('deletePartModal'),
-        exportData: document.getElementById('exportModal'),
-        bomDisplay: document.getElementById('bomModal'),    
+        export: document.getElementById('exportModal'),
+        bom: document.getElementById('bomModal'),
         projectManagement: document.getElementById('projectManagementModal'),
-        projectNameInput: document.getElementById('projectNameModal'), 
-        exportBOM: document.getElementById('exportBOMModal'),
-        deleteProject: document.getElementById('deleteProjectModal'),        
-        allProjectRequirements: document.getElementById('allProjectRequirementsModal') 
+        projectName: document.getElementById('projectNameModal'),
+        exportBOM: document.getElementById('exportBOMModal')
     }
 };
 
-// Application State
-let inventory = {};
-let projects = {};
-let appState = {
-    editingPartId: null,
-    deletingPartId: null,
-    deletingProjectId: null, 
-    currentSortOrder: 'name-asc',
-    currentProjectFilter: 'all',
-    pendingBomData: null,
-    currentSearchQuery: '',
-    currentBomForModal: null 
-};
-
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        initializeApp();
+    }, 100);
+});
 
 function initializeApp() {
-    // Main control event listeners (search, sort, filter)
-    DOM.searchInput?.addEventListener('input', debounce(searchParts, 250));
-    DOM.projectFilter?.addEventListener('change', filterByProject);
-    DOM.sortDropdown?.addEventListener('change', changeSortOrder);
+    // Main buttons
+    const addPartBtn = DOM.get('addPartBtn');
+    const compareBOMBtn = DOM.get('compareBOMBtn');
+    const exportBOMModalBtn = DOM.get('exportBOMModalBtn');
+    const importDataBtn = DOM.get('importDataBtn');
+    const exportDataBtn = DOM.get('exportDataBtn');
     
-    DOM.get('manageProjectsBtn')?.addEventListener('click', showProjectManagementModal);
-    DOM.get('compareAllProjectsBtn')?.addEventListener('click', showAllProjectRequirementsModal);
+    // Project management buttons
+    const manageProjectsBtn = DOM.get('manageProjectsBtn');
+    const compareAllProjectsBtn = DOM.get('compareAllProjectsBtn');
+    
+    // Search and filters
+    const searchInput = DOM.get('searchInput');
+    const projectFilter = DOM.get('projectFilter');
+    const sortDropdown = DOM.get('sortDropdown');
 
-    // Setup for hidden file inputs
-    DOM.get('importBOMFile')?.addEventListener('change', compareBOM);
-    DOM.get('importInventoryFile')?.addEventListener('change', importInventory);
+    // Add event listeners only if elements exist
+    if (addPartBtn) addPartBtn.addEventListener('click', showAddPartModal);
+    if (compareBOMBtn) compareBOMBtn.addEventListener('click', () => DOM.get('importBOM').click());
+    if (exportBOMModalBtn) exportBOMModalBtn.addEventListener('click', showExportBOMModal);
+    if (importDataBtn) importDataBtn.addEventListener('click', () => DOM.get('importFile').click());
+    if (exportDataBtn) exportDataBtn.addEventListener('click', showExportModal);
+    
+    if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
+    if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
+    
+    // Debounce search input for better performance
+    if (searchInput) searchInput.addEventListener('input', debounce(searchParts, 250));
+    if (projectFilter) projectFilter.addEventListener('change', filterByProject);
+    if (sortDropdown) sortDropdown.addEventListener('change', changeSortOrder);
 
-    initializeData(); // Includes localStorage loading, initial display, and sync button creation
+    // Initialize the app
+    initializeInventory();
 }
 
-// Centralized Modal Visibility Control
-function setModalVisibility(modalKey, visible) {
-    const modal = DOM.modals[modalKey];
-    if (modal) {
-        modal.style.display = visible ? 'block' : 'none'; 
+let inventory = {};
+let currentPartId = null;
+let editingPartId = null;
+let deletingPartId = null;
+let currentSortOrder = 'name-asc';
+let projects = {};
+let currentProjectFilter = 'all';
+let pendingBomData = null;
+let currentSearchQuery = '';
 
-        if (visible) {
-            const firstInput = modal.querySelector('input[type="text"]:not([disabled]):not([readonly]), input[type="search"]:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), input[type="number"]:not([disabled]):not([readonly]), select:not([disabled])');
-            if (firstInput) {
-                firstInput.focus();
-            }
-            // Specific focus cases (can be fine-tuned)
-            if (modalKey === 'projectNameInput') DOM.get('projectNameInput')?.focus();
-            else if (modalKey === 'addPart') DOM.get('newPartName')?.focus();
-            else if (modalKey === 'editPart') DOM.get('editPartName')?.focus();
-        }
-    } else {
-        console.warn(`Modal for key '${modalKey}' not found in DOM.modals.`);
-    }
+function normalizeValue(str) {
+    if (!str) return '';
+    // Lowercase, remove spaces, replace , or . with nothing, then handle k/M/R
+    return str
+        .toLowerCase()
+        .replace(/[,\.]/g, '') // Remove commas and dots
+        .replace(/([0-9]+)[ ]*([kmru])([0-9]*)/g, (m, p1, p2, p3) => p1 + p2 + (p3 || ''))
+        .replace(/[^a-z0-9]/g, ''); // Remove all non-alphanum
 }
 
 function saveProjects() {
@@ -123,123 +104,51 @@ function saveInventory() {
     localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
 }
 
-function initializeData() {
+// Initialize with some sample data
+function initializeInventory() {
     const savedInventory = localStorage.getItem('guitarPedalInventory');
     if (savedInventory) {
         inventory = JSON.parse(savedInventory);
     } else {
-        inventory = { // Minimal sample data
-            'res_10k': { name: 'Resistor 10kΩ', quantity: 10, purchaseUrl: '', projects: {} }
+        // Sample data
+        inventory = {
+            'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
+            'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
+            'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
+            'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
+            'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
+            'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
         };
         saveInventory();
     }
-
-    const savedProjects = localStorage.getItem('guitarPedalProjects');
-    if (savedProjects) {
-        projects = JSON.parse(savedProjects);
-    } else {
-        projects = {}; 
-        saveProjects();
-    }
-    
-    updateProjectFilter();
+    initializeProjects();
     displayInventory();
-    checkUrlForPart(); // Handle direct URL actions like quick remove
-    setupSyncButtons(DOM.syncButtonsContainer); // Programmatically create sync buttons
-}
-
-function createAndSetupButton(config) {
-    const button = document.createElement('button');
-    button.className = config.className;
-    if (config.id) button.id = config.id;
+    checkUrlForPart();
     
-    // Create icon SVG element if path is provided
-    if (config.svgPath) {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("class", "icon"); // Assuming 'icon' or 'sync-icon' class for styling
-        svg.setAttribute("viewBox", "0 0 24 24");
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", config.svgPath);
-        svg.appendChild(path);
-        button.appendChild(svg);
-        button.appendChild(document.createTextNode(" " + config.text)); // Add space before text
-    } else {
-        button.textContent = config.text;
+    // Update sync buttons
+    const syncButtonsContainer = document.querySelector('.sync-buttons');
+    if (syncButtonsContainer) {
+        syncButtonsContainer.innerHTML = createSyncButtons();
     }
-
-    if (config.title) button.title = config.title;
-    button.addEventListener('click', config.onClick);
-    return button;
 }
 
-function setupSyncButtons(container) {
-    if (!container) return;
-    container.innerHTML = ''; // Clear existing
-
-    container.appendChild(createAndSetupButton({
-        className: 'add-part-btn', // Combined class from original HTML structure
-        id: 'addPartBtnMain', // Use 'addPartBtnMain' to distinguish from modal's add button if needed
-        text: 'Add New Part',
-        svgPath: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
-        onClick: showAddPartModal
-    }));
-    
-    container.appendChild(createAndSetupButton({
-        className: 'sync-btn import-btn full-width',
-        id: 'compareBOMBtnMain',
-        text: 'Import & Compare BOM',
-        svgPath: "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z",
-        onClick: () => DOM.get('importBOMFile').click()
-    }));
-
-    container.appendChild(createAndSetupButton({
-        className: 'sync-btn export-btn full-width',
-        id: 'exportBOMModalBtnMain',
-        text: 'Export Project BOM',
-        svgPath: "M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z",
-        onClick: showExportBOMModal
-    }));
-    
-    // Optional: Add a separator if visually desired, like in original string
-    const hr = document.createElement('hr');
-    hr.style.borderColor = 'var(--nord4)'; // From style.css .sync-buttons > hr
-    hr.style.margin = '10px 0'; // From style.css .sync-buttons > hr
-    container.appendChild(hr);
-
-
-    container.appendChild(createAndSetupButton({
-        className: 'sync-btn import-btn full-width',
-        id: 'importDataBtnMain',
-        text: 'Import Full Data',
-        svgPath: "M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z", // Different icon from compare
-        onClick: () => DOM.get('importInventoryFile').click()
-    }));
-
-    container.appendChild(createAndSetupButton({
-        className: 'sync-btn export-btn full-width',
-        id: 'exportDataBtnMain',
-        text: 'Export Full Data',
-        svgPath: "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z", // Same icon as import, can be varied
-        onClick: showExportDataModal
-    }));
+function showExportModal() {
+    document.getElementById('exportModal').style.display = 'block';
 }
 
-
-function showExportDataModal() {
-    setModalVisibility('exportData', true);
-}
-
-function hideExportDataModal() {
-    setModalVisibility('exportData', false);
+function hideExportModal() {
+    document.getElementById('exportModal').style.display = 'none';
 }
 
 function exportInventory(format) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
     let filename, dataStr, mimeType;
-
+    
     if (format === 'csv') {
         filename = `guitar-pedal-inventory-${timestamp}.csv`;
+        // Create CSV header
         const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL', 'Projects'];
+        // Helper to quote and escape fields
         function csvEscape(val) {
             if (val == null) return '';
             val = String(val);
@@ -247,162 +156,202 @@ function exportInventory(format) {
             if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
             return val;
         }
+        // Create CSV rows
         const rows = Object.entries(inventory).map(([id, part]) => [
-            id, part.name, part.quantity, part.purchaseUrl || '',
+            id,
+            part.name,
+            part.quantity,
+            part.purchaseUrl || '',
             part.projects ? Object.entries(part.projects).map(([pid, qty]) => `${pid}:${qty}`).join(';') : ''
         ].map(csvEscape));
+        // Combine header and rows
         dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\n');
         mimeType = 'text/csv';
-    } else { 
+    } else {
         filename = `guitar-pedal-inventory-${timestamp}.json`;
+        // Export both inventory and projects
         dataStr = JSON.stringify({ inventory, projects }, null, 2);
         mimeType = 'application/json';
     }
-
-    const dataBlob = new Blob([dataStr], { type: mimeType });
+    
+    const dataBlob = new Blob([dataStr], {type: mimeType});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(dataBlob);
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    hideExportDataModal();
+    
+    hideExportModal();
     showNotification(`Exported inventory to ${filename}`);
 }
 
 function importInventory(event) {
     const file = event.target.files[0];
     if (!file) return;
-
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const fileContent = e.target.result;
-            let importedInventoryData; 
-            let importedProjectsData = null; 
+            let importedData;
 
+            // Check if file is CSV
             if (file.name.toLowerCase().endsWith('.csv')) {
+                // Use PapaParse to parse CSV
                 const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
-                if (parsed.errors.length) throw new Error('CSV parse error: ' + parsed.errors[0].message);
-                
-                importedInventoryData = {};
+                if (parsed.errors.length) {
+                    throw new Error('CSV parse error: ' + parsed.errors[0].message);
+                }
+                importedData = {};
                 parsed.data.forEach(row => {
+                    // Normalize headers
+                    const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
                     const name = row['Name'] || row['name'] || '';
-                    if (!name) return; 
-                    const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(name);
+                    if (!name) return; // skip if no name
                     const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
                     const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
-                    let itemProjects = {};
+                    let projects = {};
                     const projectsRaw = row['Projects'] || row['projects'] || '';
                     if (projectsRaw) {
                         projectsRaw.split(';').forEach(pair => {
-                            const [pid, qtyStr] = pair.split(':').map(s => s.trim());
-                            if (pid) itemProjects[pid] = qtyStr ? parseInt(qtyStr) || 0 : 0;
+                            const [pid, qty] = pair.split(':').map(s => s.trim());
+                            if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
                         });
                     }
-                    importedInventoryData[id] = { name, quantity, purchaseUrl, projects: itemProjects };
+                    importedData[id] = {
+                        name: name,
+                        quantity: quantity,
+                        purchaseUrl: purchaseUrl,
+                        projects: projects
+                    };
                 });
-            } else { 
-                const jsonData = JSON.parse(fileContent);
-                if (jsonData.inventory && jsonData.projects) { 
-                    importedInventoryData = jsonData.inventory;
-                    importedProjectsData = jsonData.projects;
-                } else if (typeof jsonData === 'object' && jsonData !== null) { 
-                    importedInventoryData = jsonData; // Assume old format (inventory only) or flat list
-                } else {
-                    throw new Error('Invalid JSON file format');
-                }
+            } else {
+                // Parse JSON
+                importedData = JSON.parse(fileContent);
             }
             
-            inventory = importedInventoryData; 
-            if (importedProjectsData) { 
-                projects = importedProjectsData;
-            } else { 
-                 // Rebuild projects from inventory's part.projects if projects data wasn't explicitly in the import
-                const tempProjects = {};
+            if (importedData.inventory && importedData.projects) {
+                inventory = importedData.inventory;
+                projects = importedData.projects;
+                saveProjects();
+                updateProjectFilter();
+            } else if (typeof importedData === 'object' && importedData !== null) {
+                // Fallback for old format or CSV import
+                inventory = importedData;
+                // --- Begin: Ensure projects are globally tagged and BOMs updated ---
                 for (const partId in inventory) {
                     const part = inventory[partId];
                     if (part.projects) {
                         for (const projectId in part.projects) {
-                            if (!tempProjects[projectId]) {
-                                tempProjects[projectId] = { name: projectId, bom: {} }; 
+                            // Create project if missing
+                            if (!projects[projectId]) {
+                                projects[projectId] = {
+                                    name: projectId,
+                                    bom: {}
+                                };
                             }
-                            if (!tempProjects[projectId].bom) tempProjects[projectId].bom = {};
-                            tempProjects[projectId].bom[partId] = { name: part.name, quantity: part.projects[projectId] };
+                            // Add part to project BOM with correct quantity
+                            if (!projects[projectId].bom) projects[projectId].bom = {};
+                            projects[projectId].bom[partId] = {
+                                name: part.name,
+                                quantity: part.projects[projectId]
+                            };
                         }
                     }
                 }
-                projects = tempProjects; // Assign rebuilt projects
+                saveProjects();
+                updateProjectFilter();
+                // --- End: Ensure projects are globally tagged and BOMs updated ---
+            } else {
+                throw new Error('Invalid file format');
             }
-
             saveInventory();
-            saveProjects();
-            updateProjectFilter();
             displayInventory();
+            currentPartId = null;
             showNotification('Inventory imported successfully!');
         } catch (error) {
             showNotification('Error importing file: ' + error.message, 'error');
-            console.error("Import Error:", error);
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; 
+    
+    // Reset the file input
+    event.target.value = '';
 }
 
 function searchParts() {
-    appState.currentSearchQuery = DOM.searchInput.value.toLowerCase().trim();
+    const searchInput = DOM.get('searchInput');
+    if (!searchInput) return;
+    currentSearchQuery = searchInput.value.toLowerCase().trim();
     displayInventory();
 }
 
 function getSortedInventoryEntries() {
-    let entries = Object.entries(inventory);
-
-    if (appState.currentSearchQuery) {
-        entries = entries.filter(([_, part]) => part.name.toLowerCase().includes(appState.currentSearchQuery));
-    }
-
-    if (appState.currentProjectFilter !== 'all') {
-        entries = entries.filter(([_, part]) => part.projects && part.projects[appState.currentProjectFilter]);
-    }
+    const entries = Object.entries(inventory);
     
-    switch (appState.currentSortOrder) {
-        case 'name-asc': return entries.sort((a, b) => a[1].name.localeCompare(b[1].name));
-        case 'name-desc': return entries.sort((a, b) => b[1].name.localeCompare(a[1].name));
-        case 'quantity-asc': return entries.sort((a, b) => a[1].quantity - b[1].quantity);
-        case 'quantity-desc': return entries.sort((a, b) => b[1].quantity - a[1].quantity);
+    // First filter by search query if one exists
+    const filteredEntries = currentSearchQuery 
+        ? entries.filter(([_, part]) => {
+            const searchStr = part.name.toLowerCase();
+            return searchStr.includes(currentSearchQuery);
+        })
+        : entries;
+    
+    // Then apply project filter
+    const projectFilteredEntries = currentProjectFilter !== 'all'
+        ? filteredEntries.filter(([_, part]) => part.projects && part.projects[currentProjectFilter])
+        : filteredEntries;
+    
+    // Finally apply sorting
+    switch (currentSortOrder) {
+        case 'name-asc':
+            return projectFilteredEntries.sort((a, b) => a[1].name.localeCompare(b[1].name));
+        case 'name-desc':
+            return projectFilteredEntries.sort((a, b) => b[1].name.localeCompare(a[1].name));
+        case 'quantity-asc':
+            return projectFilteredEntries.sort((a, b) => a[1].quantity - b[1].quantity);
+        case 'quantity-desc':
+            return projectFilteredEntries.sort((a, b) => b[1].quantity - a[1].quantity);
         case 'stock-status':
-            return entries.sort((a, b) => {
-                const aLowStock = a[1].quantity < 5; 
+            return projectFilteredEntries.sort((a, b) => {
+                const aLowStock = a[1].quantity < 5;
                 const bLowStock = b[1].quantity < 5;
                 if (aLowStock && !bLowStock) return -1;
                 if (!aLowStock && bLowStock) return 1;
-                return a[1].name.localeCompare(b[1].name); // Secondary sort by name
+                return a[1].name.localeCompare(b[1].name);
             });
-        default: return entries;
+        default:
+            return projectFilteredEntries;
     }
 }
 
 function changeSortOrder() {
-    appState.currentSortOrder = DOM.sortDropdown.value;
+    currentSortOrder = document.getElementById('sortDropdown').value;
     displayInventory();
 }
 
 function displayInventory() {
     const fragment = document.createDocumentFragment();
     const sortedItems = getSortedInventoryEntries();
-
+    
     sortedItems.forEach(([id, part]) => {
         const item = document.createElement('div');
         item.className = 'inventory-item';
         item.dataset.id = id;
-
+        
+        // Create project tags HTML if part has projects
         const projectTagsHtml = part.projects ? Object.entries(part.projects)
             .map(([projectId, qty]) => {
                 const project = projects[projectId];
-                return project ? `<span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">${project.name} (${qty})</span>` : '';
+                return project ? `
+                    <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
+                        ${project.name} (${qty})
+                    </span>
+                ` : '';
             }).join('') : '';
-
+        
+        // Use template literals for better performance
         item.innerHTML = `
             <div class="item-info">
                 <div class="item-name">
@@ -410,9 +359,9 @@ function displayInventory() {
                     ${projectTagsHtml ? `<div class="project-tags">${projectTagsHtml}</div>` : ''}
                 </div>
                 <div class="item-quantity ${part.quantity < 5 ? 'low' : ''}">
-                    <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
-                    <span class="quantity-number" role="status" aria-live="polite">${part.quantity}</span>
-                    <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
+                    <button class="quantity-btn" data-action="decrease">-</button>
+                    <span class="quantity-number">${part.quantity}</span>
+                    <button class="quantity-btn" data-action="increase">+</button>
                 </div>
             </div>
             <div class="item-actions">
@@ -429,25 +378,38 @@ function displayInventory() {
                 </button>
             </div>
         `;
-
-        item.querySelector('.edit-icon')?.addEventListener('click', () => showEditPartModal(id));
-        item.querySelector('.delete-icon')?.addEventListener('click', () => showDeletePartModal(id));
-        item.querySelector('.shop-icon')?.addEventListener('click', () => openPurchaseLink(id));
         
-        item.querySelectorAll('.project-tag').forEach(tag => {
+        // Add event listeners
+        item.querySelector('.edit-icon').addEventListener('click', () => showEditPartModal(id));
+        item.querySelector('.delete-icon').addEventListener('click', () => showDeletePartModal(id));
+        
+        // Add shopping button event listener if it exists
+        const shopButton = item.querySelector('.shop-icon');
+        if (shopButton) {
+            shopButton.addEventListener('click', () => openPurchaseLink(id));
+        }
+        
+        // Add project tag click handlers
+        const projectTags = item.querySelectorAll('.project-tag');
+        projectTags.forEach(tag => {
             tag.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const projectId = tag.dataset.projectId;
-                if (projectId) showProjectDetailsModal(projectId);
+                if (projectId) {
+                    showProjectDetails(projectId);
+                }
             });
         });
-
-        item.querySelector('[data-action="decrease"]')?.addEventListener('click', () => adjustStockInline(id, 'remove'));
-        item.querySelector('[data-action="increase"]')?.addEventListener('click', () => adjustStockInline(id, 'add'));
+        
+        // Add quantity button event listeners
+        const decreaseBtn = item.querySelector('[data-action="decrease"]');
+        const increaseBtn = item.querySelector('[data-action="increase"]');
+        if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
+        if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
         
         fragment.appendChild(item);
     });
-
+    
     DOM.inventoryItems.innerHTML = '';
     DOM.inventoryItems.appendChild(fragment);
 }
@@ -455,7 +417,7 @@ function displayInventory() {
 function adjustStockInline(partId, action) {
     const part = inventory[partId];
     if (!part) return;
-
+    
     if (action === 'add') {
         part.quantity += 1;
         showNotification(`Added 1 ${part.name}`);
@@ -464,86 +426,62 @@ function adjustStockInline(partId, action) {
             part.quantity -= 1;
             showNotification(`Removed 1 ${part.name}`);
         } else {
-            showNotification(`${part.name} is already at 0 quantity.`, 'error');
+            showNotification('Cannot remove more items', 'error');
             return;
         }
     }
+    
     saveInventory();
-    displayInventory(); 
+    displayInventory();
 }
 
 function showAddPartModal() {
-    setModalVisibility('addPart', true);
+    document.getElementById('addPartModal').style.display = 'block';
 }
 
 function hideAddPartModal() {
-    setModalVisibility('addPart', false);
-    DOM.get('newPartName').value = '';
-    DOM.get('newPartQuantity').value = '';
-    DOM.get('newPartUrl').value = '';
-    DOM.get('newPartId').value = '';
-}
-
-function addNewPart() {
-    const name = DOM.get('newPartName').value.trim();
-    const quantity = parseInt(DOM.get('newPartQuantity').value) || 0;
-    const purchaseUrl = DOM.get('newPartUrl').value.trim();
-    let id = DOM.get('newPartId').value.trim();
-
-    if (!name) {
-        showNotification('Please enter a part name', 'error');
-        return;
-    }
-    if (!id) id = normalizeValue(name);
-    if (inventory[id]) {
-        showNotification('Part ID already exists. Please choose a unique ID.', 'error');
-        return;
-    }
-
-    inventory[id] = { name, quantity, purchaseUrl, projects: {} };
-    saveInventory();
-    displayInventory();
-    hideAddPartModal();
-    showNotification(`Added ${name} to inventory`);
+    document.getElementById('addPartModal').style.display = 'none';
+    document.getElementById('newPartName').value = '';
+    document.getElementById('newPartQuantity').value = '';
+    document.getElementById('newPartUrl').value = '';
+    document.getElementById('newPartId').value = '';
 }
 
 function showEditPartModal(partId) {
-    appState.editingPartId = partId;
+    editingPartId = partId;
     const part = inventory[partId];
-    if (!part) {
-        showNotification('Part not found for editing.', 'error');
-        return;
-    }
-
-    DOM.get('editPartName').value = part.name;
-    DOM.get('editPartQuantity').value = part.quantity;
-    DOM.get('editPartUrl').value = part.purchaseUrl || '';
-    DOM.get('editPartId').value = partId; 
     
-    const projectsDropdownSection = DOM.get('editPartProjectsDropdownSection');
-    projectsDropdownSection.innerHTML = ''; 
+    document.getElementById('editPartName').value = part.name;
+    document.getElementById('editPartQuantity').value = part.quantity;
+    document.getElementById('editPartUrl').value = part.purchaseUrl || '';
+    document.getElementById('editPartId').value = partId;
+    document.getElementById('editPartModal').style.display = 'block';
+
+    // --- In showEditPartModal(partId), render a project list styled like inventory items ---
+    const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
+    projectsDropdownSection.innerHTML = '';
     if (Object.keys(projects).length === 0) {
         projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
     } else {
         let html = '<div class="nord-project-inv-list">';
         for (const projectId in projects) {
-            const project = projects[projectId];
-            const qtyInProject = part.projects && part.projects[projectId] ? part.projects[projectId] : 0;
+            const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 0;
             html += `
                 <div class="nord-project-inv-row" data-project-id="${projectId}">
-                    <span class="nord-project-inv-name">${project.name}</span>
+                    <span class="nord-project-inv-name">${projects[projectId].name}</span>
                     <div class="modal-item-quantity" style="margin-left:auto;">
-                        <button type="button" class="quantity-btn" data-action="decrement" aria-label="Decrease quantity for ${project.name}">-</button>
-                        <input type="number" min="0" class="quantity-input-inline edit-project-qty" data-project-id="${projectId}" value="${qtyInProject}" aria-label="Quantity for ${project.name}" />
-                        <button type="button" class="quantity-btn" data-action="increment" aria-label="Increase quantity for ${project.name}">+</button>
+                        <button type="button" class="quantity-btn" data-action="decrement">-</button>
+                        <input type="number" min="0" class="quantity-input-inline edit-project-qty" data-project-qty="${projectId}" value="${qty}" />
+                        <button type="button" class="quantity-btn" data-action="increment">+</button>
                     </div>
-                </div>`;
+                </div>
+            `;
         }
         html += '</div>';
         projectsDropdownSection.innerHTML = html;
-
+        // Add event listeners for + and - buttons
         projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
-            const currentProjectId = row.dataset.projectId;
+            const projectId = row.dataset.projectId;
             const qtyInput = row.querySelector('.edit-project-qty');
             row.querySelector('[data-action="decrement"]').addEventListener('click', () => {
                 let val = parseInt(qtyInput.value) || 0;
@@ -555,125 +493,167 @@ function showEditPartModal(partId) {
             });
         });
     }
-    setModalVisibility('editPart', true);
 }
 
 function hideEditPartModal() {
-    setModalVisibility('editPart', false);
-    appState.editingPartId = null;
+    document.getElementById('editPartModal').style.display = 'none';
+    editingPartId = null;
 }
 
 function saveEditPart() {
-    if (!appState.editingPartId) return;
-
-    const newName = DOM.get('editPartName').value.trim();
-    const newQuantity = parseInt(DOM.get('editPartQuantity').value) || 0;
-    const newUrl = DOM.get('editPartUrl').value.trim();
-    const newId = DOM.get('editPartId').value.trim();
-
-    if (!newName || !newId) {
-        showNotification('Part Name and Part ID are required.', 'error');
+    if (!editingPartId) return;
+    
+    const newName = document.getElementById('editPartName').value.trim();
+    const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
+    const newUrl = document.getElementById('editPartUrl').value.trim();
+    const newId = document.getElementById('editPartId').value.trim();
+    
+    if (!newName) {
+        showNotification('Please enter a part name', 'error');
         return;
     }
-
-    const oldPartData = inventory[appState.editingPartId];
-    let targetId = appState.editingPartId;
-
-    if (newId !== appState.editingPartId) { 
-        if (inventory[newId]) {
-            showNotification('New Part ID already exists. Please choose a unique ID.', 'error');
-            return;
-        }
-        inventory[newId] = { ...oldPartData }; 
-        delete inventory[appState.editingPartId];
-        targetId = newId; 
-
-        for (const projId in projects) {
-            if (projects[projId].bom && projects[projId].bom[appState.editingPartId]) {
-                projects[projId].bom[newId] = projects[projId].bom[appState.editingPartId];
-                delete projects[projId].bom[appState.editingPartId];
-            }
+    
+    if (!newId) {
+        showNotification('Please enter a part ID', 'error');
+        return;
+    }
+    
+    // If ID is changing, check if new ID already exists
+    if (newId !== editingPartId && inventory[newId]) {
+        showNotification('Part ID already exists', 'error');
+        return;
+    }
+    
+    // If ID is changing, we need to create a new entry and delete the old one
+    if (newId !== editingPartId) {
+        const part = inventory[editingPartId];
+        inventory[newId] = {
+            name: newName,
+            quantity: newQuantity,
+            purchaseUrl: newUrl,
+            projects: part.projects || {} // Preserve project tags
+        };
+        delete inventory[editingPartId];
+        editingPartId = newId;
+    } else {
+        // Just update the existing entry
+        inventory[editingPartId].name = newName;
+        inventory[editingPartId].quantity = newQuantity;
+        inventory[editingPartId].purchaseUrl = newUrl;
+        // Preserve existing projects object
+        if (!inventory[editingPartId].projects) {
+            inventory[editingPartId].projects = {};
         }
     }
     
-    inventory[targetId].name = newName;
-    inventory[targetId].quantity = newQuantity;
-    inventory[targetId].purchaseUrl = newUrl;
-    if (!inventory[targetId].projects) inventory[targetId].projects = {};
-
-    const projectsDropdownSection = DOM.get('editPartProjectsDropdownSection');
-    const updatedPartProjects = {};
+    if (currentPartId === editingPartId) {
+        selectPart(editingPartId);
+    }
+    
+    // --- In saveEditPart(), update to use the new UI ---
+    const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
+    const newProjects = {};
     projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
         const projectId = row.dataset.projectId;
         const qtyInput = row.querySelector('.edit-project-qty');
-        const qtyForProject = Math.max(0, parseInt(qtyInput.value) || 0);
-
-        if (qtyForProject > 0) {
-            updatedPartProjects[projectId] = qtyForProject;
+        const qty = Math.max(0, parseInt(qtyInput.value) || 0);
+        if (qty > 0) {
+            newProjects[projectId] = qty;
+            // Update project BOM
             if (!projects[projectId].bom) projects[projectId].bom = {};
-            projects[projectId].bom[targetId] = { name: newName, quantity: qtyForProject };
+            projects[projectId].bom[newId] = { name: newName, quantity: qty };
         } else {
-            if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[targetId]) {
-                delete projects[projectId].bom[targetId];
+            // Remove from project BOM if present
+            if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[newId]) {
+                delete projects[projectId].bom[newId];
             }
         }
     });
-    inventory[targetId].projects = updatedPartProjects;
-
+    inventory[newId].projects = newProjects;
+    saveProjects();
+    
     saveInventory();
-    saveProjects(); 
     displayInventory();
     hideEditPartModal();
     showNotification(`Updated ${newName}`);
-    appState.editingPartId = null; 
 }
 
 function showDeletePartModal(partId) {
-    appState.deletingPartId = partId;
+    deletingPartId = partId;
     const part = inventory[partId];
-    if (!part) return;
-    DOM.get('deletePartMessage').textContent = `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-    setModalVisibility('deletePart', true);
+    document.getElementById('deletePartMessage').textContent = 
+        `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
+    document.getElementById('deletePartModal').style.display = 'block';
 }
 
 function hideDeletePartModal() {
-    setModalVisibility('deletePart', false);
-    appState.deletingPartId = null;
+    document.getElementById('deletePartModal').style.display = 'none';
+    deletingPartId = null;
 }
 
 function confirmDeletePart() {
-    if (!appState.deletingPartId || !inventory[appState.deletingPartId]) return;
-
-    const partName = inventory[appState.deletingPartId].name;
-
-    for (const projectId in projects) {
-        if (projects[projectId].bom && projects[projectId].bom[appState.deletingPartId]) {
-            delete projects[projectId].bom[appState.deletingPartId];
-        }
+    if (!deletingPartId) return;
+    
+    const partName = inventory[deletingPartId].name;
+    
+    if (currentPartId === deletingPartId) {
+        currentPartId = null;
+        hidePartInfoPanel();
     }
-
-    delete inventory[appState.deletingPartId];
+    
+    delete inventory[deletingPartId];
     saveInventory();
-    saveProjects();
     displayInventory();
     hideDeletePartModal();
     showNotification(`Deleted ${partName}`);
 }
 
+function addNewPart() {
+    const name = document.getElementById('newPartName').value.trim();
+    const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
+    const purchaseUrl = document.getElementById('newPartUrl').value.trim();
+    let id = document.getElementById('newPartId').value.trim();
+    
+    if (!name) {
+        showNotification('Please enter a part name', 'error');
+        return;
+    }
+    
+    if (!id) {
+        id = normalizeValue(name);
+    }
+    
+    if (inventory[id]) {
+        showNotification('Part ID already exists', 'error');
+        return;
+    }
+    
+    inventory[id] = { 
+        name, 
+        quantity, 
+        purchaseUrl,
+        projects: {} // Initialize empty projects object
+    };
+    
+    saveInventory();
+    displayInventory();
+    hideAddPartModal();
+    showNotification(`Added ${name} to inventory`);
+}
+
 function openPurchaseLink(partId) {
     const part = inventory[partId];
     if (part && part.purchaseUrl) {
-        window.open(part.purchaseUrl, '_blank', 'noopener,noreferrer');
-    } else {
-        showNotification('No purchase URL set for this part.', 'error');
+        window.open(part.purchaseUrl, '_blank');
     }
 }
 
 function showNotification(message, type = 'success') {
-    const notification = DOM.get('notification');
-    if (!notification) return;
+    const notification = document.getElementById('notification');
     notification.textContent = message;
-    notification.className = `notification ${type === 'error' ? 'error' : ''} show`;
+    notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+    notification.classList.add('show');
+    
     setTimeout(() => {
         notification.classList.remove('show');
     }, 3000);
@@ -683,341 +663,475 @@ function checkUrlForPart() {
     const urlParams = new URLSearchParams(window.location.search);
     const partId = urlParams.get('part');
     const quickRemove = urlParams.get('remove');
-
+    
     if (partId && inventory[partId]) {
         if (quickRemove === '1') {
             adjustStockInline(partId, 'remove');
-            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 }
 
-function updateProjectFilter() {
-    const filter = DOM.projectFilter;
-    if (!filter) return;
+function quickRemoveOne(partId) {
+    const part = inventory[partId];
+    if (part.quantity > 0) {
+        part.quantity -= 1;
+        document.getElementById('currentStock').textContent = part.quantity;
+        saveInventory();
+        displayInventory();
+        showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
+    } else {
+        showNotification(`No ${part.name} in stock!`, 'error');
+    }
+}
 
+function initializeProjects() {
+    const savedProjects = localStorage.getItem('guitarPedalProjects');
+    if (savedProjects) {
+        projects = JSON.parse(savedProjects);
+        updateProjectFilter();
+    }
+}
+
+function updateProjectFilter() {
+    const filter = document.getElementById('projectFilter');
+    if (!filter) return;
+    
+    // Store current selection
     const currentValue = filter.value;
+    
+    // Clear and rebuild options
     filter.innerHTML = '<option value="all">All Projects</option>';
+    
     for (const projectId in projects) {
         const option = document.createElement('option');
         option.value = projectId;
         option.textContent = projects[projectId].name;
         filter.appendChild(option);
     }
-    filter.value = (currentValue !== 'all' && projects[currentValue]) ? currentValue : 'all';
-    appState.currentProjectFilter = filter.value; 
+    
+    // Restore selection if it still exists
+    if (currentValue !== 'all' && projects[currentValue]) {
+        filter.value = currentValue;
+    } else {
+        filter.value = 'all';
+    }
 }
 
 function filterByProject() {
-    appState.currentProjectFilter = DOM.projectFilter.value;
+    currentProjectFilter = document.getElementById('projectFilter').value;
     displayInventory();
 }
 
-function generateBomComparisonHtml(bomToCompare, currentInventory) {
-    let totalParts = 0, missingParts = 0, lowStockParts = 0;
-    const resultsListItems = [];
-
-    for (const idInBom in bomToCompare) {
+function showProjectDetails(projectId) {
+    const project = projects[projectId];
+    const bom = project.bom;
+    let totalParts = 0;
+    let missingParts = 0;
+    let lowStockParts = 0;
+    
+    document.getElementById('projectDetailsTitle').textContent = project.name;
+    
+    const partsContainer = document.getElementById('projectParts');
+    partsContainer.innerHTML = '';
+    
+    const results = [];
+    for (const id in bom) {
         totalParts++;
-        const bomEntry = bomToCompare[idInBom];
-        let inventoryPart = currentInventory[idInBom];
+        let part = inventory[id];
+        let matchedId = id;
         let fuzzyNote = '';
-
-        if (!inventoryPart) {
-            const normId = normalizeValue(idInBom); 
-            let foundMatch = null;
-            for (const invId in currentInventory) {
+        if (!part) {
+            // Try normalized match
+            const normId = normalizeValue(id);
+            let found = false;
+            for (const invId in inventory) {
                 if (normalizeValue(invId) === normId) {
-                    inventoryPart = currentInventory[invId];
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched ID: ${invId} for ${inventoryPart.name})</span>`;
-                    foundMatch = invId;
+                    part = inventory[invId];
+                    matchedId = invId;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    found = true;
                     break;
                 }
             }
-            if (!foundMatch) {
-                const normNameBom = normalizeValue(bomEntry.name);
-                 for (const invId in currentInventory) {
-                    if (normalizeValue(currentInventory[invId].name) === normNameBom) {
-                        inventoryPart = currentInventory[invId];
-                        fuzzyNote = `<span style='color:#D08770;font-size:11px;'>(Matched by name: ${inventoryPart.name})</span>`;
-                        foundMatch = invId;
-                        break;
-                    }
-                }
-            }
-            if (!foundMatch) {
-                let bestDist = Infinity, bestId = null;
-                const normNameBom = normalizeValue(bomEntry.name);
-                for (const invId in currentInventory) {
-                    const dist = levenshtein(normNameBom, normalizeValue(currentInventory[invId].name));
-                    if (dist < bestDist && dist <= 2) { 
+            // Try Levenshtein if not found
+            if (!found) {
+                let bestId = null, bestDist = 99;
+                for (const invId in inventory) {
+                    const dist = levenshtein(normId, normalizeValue(invId));
+                    if (dist < bestDist) {
                         bestDist = dist;
                         bestId = invId;
                     }
                 }
-                if (bestId) {
-                    inventoryPart = currentInventory[bestId];
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Fuzzy name match: ${inventoryPart.name})</span>`;
+                if (bestDist <= 2 && bestId) {
+                    part = inventory[bestId];
+                    matchedId = bestId;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
                 }
             }
         }
-
-        const requiredQuantity = bomEntry.quantity;
-        const partNameDisplay = bomEntry.name + (fuzzyNote ? ` ${fuzzyNote}` : '');
-        let statusIcon, statusClass, statusText;
-
-        if (!inventoryPart || inventoryPart.quantity === 0) {
+        if (!part || part.quantity === 0) {
+            // Missing entirely
             missingParts++;
-            statusIcon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
-            statusClass = 'status-error';
-            statusText = `: Missing (need ${requiredQuantity})`;
-        } else if (inventoryPart.quantity < requiredQuantity) {
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-error">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
+                </li>
+            `);
+        } else if (part.quantity < bom[id].quantity) {
+            // Low stock
             lowStockParts++;
-            statusIcon = '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>';
-            statusClass = 'status-warning';
-            statusText = `: Have ${inventoryPart.quantity}, need ${requiredQuantity}`;
+            const have = part.quantity;
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-warning">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
+                </li>
+            `);
         } else {
-            statusIcon = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-            statusClass = 'status-success';
-            statusText = `: In stock (have ${inventoryPart.quantity}, need ${requiredQuantity})`;
+            // Sufficient stock
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-success">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
+                </li>
+            `);
         }
-        resultsListItems.push(`
-            <li>
-                <span class="bom-part-label">
-                    <span class="status-icon ${statusClass}">${statusIcon}</span>
-                    <strong>${partNameDisplay}</strong>
-                </span>
-                <span class="bom-part-status">${statusText}</span>
-            </li>`);
     }
 
-    const summaryHtml = `
+    const resultsContainer = document.getElementById("bomResults");
+    resultsContainer.innerHTML = `
         <div class="project-header">
-            <div>Total Unique Parts: ${totalParts}</div>
+            <div>Total Parts: ${totalParts}</div>
             <div>Missing: ${missingParts}</div>
             <div>Low Stock: ${lowStockParts}</div>
-        </div>`;
-    const listHtml = `<ul class="project-info">${resultsListItems.join("")}</ul>`;
-    return { summaryHtml, listHtml, missingParts, lowStockParts, totalParts };
+        </div>
+        <ul class="project-info">${results.join("")}</ul>
+    `;
+    document.getElementById("bomModal").style.display = "block";
 }
 
-
-function showProjectDetailsModal(projectId) { 
-    const project = projects[projectId];
-    if (!project || !project.bom) {
-        showNotification(`Project '${projectId}' or its BOM not found.`, 'error');
-        return;
-    }
-    
-    DOM.get('projectDetailsTitle').textContent = project.name; 
-    
-    const bomComparison = generateBomComparisonHtml(project.bom, inventory);
-    
-    const resultsContainer = DOM.get("bomResults"); 
-    if (resultsContainer) {
-        resultsContainer.innerHTML = bomComparison.summaryHtml + bomComparison.listHtml;
-    }
-    
-    appState.currentBomForModal = project.bom; 
-
-    setModalVisibility('bomDisplay', true);
+function hideProjectDetailsModal() {
+    document.getElementById('projectDetailsModal').style.display = 'none';
 }
 
-function hideBomDisplayModal() { 
-    setModalVisibility('bomDisplay', false);
-    appState.currentBomForModal = null; 
-    const resultsContainer = DOM.get("bomResults");
-    if(resultsContainer) resultsContainer.innerHTML = ''; 
-    const projectDetailsTitle = DOM.get('projectDetailsTitle');
-    if(projectDetailsTitle) projectDetailsTitle.textContent = 'Bill of Materials'; 
+function removeProjectTag(partId, projectId) {
+    if (!inventory[partId].projects) return;
+    
+    // Remove the tag from the inventory part
+    delete inventory[partId].projects[projectId];
+    if (Object.keys(inventory[partId].projects).length === 0) {
+        delete inventory[partId].projects;
+    }
+
+    // Remove the part from the project's BOM
+    if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[partId]) {
+        delete projects[projectId].bom[partId];
+    }
+
+    saveInventory();
+    saveProjects();
+    displayInventory();
+    showProjectDetails(projectId);
+    showNotification(`Removed ${inventory[partId].name} from ${projects[projectId].name}`);
 }
 
 function showProjectNameModal() {
-    appState.pendingBomData = appState.pendingBomData || {}; // Ensure it's an object if called without a BOM
-    setModalVisibility('projectNameInput', true);
+    const modal = document.getElementById('projectNameModal');
+    modal.classList.add('show');
+    document.getElementById('projectNameInput').value = '';
+    document.getElementById('projectNameInput').focus();
 }
 
 function hideProjectNameModal() {
-    setModalVisibility('projectNameInput', false);
-    DOM.get('projectNameInput').value = '';
-    appState.pendingBomData = null; 
+    const modal = document.getElementById('projectNameModal');
+    modal.classList.remove('show');
+    pendingBomData = null;
+    // Also clear the input for safety
+    document.getElementById('projectNameInput').value = '';
 }
 
 function confirmProjectName() {
-    const projectName = DOM.get('projectNameInput').value.trim();
+    const projectName = document.getElementById('projectNameInput').value.trim();
     if (!projectName) {
         showNotification('Please enter a project name', 'error');
         return;
     }
-    const projectId = normalizeValue(projectName); 
+    const projectId = projectName.toLowerCase().replace(/[^a-z0-9]/g, '_');
     if (projects[projectId]) {
-        showNotification(`Project name '${projectName}' (ID: ${projectId}) already exists.`, 'error');
+        showNotification('Project name already exists', 'error');
         return;
     }
-
-    if (appState.pendingBomData && Object.keys(appState.pendingBomData).length > 0) {
-        createProjectFromBom(projectName, projectId, appState.pendingBomData);
-    } else { 
-        projects[projectId] = { name: projectName, bom: {} };
+    if (pendingBomData) {
+        createProjectFromBom(projectName, projectId, pendingBomData);
+        pendingBomData = null;
+    } else {
+        // Create an empty project
+        projects[projectId] = {
+            name: projectName,
+            bom: {}
+        };
         saveProjects();
         updateProjectFilter();
-        showNotification(`Created empty project: ${projectName}`);
-        if (DOM.modals.editPart.style.display === 'block' && appState.editingPartId) {
-            showEditPartModal(appState.editingPartId); 
+        displayInventory();
+        showNotification(`Created project: ${projectName}`);
+        // If Edit Part modal is open, refresh it to show the new project
+        if (document.getElementById('editPartModal').style.display === 'block' && editingPartId) {
+            showEditPartModal(editingPartId);
         }
-        if (DOM.modals.projectManagement.style.display === 'block') {
-            showProjectManagementModal(); 
+        // If Project Management modal is open, refresh it to show the new project
+        if (document.getElementById('projectManagementModal').style.display === 'block') {
+            showProjectManagementModal();
         }
     }
     hideProjectNameModal();
 }
 
-function createProjectFromBom(projectName, projectId, bomData) {
-    projects[projectId] = { name: projectName, bom: bomData };
-    appState.currentBomForModal = bomData;
-
-    for (const bomPartIdRaw in bomData) {
-        const bomEntry = bomData[bomPartIdRaw];
-        let inventoryPartId = bomPartIdRaw;
-        let partInInventory = inventory[inventoryPartId];
-
-        if (!partInInventory) {
-            const normBomPartId = normalizeValue(bomPartIdRaw);
-            const normBomName = normalizeValue(bomEntry.name);
-            let foundMatch = null;
-
-            for (const invId in inventory) {
-                if (normalizeValue(invId) === normBomPartId) {
-                    partInInventory = inventory[invId];
-                    inventoryPartId = invId; 
-                    foundMatch = true; break;
-                }
-            }
-            if (!foundMatch) {
-                for (const invId in inventory) {
-                    if (normalizeValue(inventory[invId].name) === normBomName) {
-                        partInInventory = inventory[invId];
-                        inventoryPartId = invId;
-                        foundMatch = true; break;
-                    }
+function createProjectFromBom(projectName, projectId, bom) {
+    let totalParts = 0;
+    let missingParts = 0;
+    let lowStockParts = 0;
+    projects[projectId] = {
+        name: projectName,
+        bom: bom
+    };
+    
+    // Tag parts in the main inventory with this project
+    for (const id in bom) {
+        // Find the part in inventory by name if ID doesn't match
+        let partId = id;
+        if (!inventory[id]) {
+            // Try to find by name
+            for (const existingId in inventory) {
+                if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
+                    partId = existingId;
+                    break;
                 }
             }
         }
         
-        if (partInInventory) {
-            if (!partInInventory.projects) partInInventory.projects = {};
-            partInInventory.projects[projectId] = bomEntry.quantity;
-        } else { 
-            inventory[inventoryPartId] = { 
-                name: bomEntry.name,
-                quantity: 0, 
-                purchaseUrl: bomEntry.purchaseUrl || '',
-                projects: { [projectId]: bomEntry.quantity }
+        if (inventory[partId]) {
+            if (!inventory[partId].projects) {
+                inventory[partId].projects = {};
+            }
+            inventory[partId].projects[projectId] = bom[id].quantity;
+        } else {
+            // Create the part if it doesn't exist
+            inventory[id] = {
+                name: bom[id].name,
+                quantity: 0,
+                projects: {
+                    [projectId]: bom[id].quantity
+                }
             };
         }
     }
-
+    
     saveProjects();
     saveInventory();
     updateProjectFilter();
     displayInventory();
 
-    DOM.get('projectDetailsTitle').textContent = `BOM for new project: ${projectName}`;
-    const bomComparison = generateBomComparisonHtml(bomData, inventory);
-    const resultsContainer = DOM.get("bomResults");
-    if (resultsContainer) {
-        resultsContainer.innerHTML = bomComparison.summaryHtml + bomComparison.listHtml;
+    // Store BOM data for comparison
+    window.currentBom = bom;
+
+    const results = [];
+    for (const id in bom) {
+        totalParts++;
+        let part = inventory[id];
+        let matchedId = id;
+        let fuzzyNote = '';
+        if (!part) {
+            // Try normalized match
+            const normId = normalizeValue(id);
+            let found = false;
+            for (const invId in inventory) {
+                if (normalizeValue(invId) === normId) {
+                    part = inventory[invId];
+                    matchedId = invId;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    found = true;
+                    break;
+                }
+            }
+            // Try Levenshtein if not found
+            if (!found) {
+                let bestId = null, bestDist = 99;
+                for (const invId in inventory) {
+                    const dist = levenshtein(normId, normalizeValue(invId));
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestId = invId;
+                    }
+                }
+                if (bestDist <= 2 && bestId) {
+                    part = inventory[bestId];
+                    matchedId = bestId;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                }
+            }
+        }
+        if (!part || part.quantity === 0) {
+            // Missing entirely
+            missingParts++;
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-error">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
+                </li>
+            `);
+        } else if (part.quantity < bom[id].quantity) {
+            // Low stock
+            lowStockParts++;
+            const have = part.quantity;
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-warning">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
+                </li>
+            `);
+        } else {
+            // Sufficient stock
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-success">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </span>
+                        <strong>${bom[id].name}</strong>
+                    </span>
+                    <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
+                </li>
+            `);
+        }
     }
-    setModalVisibility('bomDisplay', true);
-    showNotification(`Project '${projectName}' created from BOM.`);
+
+    const resultsContainer = document.getElementById("bomResults");
+    resultsContainer.innerHTML = `
+        <div class="project-header">
+            <div>Total Parts: ${totalParts}</div>
+            <div>Missing: ${missingParts}</div>
+            <div>Low Stock: ${lowStockParts}</div>
+        </div>
+        <ul class="project-info">${results.join("")}</ul>
+    `;
+    document.getElementById("bomModal").style.display = "block";
+    showBOMModal();
 }
 
-
-function compareBOM(event) { 
+function compareBOM(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
+            let bom = {};
             const fileContent = e.target.result;
-            let parsedBomData = {};
-
+            
+            // Check if file is CSV
             if (file.name.toLowerCase().endsWith('.csv')) {
-                const parsedCsv = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
-                if (parsedCsv.errors.length) {
-                    throw new Error('CSV parse error: ' + parsedCsv.errors[0].message);
+                // Use PapaParse to parse CSV
+                const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+                if (parsed.errors.length) {
+                    throw new Error('CSV parse error: ' + parsed.errors[0].message);
                 }
-                parsedCsv.data.forEach(row => {
-                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'];
-                    if (!name) return;
-                    const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(name);
-                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0');
+                importedData = {};
+                parsed.data.forEach(row => {
+                    // Normalize headers
+                    const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
+                    const name = row['Name'] || row['name'] || '';
+                    if (!name) return; // skip if no name
+                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
                     const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
-                    if (id && quantity > 0) {
-                        parsedBomData[id] = { name, quantity, purchaseUrl };
+                    let projects = {};
+                    const projectsRaw = row['Projects'] || row['projects'] || '';
+                    if (projectsRaw) {
+                        projectsRaw.split(';').forEach(pair => {
+                            const [pid, qty] = pair.split(':').map(s => s.trim());
+                            if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
+                        });
                     }
+                    importedData[id] = {
+                        name: name,
+                        quantity: quantity,
+                        purchaseUrl: purchaseUrl,
+                        projects: projects
+                    };
                 });
-            } else { 
-                const jsonData = JSON.parse(fileContent);
-                if (jsonData.projectName && Array.isArray(jsonData.parts)) { 
-                    jsonData.parts.forEach(part => {
-                        const id = normalizeValue(part.name); 
-                        if (part.quantity !== undefined) {
-                            parsedBomData[id] = { name: part.name, quantity: part.quantity, purchaseUrl: part.purchaseUrl || '' };
-                        }
-                    });
-                } else { 
-                    for (const id in jsonData) {
-                        if (jsonData[id] && jsonData[id].quantity !== undefined && jsonData[id].name) {
-                            parsedBomData[id] = { name: jsonData[id].name, quantity: jsonData[id].quantity, purchaseUrl: jsonData[id].purchaseUrl || '' };
-                        }
+            } else {
+                // Parse JSON
+                const parsedBom = JSON.parse(fileContent);
+                // Only include parts that have a quantity specified
+                for (const id in parsedBom) {
+                    if (parsedBom[id].quantity !== undefined) {
+                        bom[id] = parsedBom[id];
                     }
                 }
             }
-            if (Object.keys(parsedBomData).length === 0) {
-                throw new Error("No valid BOM data found in the file.");
-            }
-            appState.pendingBomData = parsedBomData;
-            showProjectNameModal(); 
+
+            // Store the BOM data and show the project name modal
+            pendingBomData = bom;
+            showProjectNameModal();
+
         } catch (err) {
             showNotification("Error processing BOM file: " + err.message, "error");
-            console.error("BOM processing error:", err);
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; 
+    event.target.value = '';
 }
 
-
-function addMissingPartsFromBomModal() { 
-    if (!appState.currentBomForModal) {
-        showNotification('No BOM loaded in the modal to add parts from.', 'error');
-        return;
-    }
+function addMissingParts() {
+    if (!window.currentBom) return;
     
     let addedCount = 0;
-    for (const idInBom in appState.currentBomForModal) {
-        const bomEntry = appState.currentBomForModal[idInBom];
-        let partExists = !!inventory[idInBom];
-        
-        if (!partExists) { 
-            const normId = normalizeValue(idInBom);
-            const normName = normalizeValue(bomEntry.name);
-            for (const invId in inventory) {
-                if (normalizeValue(invId) === normId || normalizeValue(inventory[invId].name) === normName) {
-                    partExists = true;
-                    break;
-                }
-            }
-        }
-
-        if (!partExists) {
-            inventory[idInBom] = { 
-                name: bomEntry.name,
-                quantity: 0, 
-                purchaseUrl: bomEntry.purchaseUrl || '',
-                projects: {} 
+    for (const id in window.currentBom) {
+        if (!inventory[id]) {
+            const part = window.currentBom[id];
+            inventory[id] = {
+                name: part.name,
+                quantity: 0,
+                purchaseUrl: part.purchaseUrl || '',
+                projects: {}
             };
             addedCount++;
         }
@@ -1025,258 +1139,249 @@ function addMissingPartsFromBomModal() {
     
     if (addedCount > 0) {
         saveInventory();
-        displayInventory(); 
-        showNotification(`Added ${addedCount} new part(s) to inventory (quantity set to 0).`);
-        
-        const projectDetailsTitleEl = DOM.get('projectDetailsTitle');
-        const activeProjectName = projectDetailsTitleEl ? projectDetailsTitleEl.textContent : "";
-
-        if (activeProjectName.startsWith("BOM for new project:")) { 
-             const bomComparison = generateBomComparisonHtml(appState.currentBomForModal, inventory);
-             const resultsContainer = DOM.get("bomResults");
-             if (resultsContainer) resultsContainer.innerHTML = bomComparison.summaryHtml + bomComparison.listHtml;
-        } else { 
-            const projectId = Object.keys(projects).find(pid => projects[pid].name === activeProjectName);
-            if(projectId) showProjectDetailsModal(projectId); // Re-render the existing project's BOM
-        }
-
+        displayInventory();
+        showNotification(`Added ${addedCount} new part(s) to inventory`);
     } else {
-        showNotification('All parts from the BOM already exist in inventory (though stock levels may vary).');
+        showNotification('No new parts to add');
     }
+    
+    hideBOMModal();
 }
 
+function showBOMModal() {
+    document.getElementById('bomModal').style.display = 'block';
+}
 
+function hideBOMModal() {
+    document.getElementById('bomModal').style.display = 'none';
+    window.currentBom = null;
+}
+
+// Add these new functions for project management
 function showProjectManagementModal() {
-    const projectList = DOM.get('projectList');
-    if (!projectList) return;
+    const projectList = document.getElementById('projectList');
     projectList.innerHTML = '';
-
-    if (Object.keys(projects).length === 0) {
-        projectList.innerHTML = '<div>No projects created yet.</div>';
-    } else {
-        for (const projectId in projects) {
-            const project = projects[projectId];
-            const projectElement = document.createElement('div');
-            projectElement.className = 'project-list-item';
-            
-            let taggedPartsCount = 0;
-            for (const partId in inventory) {
-                if (inventory[partId].projects && inventory[partId].projects[projectId]) {
-                    taggedPartsCount++;
-                }
+    
+    for (const projectId in projects) {
+        const project = projects[projectId];
+        const projectElement = document.createElement('div');
+        projectElement.className = 'project-list-item';
+        
+        // Count parts tagged with this project
+        let taggedParts = 0;
+        for (const id in inventory) {
+            if (inventory[id].projects && inventory[id].projects[projectId]) {
+                taggedParts++;
             }
-            const bomPartsCount = project.bom ? Object.keys(project.bom).length : 0;
-
-            projectElement.innerHTML = `
-                <div>
-                    <strong>${project.name}</strong> (ID: ${projectId})
-                    <div class="project-info">
-                        ${bomPartsCount} parts in BOM, ${taggedPartsCount} inventory items tagged.
-                    </div>
-                </div>
-                <div>
-                    <button class="project-action-btn view-btn" data-project-id="${projectId}" title="View Project BOM">View</button>
-                    <button class="project-action-btn delete-btn" data-project-id="${projectId}" title="Delete Project">Delete</button>
-                </div>`;
-            projectElement.querySelector('.view-btn').addEventListener('click', () => showProjectDetailsModal(projectId));
-            projectElement.querySelector('.delete-btn').addEventListener('click', () => showDeleteProjectModal(projectId));
-            projectList.appendChild(projectElement);
         }
+        
+        projectElement.innerHTML = `
+            <div>
+                <strong>${project.name}</strong>
+                <div class="project-info">
+                    ${taggedParts} parts tagged
+                </div>
+            </div>
+            <div>
+                <button onclick="showDeleteProjectModal('${projectId}')" class="project-delete-btn">Delete</button>
+            </div>
+        `;
+        
+        projectList.appendChild(projectElement);
     }
-    setModalVisibility('projectManagement', true);
+    
+    document.getElementById('projectManagementModal').style.display = 'block';
 }
 
 function hideProjectManagementModal() {
-    setModalVisibility('projectManagement', false);
+    const modal = document.getElementById('projectManagementModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
+let deletingProjectId = null;
 
 function showDeleteProjectModal(projectId) {
-    appState.deletingProjectId = projectId;
+    deletingProjectId = projectId;
     const project = projects[projectId];
-    if (!project) return;
-    DOM.get('deleteProjectMessage').textContent = `Are you sure you want to delete project "${project.name}"? This will remove it from all associated parts. This action cannot be undone.`;
-    setModalVisibility('deleteProject', true);
+    const modal = document.getElementById('deleteProjectModal');
+    const message = document.getElementById('deleteProjectMessage');
+    
+    if (modal && message) {
+        message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
+        modal.style.display = 'block';
+    }
 }
 
 function hideDeleteProjectModal() {
-    setModalVisibility('deleteProject', false);
-    appState.deletingProjectId = null;
+    const modal = document.getElementById('deleteProjectModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    deletingProjectId = null;
 }
 
 function confirmDeleteProject() {
-    if (!appState.deletingProjectId || !projects[appState.deletingProjectId]) return;
-
-    const projectName = projects[appState.deletingProjectId].name;
-
-    for (const partId in inventory) {
-        if (inventory[partId].projects && inventory[partId].projects[appState.deletingProjectId]) {
-            delete inventory[partId].projects[appState.deletingProjectId];
-            if (Object.keys(inventory[partId].projects).length === 0) {
-                delete inventory[partId].projects; 
+    if (!deletingProjectId) return;
+    
+    const projectName = projects[deletingProjectId].name;
+    
+    // Remove project tags from all parts
+    for (const id in inventory) {
+        if (inventory[id].projects && inventory[id].projects[deletingProjectId]) {
+            delete inventory[id].projects[deletingProjectId];
+            // Remove projects object if empty
+            if (Object.keys(inventory[id].projects).length === 0) {
+                delete inventory[id].projects;
             }
         }
     }
     
-    delete projects[appState.deletingProjectId]; 
-
+    // Delete the project
+    delete projects[deletingProjectId];
+    
+    // Save changes
     saveProjects();
     saveInventory();
-    updateProjectFilter(); 
-    displayInventory();    
     
-    hideDeleteProjectModal();
-    showProjectManagementModal(); 
+    // Update UI
+    updateProjectFilter();
+    displayInventory();
+    
+    // Hide modals
+    const deleteModal = document.getElementById('deleteProjectModal');
+    const manageModal = document.getElementById('projectManagementModal');
+    
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
+    }
+    
+    if (manageModal) {
+        manageModal.style.display = 'none';
+    }
+    
+    // Reset state
+    deletingProjectId = null;
+    
+    // Show notification
     showNotification(`Deleted project: ${projectName}`);
 }
 
-
-function showAllProjectRequirementsModal() {
-    const partTotals = {}; 
+function showAllProjectRequirements() {
+    const partTotals = {};
     for (const projectId in projects) {
-        const project = projects[projectId];
-        if (!project.bom) continue;
-        for (const bomPartId in project.bom) {
-            const bomEntry = project.bom[bomPartId];
-            let inventoryPartId = bomPartId;
-            let inventoryPartName = bomEntry.name;
-
-            let canonicalPart = inventory[bomPartId];
-            if (!canonicalPart) {
-                const normBomId = normalizeValue(bomPartId);
-                const normBomName = normalizeValue(bomEntry.name);
-                for(const invId in inventory) {
-                    if(normalizeValue(invId) === normBomId || normalizeValue(inventory[invId].name) === normBomName) {
-                        canonicalPart = inventory[invId];
-                        inventoryPartId = invId; 
-                        inventoryPartName = canonicalPart.name; 
-                        break;
-                    }
-                }
-            } else {
-                inventoryPartName = canonicalPart.name; 
-            }
-
-            if (!partTotals[inventoryPartId]) {
-                partTotals[inventoryPartId] = {
-                    name: inventoryPartName, 
+        const bom = projects[projectId].bom;
+        for (const partId in bom) {
+            if (!partTotals[partId]) {
+                partTotals[partId] = {
+                    name: bom[partId].name,
                     total: 0,
-                    projectsInfo: []
+                    projects: []
                 };
             }
-            partTotals[inventoryPartId].total += bomEntry.quantity;
-            partTotals[inventoryPartId].projectsInfo.push({
-                projectName: project.name,
-                quantity: bomEntry.quantity
+            partTotals[partId].total += bom[partId].quantity;
+            partTotals[partId].projects.push({
+                project: projects[projectId].name,
+                quantity: bom[partId].quantity
             });
         }
     }
 
-    let tableHtml = '<table id="allProjectRequirementsTable"><thead><tr><th>Part Name (ID)</th><th>Total Needed</th><th>Current Stock</th><th>Deficit</th><th>Projects</th></tr></thead><tbody>';
+    // Build HTML table
+    let html = '<table id="allProjectRequirementsTable">';
+    html += '<tr><th>Part Name</th><th>Total Needed</th><th>Projects</th></tr>';
     for (const partId in partTotals) {
-        const data = partTotals[partId];
-        const stock = inventory[partId] ? inventory[partId].quantity : 0;
-        const deficit = Math.max(0, data.total - stock);
-        const rowClass = deficit > 0 ? 'low-stock' : ''; 
-
-        tableHtml += `<tr class="${rowClass}">
-            <td>${data.name} (${partId})</td>
-            <td>${data.total}</td>
-            <td>${stock}</td>
-            <td${deficit > 0 ? ' style="color:var(--nord11); font-weight:bold;"' : ''}>${deficit}</td>
-            <td>${data.projectsInfo.map(p => `${p.projectName} (${p.quantity})`).join('; ')}</td>
-        </tr>`;
+        const part = partTotals[partId];
+        // Check inventory for low stock
+        let lowStock = false;
+        if (inventory[partId] && inventory[partId].quantity < part.total) lowStock = true;
+        html += `<tr${lowStock ? ' class="low-stock"' : ''}>`;
+        html += `<td>${part.name}</td>`;
+        html += `<td${lowStock ? ' class="low-stock"' : ''}>${part.total}</td>`;
+        html += `<td>${part.projects.map(p => `${p.project} (${p.quantity})`).join(', ')}</td>`;
+        html += '</tr>';
     }
-    tableHtml += '</tbody></table>';
+    html += '</table>';
     
-    const modalTitle = DOM.modals.allProjectRequirements.querySelector('h2');
-    if (modalTitle) {
-         modalTitle.innerHTML = 'All Project Requirements <br><span style="font-size:13px;color:var(--nord11);font-weight:normal;">* Highlighted rows indicate insufficient stock for combined project needs.</span>';
-    }
-    // Ensure the content container ID is correct based on your HTML structure
-    const contentContainer = DOM.get('allProjectRequirementsContent') || DOM.get('allProjectRequirements');
-    if (contentContainer) contentContainer.innerHTML = tableHtml; 
-    setModalVisibility('allProjectRequirements', true);
+    // Update the modal title to include the explanation
+    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
+        'All Project Requirements<br><span style="font-size:13px;color:#BF616A;font-weight:normal;">* Red means you do not have enough in stock for all projects.</span>';
+    
+    document.getElementById('allProjectRequirements').innerHTML = html;
+    document.getElementById('allProjectRequirementsModal').style.display = 'block';
 }
 
 function hideAllProjectRequirementsModal() {
-    setModalVisibility('allProjectRequirements', false);
+    document.getElementById('allProjectRequirementsModal').style.display = 'none';
 }
 
-
 function showExportBOMModal() {
-    const select = DOM.get('exportBOMProjectSelect'); 
-    if (!select) return;
+    const select = document.getElementById('exportBOMProject');
     select.innerHTML = '<option value="">Select a project...</option>';
+    
     for (const projectId in projects) {
         const option = document.createElement('option');
         option.value = projectId;
         option.textContent = projects[projectId].name;
         select.appendChild(option);
     }
-    setModalVisibility('exportBOM', true);
+    
+    document.getElementById('exportBOMModal').style.display = 'block';
 }
 
 function hideExportBOMModal() {
-    setModalVisibility('exportBOM', false);
-    const select = DOM.get('exportBOMProjectSelect');
-    if (select) select.value = ''; 
+    document.getElementById('exportBOMModal').style.display = 'none';
 }
 
 function exportProjectBOM(format) {
-    const projectId = DOM.get('exportBOMProjectSelect').value;
+    const projectId = document.getElementById('exportBOMProject').value;
     if (!projectId) {
-        showNotification('Please select a project to export.', 'error');
+        showNotification('Please select a project', 'error');
         return;
     }
 
     const project = projects[projectId];
-    if (!project || !project.bom) {
-        showNotification('Selected project or its BOM is invalid.', 'error');
-        return;
-    }
-
     const bom = project.bom;
-    const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, ''); 
-    const safeProjectName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
     let filename, dataStr, mimeType;
 
     if (format === 'csv') {
-        filename = `${safeProjectName}_bom_${timestamp}.csv`;
-        const headers = ['Part ID', 'Part Name', 'Quantity', 'Purchase URL'];
-        const csvEscape = (val) => {
-            if (val == null) return '';
-            val = String(val);
-            if (val.includes('"')) val = val.replace(/"/g, '""'); 
-            return /[",\n\r]/.test(val) ? `"${val}"` : val; 
-        };
-        const rows = Object.entries(bom).map(([id, partData]) => {
-            const inventoryPart = inventory[id] || {}; 
-            return [id, partData.name, partData.quantity, inventoryPart.purchaseUrl || ''].map(csvEscape);
+        filename = `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}-bom-${timestamp}.csv`;
+        // Create CSV header
+        const headers = ['Part Name', 'Quantity', 'Purchase URL'];
+        // Create CSV rows
+        const rows = Object.entries(bom).map(([id, part]) => {
+            const inventoryPart = inventory[id];
+            return [
+                part.name,
+                part.quantity,
+                inventoryPart ? inventoryPart.purchaseUrl || '' : ''
+            ];
         });
-        dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\r\n');
-        mimeType = 'text/csv;charset=utf-8;';
-    } else { 
-        filename = `${safeProjectName}_bom_${timestamp}.json`;
+        // Combine header and rows
+        dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
+        mimeType = 'text/csv';
+    } else {
+        filename = `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}-bom-${timestamp}.json`;
+        // Create JSON with additional metadata
         const exportData = {
             projectName: project.name,
-            projectId: projectId,
             exportDate: new Date().toISOString(),
-            parts: Object.entries(bom).map(([id, partData]) => {
-                const inventoryPart = inventory[id] || {};
+            parts: Object.entries(bom).map(([id, part]) => {
+                const inventoryPart = inventory[id];
                 return {
-                    id: id, 
-                    name: partData.name,
-                    quantity: partData.quantity,
-                    purchaseUrl: inventoryPart.purchaseUrl || ''
+                    name: part.name,
+                    quantity: part.quantity,
+                    purchaseUrl: inventoryPart ? inventoryPart.purchaseUrl || '' : ''
                 };
             })
         };
         dataStr = JSON.stringify(exportData, null, 2);
-        mimeType = 'application/json;charset=utf-8;';
+        mimeType = 'application/json';
     }
 
-    const dataBlob = new Blob([dataStr], { type: mimeType });
+    const dataBlob = new Blob([dataStr], {type: mimeType});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(dataBlob);
     link.download = filename;
@@ -1285,47 +1390,142 @@ function exportProjectBOM(format) {
     document.body.removeChild(link);
 
     hideExportBOMModal();
-    showNotification(`Exported BOM for ${project.name} as ${filename}`);
+    showNotification(`Exported BOM for ${project.name}`);
 }
 
+// Add this function to create the sync buttons HTML
+function createSyncButtons() {
+    return `
+        <button class="add-part-btn" onclick="showAddPartModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add New Part
+        </button>
+        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Compare BOM
+        </button>
+        <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
+            </svg>
+            Export Project BOM
+        </button>
+        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importFile').click()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+            </svg>
+            Import Data
+        </button>
+        <button class="sync-btn export-btn full-width" onclick="showExportModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Export Data
+        </button>
+    `;
+}
 
-// Event listeners for modal buttons and other global actions are set up in DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp(); // Initialize main app logic, including data loading and initial UI setup
+function showQuantityInput(partId, currentQuantity) {
+    // Find the specific quantity span for this part
+    const quantitySpan = document.querySelector(`.item-quantity[data-part-id="${partId}"] .quantity-number`);
+    if (!quantitySpan) return;
 
-    // Modal action buttons
-    DOM.get('saveAddPartBtn')?.addEventListener('click', addNewPart);
-    DOM.get('cancelAddPartBtn')?.addEventListener('click', hideAddPartModal);
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.value = currentQuantity;
+    input.className = 'quantity-input-inline';
     
-    DOM.get('saveEditPartBtn')?.addEventListener('click', saveEditPart);
-    DOM.get('cancelEditPartBtn')?.addEventListener('click', hideEditPartModal);
+    // Replace span with input
+    quantitySpan.replaceWith(input);
+    input.focus();
+    input.select();
 
-    DOM.get('confirmDeletePartBtn')?.addEventListener('click', confirmDeletePart);
-    DOM.get('cancelDeletePartBtn')?.addEventListener('click', hideDeletePartModal);
-
-    DOM.get('exportJsonBtn')?.addEventListener('click', () => exportInventory('json'));
-    DOM.get('exportCsvBtn')?.addEventListener('click', () => exportInventory('csv'));
-    DOM.get('cancelExportBtn')?.addEventListener('click', hideExportDataModal);
-    
-    DOM.get('closeBomDisplayBtn')?.addEventListener('click', hideBomDisplayModal);
-    DOM.get('addMissingPartsBtn')?.addEventListener('click', addMissingPartsFromBomModal);
-
-
-    DOM.get('createNewProjectManagementBtn')?.addEventListener('click', () => {
-        appState.pendingBomData = {}; // Reset pendingBomData for creating an empty project
-        showProjectNameModal();
+    // Handle input events
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            updateQuantity(partId, parseInt(input.value) || 0);
+        }
     });
-    DOM.get('closeProjectManagementBtn')?.addEventListener('click', hideProjectManagementModal);
 
-    DOM.get('confirmDeleteProjectBtn')?.addEventListener('click', confirmDeleteProject);
-    DOM.get('cancelDeleteProjectBtn')?.addEventListener('click', hideDeleteProjectModal);
-    
-    DOM.get('closeAllProjectRequirementsBtn')?.addEventListener('click', hideAllProjectRequirementsModal);
-    
-    DOM.get('exportProjectBOMJsonBtn')?.addEventListener('click', () => exportProjectBOM('json'));
-    DOM.get('exportProjectBOMCsvBtn')?.addEventListener('click', () => exportProjectBOM('csv'));
-    DOM.get('cancelExportBOMBtn')?.addEventListener('click', hideExportBOMModal);
+    input.addEventListener('blur', function() {
+        updateQuantity(partId, parseInt(input.value) || 0);
+    });
 
-    DOM.get('confirmProjectNameBtn')?.addEventListener('click', confirmProjectName);
-    DOM.get('cancelProjectNameBtn')?.addEventListener('click', hideProjectNameModal);
-});
+    // Prevent click propagation to avoid immediate blur
+    input.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
+
+function updateQuantity(partId, newQuantity) {
+    if (newQuantity < 0) newQuantity = 0;
+    
+    const part = inventory[partId];
+    if (!part) return;
+
+    const oldQuantity = part.quantity;
+    part.quantity = newQuantity;
+    
+    saveInventory();
+    displayInventory();
+    
+    if (newQuantity !== oldQuantity) {
+        showNotification(`Updated ${part.name} quantity to ${newQuantity}`);
+    }
+}
+
+// --- CSV Import: Parse quoted fields ---
+function parseCsvLine(line) {
+    const result = [];
+    let cur = '', inQuotes = false;
+    for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (inQuotes) {
+            if (char === '"') {
+                if (line[j+1] === '"') { cur += '"'; j++; } // Escaped quote
+                else inQuotes = false;
+            } else {
+                cur += char;
+            }
+        } else {
+            if (char === ',') {
+                result.push(cur);
+                cur = '';
+            } else if (char === '"') {
+                inQuotes = true;
+            } else {
+                cur += char;
+            }
+        }
+    }
+    result.push(cur);
+    return result;
+}
+
+// --- Add Levenshtein distance function near the top ---
+function levenshtein(a, b) {
+    const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b[i - 1] === a[j - 1]) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+initializeInventory();

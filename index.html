@@ -7,9 +7,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>PedalVault</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@700&display=swap" rel="stylesheet">
     <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="style.css"></noscript>
     <link rel="manifest" href="manifest.json">
@@ -22,7 +19,6 @@
     <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
     <script src="rive-logo.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -62,7 +58,7 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <canvas id="rive-logo" width="100" height="100"></canvas>
+                <canvas id="rive-logo" width="400" height="400"></canvas>
             </div>
             <div class="header-content">
                 <svg class="wordmark-svg" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 655.62 148.27">
@@ -136,6 +132,7 @@
 
         <div class="footer">
             <div class="footer-content">
+                <span class="data-note">Your data is stored in your browser. <b>Export regularly</b> to avoid loss.</span>
                 <a href="https://buymeacoffee.com/j0sephl" target="_blank" class="coffee-link" title="Buy me a coffee">
                     <svg viewBox="0 0 24 24" class="coffee-icon">
                         <path d="M2 21h18v-2H2v2zm6-4h12v-2H8v2zm-6-4h16v-2H2v2zm6-4h12V7H8v2zM2 3v2h18V3H2z"/>
@@ -143,6 +140,7 @@
                     Buy me a coffee
                 </a>
                 <span class="version">v1.4.0</span>
+               
             </div>
         </div>
     </div>
@@ -295,7 +293,17 @@
     <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" class="hidden">
     <input type="file" id="importFile" accept=".json,.csv" onchange="importInventory(event)" class="hidden">
 
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <!-- All Project Tags Modal -->
+    <div class="modal" id="allProjectTagsModal">
+        <div class="modal-content">
+            <h2>Project Tags</h2>
+            <div id="allProjectTagsList" class="all-project-tags-list"></div>
+            <div class="modal-buttons">
+                <button class="btn close-btn flex-1" onclick="hideAllProjectTagsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

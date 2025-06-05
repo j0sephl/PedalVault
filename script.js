@@ -86,14 +86,54 @@ let currentProjectFilter = 'all';
 let pendingBomData = null;
 let currentSearchQuery = '';
 
+// Remove all File System Access API demo logic
+
 function normalizeValue(str) {
     if (!str) return '';
-    // Lowercase, remove spaces, replace , or . with nothing, then handle k/M/R
-    return str
-        .toLowerCase()
-        .replace(/[,\.]/g, '') // Remove commas and dots
-        .replace(/([0-9]+)[ ]*([kmru])([0-9]*)/g, (m, p1, p2, p3) => p1 + p2 + (p3 || ''))
-        .replace(/[^a-z0-9]/g, ''); // Remove all non-alphanum
+    let normalized = str.toLowerCase();
+
+    // Convert all 'µ' and '_' to 'u' for microfarad compatibility
+    normalized = normalized.replace(/[µ_]/g, 'u');
+
+    // Replace common decimal notations with letter notation (e.g., 2.2m -> 2m2)
+    // Handles: 2.2m, 2_2m, 2 2m, 2-2m, 2m2, etc.
+    // For M, K, R, N, P, U, F
+    normalized = normalized
+        // Replace decimal with letter for M (mega)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)m(?![a-z])/g, '$1m$2')
+        // For K (kilo)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)k(?![a-z])/g, '$1k$2')
+        // For R (ohm)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)r(?![a-z])/g, '$1r$2')
+        // For N (nano)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)n(?![a-z])/g, '$1n$2')
+        // For P (pico)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)p(?![a-z])/g, '$1p$2')
+        // For U (micro)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)u(?![a-z])/g, '$1u$2')
+        // For F (farad)
+        .replace(/([0-9]+)[\.,\- ]([0-9]+)f(?![a-z])/g, '$1f$2');
+
+    // Special: treat '100n' as '100nf' (and similar)
+    normalized = normalized.replace(/([0-9]+)n(?!f)/g, '$1nf');
+
+    // Remove all non-alphanumeric characters
+    normalized = normalized.replace(/[^a-z0-9]/g, '');
+
+    // Special case handling for common variations
+    normalized = normalized
+        .replace(/capacitor/g, 'cap')
+        .replace(/resistor/g, 'res')
+        .replace(/potentiometer/g, 'pot')
+        .replace(/transistor/g, 'trans')
+        .replace(/diode/g, 'diode')
+        .replace(/switch/g, 'sw')
+        .replace(/ic/g, 'ic')
+        .replace(/led/g, 'led')
+        .replace(/voltage/g, 'v')
+        .replace(/regulator/g, 'reg');
+
+    return normalized;
 }
 
 function saveProjects() {
@@ -109,6 +149,8 @@ function initializeInventory() {
     const savedInventory = localStorage.getItem('guitarPedalInventory');
     if (savedInventory) {
         inventory = JSON.parse(savedInventory);
+        // Auto-merge duplicates on load
+        mergeDuplicateInventoryEntries();
     } else {
         // Sample data
         inventory = {
@@ -234,6 +276,8 @@ function importInventory(event) {
             if (importedData.inventory && importedData.projects) {
                 inventory = importedData.inventory;
                 projects = importedData.projects;
+                // Auto-merge duplicates after import
+                mergeDuplicateInventoryEntries();
                 saveProjects();
                 updateProjectFilter();
             } else if (typeof importedData === 'object' && importedData !== null) {
@@ -260,9 +304,10 @@ function importInventory(event) {
                         }
                     }
                 }
+                // Auto-merge duplicates after import
+                mergeDuplicateInventoryEntries();
                 saveProjects();
                 updateProjectFilter();
-                // --- End: Ensure projects are globally tagged and BOMs updated ---
             } else {
                 throw new Error('Invalid file format');
             }
@@ -270,13 +315,11 @@ function importInventory(event) {
             displayInventory();
             currentPartId = null;
             showNotification('Inventory imported successfully!');
-        } catch (error) {
-            showNotification('Error importing file: ' + error.message, 'error');
+        } catch (err) {
+            showNotification('Error importing inventory: ' + err.message, 'error');
         }
     };
     reader.readAsText(file);
-    
-    // Reset the file input
     event.target.value = '';
 }
 
@@ -332,86 +375,104 @@ function changeSortOrder() {
 }
 
 function displayInventory() {
-    const fragment = document.createDocumentFragment();
-    const sortedItems = getSortedInventoryEntries();
-    
-    sortedItems.forEach(([id, part]) => {
+    const inventoryItems = document.getElementById('inventoryItems');
+    inventoryItems.innerHTML = '';
+
+    const sortedEntries = getSortedInventoryEntries();
+    const maxTags = 3; // Show up to 3 tags, then "+X more"
+    const isMobile = window.innerWidth <= 768;
+
+    sortedEntries.forEach(([id, part]) => {
         const item = document.createElement('div');
         item.className = 'inventory-item';
-        item.dataset.id = id;
+        item.setAttribute('data-part-id', id);
+
+        const projectEntries = part.projects ? Object.entries(part.projects) : [];
+        let projectTagsHtml = '';
         
-        // Create project tags HTML if part has projects
-        const projectTagsHtml = part.projects ? Object.entries(part.projects)
-            .map(([projectId, qty]) => {
-                const project = projects[projectId];
-                return project ? `
-                    <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
-                        ${project.name} (${qty})
+        if (projectEntries.length > 0) {
+            if (isMobile) {
+                // On mobile, show a single pill for all projects
+                projectTagsHtml = `
+                    <span class="project-tag more-tags" title="Show all projects">
+                        +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
                     </span>
-                ` : '';
-            }).join('') : '';
-        
-        // Use template literals for better performance
+                `;
+            } else {
+                // Desktop: show up to maxTags, then +X more
+                projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
+                    const project = projects[projectId];
+                    return project ? `
+                        <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
+                            ${project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name} (${qty})
+                        </span>
+                    ` : '';
+                }).join('');
+                
+                if (projectEntries.length > maxTags) {
+                    const moreCount = projectEntries.length - maxTags;
+                    projectTagsHtml += `
+                        <span class="project-tag more-tags" title="Show all projects">+${moreCount} more</span>
+                    `;
+                }
+            }
+        }
+
         item.innerHTML = `
             <div class="item-info">
-                <div class="item-name">
-                    ${part.name}
-                    ${projectTagsHtml ? `<div class="project-tags">${projectTagsHtml}</div>` : ''}
-                </div>
-                <div class="item-quantity ${part.quantity < 5 ? 'low' : ''}">
-                    <button class="quantity-btn" data-action="decrease">-</button>
-                    <span class="quantity-number">${part.quantity}</span>
-                    <button class="quantity-btn" data-action="increase">+</button>
-                </div>
+                <div class="item-name">${part.name}</div>
+                <div class="project-tags">${projectTagsHtml}</div>
+            </div>
+            <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                <button class="quantity-btn" data-action="decrease">-</button>
+                <span class="quantity-number">${part.quantity}</span>
+                <button class="quantity-btn" data-action="increase">+</button>
             </div>
             <div class="item-actions">
-                ${part.purchaseUrl ? `
-                    <button class="action-icon shop-icon" title="Purchase">
-                        <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                    </button>
-                ` : ''}
-                <button class="action-icon edit-icon" title="Edit">
+                <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 </button>
-                <button class="action-icon delete-icon" title="Delete">
+                <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
                     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
+                ${part.purchaseUrl ? `
+                    <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Open purchase link">
+                        <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+                    </button>
+                ` : ''}
             </div>
         `;
-        
-        // Add event listeners
-        item.querySelector('.edit-icon').addEventListener('click', () => showEditPartModal(id));
-        item.querySelector('.delete-icon').addEventListener('click', () => showDeletePartModal(id));
-        
-        // Add shopping button event listener if it exists
-        const shopButton = item.querySelector('.shop-icon');
-        if (shopButton) {
-            shopButton.addEventListener('click', () => openPurchaseLink(id));
-        }
-        
-        // Add project tag click handlers
-        const projectTags = item.querySelectorAll('.project-tag');
-        projectTags.forEach(tag => {
-            tag.addEventListener('click', (e) => {
+
+        // Add click handler for the "+X more" or mobile tag
+        const moreTag = item.querySelector('.more-tags');
+        if (moreTag) {
+            moreTag.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const projectId = tag.dataset.projectId;
-                if (projectId) {
-                    showProjectDetails(projectId);
-                }
+                showAllProjectTagsModal(id);
             });
-        });
-        
-        // Add quantity button event listeners
+        }
+
+        // Add click handlers for project tags (desktop only)
+        if (!isMobile) {
+            item.querySelectorAll('.project-tag:not(.more-tags)').forEach(tag => {
+                tag.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const projectId = tag.getAttribute('data-project-id');
+                    if (projectId) {
+                        showProjectDetails(projectId);
+                    }
+                });
+            });
+        }
+
+        // Restore quantity button event listeners
         const decreaseBtn = item.querySelector('[data-action="decrease"]');
         const increaseBtn = item.querySelector('[data-action="increase"]');
         if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
         if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
-        
-        fragment.appendChild(item);
+
+        inventoryItems.appendChild(item);
     });
-    
-    DOM.inventoryItems.innerHTML = '';
-    DOM.inventoryItems.appendChild(fragment);
 }
 
 function adjustStockInline(partId, action) {
@@ -1273,15 +1334,32 @@ function showAllProjectRequirements() {
     for (const projectId in projects) {
         const bom = projects[projectId].bom;
         for (const partId in bom) {
-            if (!partTotals[partId]) {
-                partTotals[partId] = {
-                    name: bom[partId].name,
+            const normId = normalizeValue(partId);
+            // Use inventory name if available, otherwise BOM name
+            let canonicalName = bom[partId].name;
+            for (const id in inventory) {
+                if (normalizeValue(id) === normId) {
+                    canonicalName = inventory[id].name;
+                    break;
+                }
+            }
+            if (!partTotals[normId]) {
+                partTotals[normId] = {
+                    name: canonicalName,
                     total: 0,
                     projects: []
                 };
+            } else {
+                // Always update the name to the inventory name if found
+                for (const id in inventory) {
+                    if (normalizeValue(id) === normId) {
+                        partTotals[normId].name = inventory[id].name;
+                        break;
+                    }
+                }
             }
-            partTotals[partId].total += bom[partId].quantity;
-            partTotals[partId].projects.push({
+            partTotals[normId].total += bom[partId].quantity;
+            partTotals[normId].projects.push({
                 project: projects[projectId].name,
                 quantity: bom[partId].quantity
             });
@@ -1291,11 +1369,19 @@ function showAllProjectRequirements() {
     // Build HTML table
     let html = '<table id="allProjectRequirementsTable">';
     html += '<tr><th>Part Name</th><th>Total Needed</th><th>Projects</th></tr>';
-    for (const partId in partTotals) {
-        const part = partTotals[partId];
+    for (const normId in partTotals) {
+        const part = partTotals[normId];
         // Check inventory for low stock
         let lowStock = false;
-        if (inventory[partId] && inventory[partId].quantity < part.total) lowStock = true;
+        // Try to find the actual inventory part by normalized ID
+        let invId = null;
+        for (const id in inventory) {
+            if (normalizeValue(id) === normId) {
+                invId = id;
+                break;
+            }
+        }
+        if (invId && inventory[invId].quantity < part.total) lowStock = true;
         html += `<tr${lowStock ? ' class="low-stock"' : ''}>`;
         html += `<td>${part.name}</td>`;
         html += `<td${lowStock ? ' class="low-stock"' : ''}>${part.total}</td>`;
@@ -1528,4 +1614,112 @@ function levenshtein(a, b) {
     return matrix[b.length][a.length];
 }
 
-initializeInventory();
+function showAllProjectTagsModal(partId) {
+    const part = inventory[partId];
+    if (!part || !part.projects) return;
+
+    const modal = document.getElementById('allProjectTagsModal');
+    const tagsList = document.getElementById('allProjectTagsList');
+    tagsList.innerHTML = '';
+
+    Object.entries(part.projects).forEach(([projectId, qty]) => {
+        const project = projects[projectId];
+        if (project) {
+            const tag = document.createElement('span');
+            tag.className = 'project-tag';
+            tag.setAttribute('data-project-id', projectId);
+            tag.setAttribute('title', `${project.name} (${qty} needed)`);
+            tag.textContent = `${project.name} (${qty})`;
+            tag.onclick = (e) => {
+                e.stopPropagation();
+                showProjectDetails(projectId);
+                hideAllProjectTagsModal();
+            };
+            tagsList.appendChild(tag);
+        }
+    });
+
+    modal.style.display = 'flex';
+}
+
+function hideAllProjectTagsModal() {
+    const modal = document.getElementById('allProjectTagsModal');
+    modal.style.display = 'none';
+}
+
+// Update tag display responsively on window resize
+window.addEventListener('resize', debounce(displayInventory, 200));
+
+function mergeDuplicateInventoryEntries() {
+    // Create a map of normalized IDs to their canonical IDs
+    const normalizedToCanonical = {};
+    const duplicates = [];
+    
+    // First pass: identify duplicates and choose canonical IDs
+    for (const id in inventory) {
+        const normId = normalizeValue(id);
+        if (!normalizedToCanonical[normId]) {
+            normalizedToCanonical[normId] = id;
+        } else {
+            duplicates.push({
+                canonicalId: normalizedToCanonical[normId],
+                duplicateId: id,
+                normId: normId
+            });
+        }
+    }
+    
+    if (duplicates.length === 0) {
+        // Do not notify the user if there are no duplicates
+        return;
+    }
+    
+    // Second pass: merge duplicates
+    for (const dup of duplicates) {
+        const canonical = inventory[dup.canonicalId];
+        const duplicate = inventory[dup.duplicateId];
+        
+        // Merge quantities
+        canonical.quantity += duplicate.quantity;
+        
+        // Merge project tags
+        if (duplicate.projects) {
+            if (!canonical.projects) canonical.projects = {};
+            for (const projectId in duplicate.projects) {
+                if (!canonical.projects[projectId]) {
+                    canonical.projects[projectId] = 0;
+                }
+                canonical.projects[projectId] += duplicate.projects[projectId];
+            }
+        }
+        
+        // Update project BOMs
+        for (const projectId in projects) {
+            const bom = projects[projectId].bom;
+            if (bom[dup.duplicateId]) {
+                // If canonical doesn't exist in BOM, add it
+                if (!bom[dup.canonicalId]) {
+                    bom[dup.canonicalId] = {
+                        name: canonical.name,
+                        quantity: bom[dup.duplicateId].quantity
+                    };
+                } else {
+                    // Add quantities if both exist
+                    bom[dup.canonicalId].quantity += bom[dup.duplicateId].quantity;
+                }
+                // Remove the duplicate entry
+                delete bom[dup.duplicateId];
+            }
+        }
+        
+        // Remove the duplicate inventory entry
+        delete inventory[dup.duplicateId];
+    }
+    
+    // Save changes
+    saveInventory();
+    saveProjects();
+    displayInventory();
+    
+    showNotification(`Merged ${duplicates.length} duplicate entries`);
+}

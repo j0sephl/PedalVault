@@ -45,8 +45,8 @@ function initializeApp() {
     const addPartBtn = DOM.get('addPartBtn');
     const compareBOMBtn = DOM.get('compareBOMBtn');
     const exportBOMModalBtn = DOM.get('exportBOMModalBtn');
-    const importDataBtn = DOM.get('importDataBtn');
-    const exportDataBtn = DOM.get('exportDataBtn');
+    const saveDataBtn = DOM.get('saveDataBtn');
+    const loadDataBtn = DOM.get('loadDataBtn');
     
     // Project management buttons
     const manageProjectsBtn = DOM.get('manageProjectsBtn');
@@ -61,8 +61,8 @@ function initializeApp() {
     if (addPartBtn) addPartBtn.addEventListener('click', showAddPartModal);
     if (compareBOMBtn) compareBOMBtn.addEventListener('click', () => DOM.get('importBOM').click());
     if (exportBOMModalBtn) exportBOMModalBtn.addEventListener('click', showExportBOMModal);
-    if (importDataBtn) importDataBtn.addEventListener('click', () => DOM.get('importFile').click());
-    if (exportDataBtn) exportDataBtn.addEventListener('click', showExportModal);
+    if (saveDataBtn) saveDataBtn.addEventListener('click', showExportModal);
+    if (loadDataBtn) loadDataBtn.addEventListener('click', () => DOM.get('importFile').click());
     
     if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
     if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
@@ -184,13 +184,12 @@ function hideExportModal() {
 
 function exportInventory(format) {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-    let filename, dataStr, mimeType;
+    let filename, dataStr, mimeType, defaultName;
     
     if (format === 'csv') {
-        filename = `guitar-pedal-inventory-${timestamp}.csv`;
+        defaultName = `guitar-pedal-inventory-${timestamp}.csv`;
         // Create CSV header
         const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL', 'Projects'];
-        // Helper to quote and escape fields
         function csvEscape(val) {
             if (val == null) return '';
             val = String(val);
@@ -198,7 +197,6 @@ function exportInventory(format) {
             if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
             return val;
         }
-        // Create CSV rows
         const rows = Object.entries(inventory).map(([id, part]) => [
             id,
             part.name,
@@ -206,16 +204,25 @@ function exportInventory(format) {
             part.purchaseUrl || '',
             part.projects ? Object.entries(part.projects).map(([pid, qty]) => `${pid}:${qty}`).join(';') : ''
         ].map(csvEscape));
-        // Combine header and rows
         dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\n');
         mimeType = 'text/csv';
     } else {
-        filename = `guitar-pedal-inventory-${timestamp}.json`;
-        // Export both inventory and projects
+        defaultName = `guitar-pedal-inventory-${timestamp}.json`;
         dataStr = JSON.stringify({ inventory, projects }, null, 2);
         mimeType = 'application/json';
     }
     
+    // Prompt user for filename
+    filename = prompt('Enter a file name to save:', defaultName);
+    if (!filename) {
+        showNotification('Save cancelled', 'error');
+        hideExportModal();
+        return;
+    }
+    // Ensure correct extension
+    if (format === 'csv' && !filename.endsWith('.csv')) filename += '.csv';
+    if (format !== 'csv' && !filename.endsWith('.json')) filename += '.json';
+
     const dataBlob = new Blob([dataStr], {type: mimeType});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(dataBlob);
@@ -225,7 +232,7 @@ function exportInventory(format) {
     document.body.removeChild(link);
     
     hideExportModal();
-    showNotification(`Exported inventory to ${filename}`);
+    showNotification(`Saved inventory to ${filename}`);
 }
 
 function importInventory(event) {
@@ -1490,7 +1497,7 @@ function createSyncButtons() {
         </button>
         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
             <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
             Compare BOM
         </button>
@@ -1504,13 +1511,13 @@ function createSyncButtons() {
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
             </svg>
-            Import Data
+            Load Data
         </button>
         <button class="sync-btn export-btn full-width" onclick="showExportModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
-            Export Data
+            Save Data
         </button>
     `;
 }

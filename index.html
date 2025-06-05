@@ -100,8 +100,8 @@
                         <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
                         <button class="sync-btn import-btn full-width" id="compareBOMBtn">📋 Compare BOM</button>
                         <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">📋 Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" id="importDataBtn">📥 Import Data</button>
-                        <button class="sync-btn export-btn full-width" id="exportDataBtn">📤 Export Data</button>
+                        <button class="sync-btn import-btn full-width" id="loadDataBtn">📥 Load Data</button>
+                        <button class="sync-btn export-btn full-width" id="saveDataBtn">💾 Save Data</button>
                     </div>
                 </div>
 
@@ -194,8 +194,8 @@
     <!-- Export Options Modal -->
     <div class="modal" id="exportModal">
         <div class="modal-content">
-            <h2>Export Inventory</h2>
-            <p class="export-format-text">Choose export format:</p>
+            <h2>Save Inventory</h2>
+            <p class="export-format-text">Choose save format:</p>
             <div class="modal-buttons">
                 <button class="btn json-btn flex-1" onclick="exportInventory('json')">JSON</button>
                 <button class="btn csv-btn flex-1" onclick="exportInventory('csv')">CSV</button>

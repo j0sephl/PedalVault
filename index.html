@@ -10,32 +10,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Goldman:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="style.css"></noscript>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3B4252">
+    <meta name="application-name" content="PedalVault">
+    <meta name="apple-mobile-web-app-title" content="PedalVault">
     <meta name="description" content="NFC Inventory System for Guitar Pedal Parts">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <link rel="icon" type="x-icon" href="icons/favicon.ico">
-    <script src="https://unpkg.com/@rive-app/canvas@2.10.3"></script>
-    <script src="rive-logo.js"></script>
+    <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
+    <script src="rive-logo.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Only register service worker in production
                 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                    // First unregister any existing service workers
                     navigator.serviceWorker.getRegistrations().then(registrations => {
                         for(let registration of registrations) {
+                            // It's generally aggressive to unregister all.
+                            // This might be here for a specific reason, but standard practice is to let the browser manage updates.
+                            // Consider removing this loop if not strictly needed.
                             registration.unregister();
                         }
-                        // Then register the new service worker
                         navigator.serviceWorker.register('sw.js')
                             .then(registration => {
                                 console.log('ServiceWorker registration successful');
-                                // Force the service worker to update
-                                registration.update();
+                                registration.update(); // Check for updates
                             })
                             .catch(err => {
                                 console.log('ServiceWorker registration failed: ', err);
@@ -46,20 +48,17 @@
         }
     </script>
     
-    <!-- Preload critical resources -->
-    <link rel="preload" href="style.css" as="style">
     <link rel="preload" href="script.js" as="script">
     <link rel="preload" href="rive-logo.js" as="script">
     <link rel="preload" href="gpi.riv" as="fetch" crossorigin>
     
-    <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://unpkg.com">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="logo">
-                <canvas id="rive-logo" width="400" height="400"></canvas>
+                <canvas id="rive-logo" width="100" height="100"></canvas>
             </div>
             <div class="header-content">
                 <svg class="wordmark-svg" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 655.62 148.27">
@@ -97,13 +96,8 @@
         <div class="content">
             <div class="main-content">
                 <div class="left-panel">
-                    <div class="sync-buttons"> 
-                        <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
-                        <button class="sync-btn import-btn full-width" id="compareBOMBtn">📋 Compare BOM</button>
-                        <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">📋 Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" id="importDataBtn">📥 Import Data</button>
-                        <button class="sync-btn export-btn full-width" id="exportDataBtn">📤 Export Data</button>
-                    </div>
+                    <div class="sync-buttons" id="syncButtonsContainer"> 
+                        </div>
                 </div>
 
                 <div class="right-panel">
@@ -139,27 +133,24 @@
                     </svg>
                     Buy me a coffee
                 </a>
-                <span class="version">v1.4.0</span>
-            </div>
+                <span class="version">v1.4.0</span> </div>
         </div>
     </div>
 
-    <!-- Add Part Modal -->
     <div class="modal" id="addPartModal">
         <div class="modal-content">
             <h2>Add New Part</h2>
-            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
+            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kﾎｩ')">
             <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
             <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
             <div class="modal-buttons">
-                <button class="btn btn-add flex-1" onclick="addNewPart()">Add Part</button>
-                <button class="btn cancel-btn flex-1" onclick="hideAddPartModal()">Cancel</button>
+                <button class="btn btn-add flex-1" id="saveAddPartBtn">Add Part</button>
+                <button class="btn cancel-btn flex-1" id="cancelAddPartBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit Part Modal -->
     <div class="modal" id="editPartModal">
         <div class="modal-content">
             <h2>Edit Part</h2>
@@ -169,128 +160,103 @@
             <input type="text" id="editPartId" placeholder="NFC Tag ID" class="readonly-input">
             <div id="editPartProjectsDropdownSection"></div>
             <div class="modal-buttons">
-                <button class="btn btn-add flex-1" onclick="saveEditPart()">Save Changes</button>
-                <button class="btn cancel-btn flex-1" onclick="hideEditPartModal()">Cancel</button>
+                <button class="btn btn-add flex-1" id="saveEditPartBtn">Save Changes</button>
+                <button class="btn cancel-btn flex-1" id="cancelEditPartBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal" id="deletePartModal">
         <div class="modal-content">
             <h2>Delete Part</h2>
             <p id="deletePartMessage">Are you sure you want to delete this part? This action cannot be undone.</p>
             <div class="modal-buttons">
-                <button class="btn btn-remove" onclick="confirmDeletePart()">Delete</button>
-                <button class="btn" onclick="hideDeletePartModal()">Cancel</button>
+                <button class="btn btn-remove" id="confirmDeletePartBtn">Delete</button>
+                <button class="btn" id="cancelDeletePartBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Notification -->
     <div class="notification" id="notification"></div>
 
-    <!-- Export Options Modal -->
     <div class="modal" id="exportModal">
         <div class="modal-content">
             <h2>Export Inventory</h2>
             <p class="export-format-text">Choose export format:</p>
             <div class="modal-buttons">
-                <button class="btn json-btn flex-1" onclick="exportInventory('json')">JSON</button>
-                <button class="btn csv-btn flex-1" onclick="exportInventory('csv')">CSV</button>
-                <button class="btn cancel-btn flex-1" onclick="hideExportModal()">Cancel</button>
+                <button class="btn json-btn flex-1" id="exportJsonBtn">JSON</button>
+                <button class="btn csv-btn flex-1" id="exportCsvBtn">CSV</button>
+                <button class="btn cancel-btn flex-1" id="cancelExportBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- BOM Comparison Modal -->
-    <div class="modal" id="bomModal">
-        <div class="modal-content">
-            <h2>BOM Comparison Results</h2>
-            <div id="bomResults" class="bom-results"></div>
+    <div class="modal" id="bomModal"> <div class="modal-content modal-content-wide"> <h2 id="projectDetailsTitle">Bill of Materials</h2> <div id="bomResults" class="bom-results"></div>
             <div class="modal-buttons modal-buttons-top">
-                <button class="btn cancel-btn flex-1" onclick="hideBOMModal()">Close</button>
+                <button class="btn add-missing-btn flex-1" id="addMissingPartsBtn">Add Missing Parts to Inventory</button>
+                <button class="btn cancel-btn flex-1" id="closeBomDisplayBtn">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Project Management Modal -->
     <div class="modal" id="projectManagementModal">
         <div class="modal-content">
             <h2>Project Management</h2>
-            <button class="btn btn-add flex-1" onclick="showProjectNameModal()" id="createProjectBtn">+ Create Project</button>
+            <button class="btn btn-add flex-1" id="createNewProjectManagementBtn">+ Create Project</button>
             <div id="projectList" class="project-list">
-                <!-- Projects will be listed here -->
-            </div>
+                </div>
             <div class="modal-buttons">
-                <button class="btn close-btn flex-1" onclick="hideProjectManagementModal()">Close</button>
+                <button class="btn close-btn flex-1" id="closeProjectManagementBtn">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Delete Project Confirmation Modal -->
     <div class="modal" id="deleteProjectModal">
         <div class="modal-content">
             <h2>Delete Project</h2>
             <p id="deleteProjectMessage" class="project-info"></p>
             <div class="modal-buttons">
-                <button class="btn btn-remove flex-1" onclick="confirmDeleteProject()">Delete</button>
-                <button class="btn close-btn flex-1" onclick="hideDeleteProjectModal()">Cancel</button>
+                <button class="btn btn-remove flex-1" id="confirmDeleteProjectBtn">Delete</button>
+                <button class="btn close-btn flex-1" id="cancelDeleteProjectBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Project Details Modal -->
-    <div class="modal" id="projectDetailsModal">
-        <div class="modal-content modal-content-wide">
-            <h2 id="projectDetailsTitle">Project Details</h2>
-            <div id="projectStatus" class="project-status"></div>
-            <div id="projectParts" class="project-parts"></div>
-            <div class="modal-buttons">
-                <button class="btn close-btn flex-1" onclick="hideProjectDetailsModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- All Projects Requirements Modal -->
     <div class="modal" id="allProjectRequirementsModal">
-        <div class="modal-content">
-            <h2>All Project Requirements</h2>
-            <div id="allProjectRequirements"></div>
-            <button class="close-btn" onclick="hideAllProjectRequirementsModal()">Close</button>
+        <div class="modal-content"> <h2>All Project Requirements</h2>
+            <div id="allProjectRequirementsContent"></div> <div class="modal-buttons modal-buttons-top">
+                <button class="btn close-btn flex-1" id="closeAllProjectRequirementsBtn">Close</button>
+            </div>
         </div>
     </div>
 
-    <!-- Export BOM Modal -->
     <div class="modal" id="exportBOMModal">
         <div class="modal-content">
             <h2>Export Project BOM</h2>
-            <select id="exportBOMProject" class="sort-dropdown full-width" style="margin-bottom: 15px;">
+            <select id="exportBOMProjectSelect" class="sort-dropdown full-width" style="margin-bottom: 15px;">
                 <option value="">Select a project...</option>
             </select>
             <p class="export-format-text">Choose export format:</p>
             <div class="modal-buttons">
-                <button class="btn json-btn flex-1" onclick="exportProjectBOM('json')">JSON</button>
-                <button class="btn csv-btn flex-1" onclick="exportProjectBOM('csv')">CSV</button>
-                <button class="btn cancel-btn flex-1" onclick="hideExportBOMModal()">Cancel</button>
+                <button class="btn json-btn flex-1" id="exportProjectBOMJsonBtn">JSON</button>
+                <button class="btn csv-btn flex-1" id="exportProjectBOMCsvBtn">CSV</button>
+                <button class="btn cancel-btn flex-1" id="cancelExportBOMBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Project Name Modal -->
-    <div class="modal" id="projectNameModal">
-        <div class="modal-content">
+    <div class="modal" id="projectNameModal"> <div class="modal-content">
             <h2>New Project</h2>
             <input type="text" id="projectNameInput" placeholder="Enter project name" class="full-width">
             <div class="modal-buttons">
-                <button class="btn btn-add flex-1" onclick="confirmProjectName()">Create Project</button>
-                <button class="btn cancel-btn flex-1" onclick="hideProjectNameModal()">Cancel</button>
+                <button class="btn btn-add flex-1" id="confirmProjectNameBtn">Create Project</button>
+                <button class="btn cancel-btn flex-1" id="cancelProjectNameBtn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <input type="file" id="importBOM" accept=".json,.csv" onchange="compareBOM(event)" class="hidden">
-    <input type="file" id="importFile" accept=".json,.csv" onchange="importInventory(event)" class="hidden">
+    <input type="file" id="importBOMFile" accept=".json,.csv" class="hidden">
+    <input type="file" id="importInventoryFile" accept=".json,.csv" class="hidden">
 
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="script.js"></script>

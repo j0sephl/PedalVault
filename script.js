@@ -385,10 +385,12 @@ function displayInventory() {
     const inventoryItems = document.getElementById('inventoryItems');
     inventoryItems.innerHTML = '';
 
-    const sortedEntries = getSortedInventoryEntries();
-    const maxTags = 3; // Show up to 3 tags, then "+X more"
-    const isMobile = window.innerWidth <= 768;
+    // Responsive tag limit logic
+    let maxTags = 3;
+    if (window.innerWidth <= 1280) maxTags = 1;
+    const isMobile = window.innerWidth <= 1024;
 
+    const sortedEntries = getSortedInventoryEntries();
     sortedEntries.forEach(([id, part]) => {
         const item = document.createElement('div');
         item.className = 'inventory-item';
@@ -453,11 +455,9 @@ function displayInventory() {
                 <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
                     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
-                ${part.purchaseUrl ? `
-                    <button class="action-icon shop-icon" onclick="openPurchaseLink('${id}')" title="Open purchase link">
-                        <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
-                    </button>
-                ` : ''}
+                <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                    <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+                </button>
             </div>
         `;
 
@@ -727,10 +727,12 @@ function addNewPart() {
     showNotification(`Added ${name} to inventory`);
 }
 
-function openPurchaseLink(partId) {
+function handlePurchaseClick(partId) {
     const part = inventory[partId];
     if (part && part.purchaseUrl) {
         window.open(part.purchaseUrl, '_blank');
+    } else {
+        showNotification('No purchase link available', 'error');
     }
 }
 

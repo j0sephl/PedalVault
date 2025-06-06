@@ -388,11 +388,14 @@
           justify-content: space-between;
           align-items: center;
           padding-right: 15px;
-          flex-wrap: wrap;
+          flex-wrap: nowrap;
           gap: 4px;
+          min-width: 0;
       }
   
       .item-name {
+          flex: 1 1 auto;
+          min-width: 0;
           font-weight: 300;
           color: #F8F8F2;
           font-size: 14px;
@@ -401,6 +404,22 @@
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+      }
+  
+      .project-tags {
+          flex: 0 1 auto;
+          min-width: 0;
+          max-width: 60%;
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          align-items: center;
       }
   
       .item-quantity {
@@ -468,6 +487,8 @@
       .item-actions {
           display: flex;
           gap: 8px;
+          min-width: 96px;
+          justify-content: flex-end;
       }
   
       .action-icon {
@@ -755,7 +776,7 @@
           background: #BF616A;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           html, body {
               max-width: 100vw;
               overflow-x: hidden;
@@ -865,7 +886,7 @@
           .item-info {
               flex-direction: column;
               align-items: flex-start;
-              gap: 6px;
+
           }
   
           .item-name {
@@ -885,7 +906,7 @@
               display: block;
               margin: 2px 0 0 0;
               max-width: 100%;
-              font-size: 11px;
+              font-size: 10px;
               white-space: normal;
               overflow-wrap: break-word;
               text-overflow: initial;
@@ -916,7 +937,7 @@
           }
   
           .project-tag {
-              font-size: 9px;
+              font-size: 10px;
               padding: 1px 4px;
               max-width: 100px;
           }
@@ -1138,21 +1159,25 @@
       /* Project Tags Styles */
       .project-tags {
           display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-          margin-top: 4px;
+          flex-wrap: nowrap;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          align-items: center;
+          max-width: 60%;
       }
   
       .project-tag {
           display: inline-block;
           background-color: var(--nord3) !important;
           color: var(--nord6) !important;
-          padding: 4px 12px !important;
+          padding: 4px 8px !important;
           border-radius: 12px !important;
           margin: 2px !important;
-          font-size: 0.95em !important;
+          font-size: 1em !important;
           font-weight: 500 !important;
-          max-width: 120px;
+          max-width: 100px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -1195,15 +1220,27 @@
           margin-bottom: auto;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1280px) {
           .project-tag {
-              max-width: 100px;
+              max-width: 80px;
               font-size: 0.8em;
-              padding: 3px 6px;
+              padding: 2px 6px !important;
           }
           
-          .all-project-tags-list .project-tag {
-              max-width: 150px;
+          .project-tags {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 2px;
+              margin-top: 2px;
+              max-width: 100%;
+          }
+          
+          .project-tag:nth-child(n+2) {
+              display: none;
+          }
+          
+          .project-tag.more-tags {
+              display: inline-block !important;
           }
       }
   
@@ -1320,7 +1357,7 @@
           color: #BF616A;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .bom-results .project-info li {
               font-size: 12px;
               padding: 14px 8px;
@@ -1465,7 +1502,7 @@
           filter: brightness(1.1);
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .modal-content {
               margin: 20% auto;
               width: 95%;
@@ -1534,7 +1571,7 @@
           fill: currentColor;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .footer {
               padding: 12px;
               text-align: center;
@@ -1659,7 +1696,7 @@
           margin-top: 5px;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           #projectParts .project-list-item {
               flex-direction: column;
               align-items: flex-start;
@@ -1706,7 +1743,7 @@
           display: block;
           margin-bottom: 4px;
       }
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .wordmark-svg {
               max-width: 250px;
           }
@@ -1844,7 +1881,7 @@
           margin-left: 16px;
           opacity: 0.85;
       }
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .data-note {
               display: block;
               margin-left: 0;
@@ -1853,7 +1890,7 @@
           }
       }
   
-      @media (max-width: 1024px) {
+      @media (max-width: 1280px) {
           .project-tag {
               max-width: 80px;
               font-size: 0.85em;
@@ -1920,7 +1957,7 @@
           opacity: 1;
       }
   
-      @media (max-width: 768px) {
+      @media (max-width: 1024px) {
           .type-pill {
               max-width: 60px;
               min-width: 0;

@@ -435,31 +435,61 @@ function displayInventory() {
         }
 
         // Responsive: type pill below name on mobile, inline on desktop
-        item.innerHTML = `
-            <div class="item-info">
-                <div class="item-name" title="${part.name}">
-                    <span class="part-name-text">${part.name}</span>
-                    ${typePillHtml}
+        if (isMobile) {
+            item.innerHTML = `
+                <div class="item-left">
+                    <div class="item-name" title="${part.name}">
+                        <span class="part-name-text">${part.name}</span>
+                        ${typePillHtml}
+                    </div>
+                    <div class="project-tags">${projectTagsHtml}</div>
                 </div>
-                <div class="project-tags">${projectTagsHtml}</div>
-            </div>
-            <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
-                <button class="quantity-btn" data-action="decrease">-</button>
-                <span class="quantity-number">${part.quantity}</span>
-                <button class="quantity-btn" data-action="increase">+</button>
-            </div>
-            <div class="item-actions">
-                <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
-                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                </button>
-                <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
-                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                </button>
-                <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
-                    <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
-                </button>
-            </div>
-        `;
+                <div class="item-controls">
+                    <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                        <button class="quantity-btn" data-action="decrease">-</button>
+                        <span class="quantity-number">${part.quantity}</span>
+                        <button class="quantity-btn" data-action="increase">+</button>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        </button>
+                        <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                        <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                            <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            item.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name" title="${part.name}">
+                        <span class="part-name-text">${part.name}</span>
+                        ${typePillHtml}
+                    </div>
+                    <div class="project-tags">${projectTagsHtml}</div>
+                </div>
+                <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                    <button class="quantity-btn" data-action="decrease">-</button>
+                    <span class="quantity-number">${part.quantity}</span>
+                    <button class="quantity-btn" data-action="increase">+</button>
+                </div>
+                <div class="item-actions">
+                    <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </button>
+                    <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                    <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                        <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+                    </button>
+                </div>
+            `;
+        }
 
         // Add click handler for the "+X more" or mobile tag
         const moreTag = item.querySelector('.more-tags');

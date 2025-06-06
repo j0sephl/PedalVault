@@ -2015,3 +2015,46 @@
         }
       }
   
+      @media (max-width: 1024px) {
+        .inventory-list .inventory-item {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 0 12px;
+        }
+        .inventory-list .item-left {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          flex: 1 1 0;
+          min-width: 0;
+        }
+        .inventory-list .item-controls {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 8px;
+          min-width: 120px;
+        }
+        .inventory-list .item-quantity,
+        .inventory-list .item-actions {
+          width: 110px;
+          justify-content: flex-end;
+        }
+        .inventory-list .item-name {
+          margin-bottom: 4px;
+        }
+        .inventory-list .project-tags {
+          width: 100%;
+          max-width: 100%;
+          margin-bottom: 8px;
+          justify-content: flex-start;
+          flex-wrap: wrap;
+          gap: 2px;
+          overflow: visible;
+          text-overflow: initial;
+          white-space: normal;
+        }
+      }
+  

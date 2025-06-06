@@ -42,6 +42,8 @@
   --nord13: #EBCB8B;
   --nord14: #A3BE8C;
   --nord15: #B48EAD;
+  --notification-easing: cubic-bezier(0.33, 0.00, 0.00, 1.00);
+  --notification-duration: 0.5s;
 }
 
   
@@ -721,10 +723,11 @@
           background: #A3BE8C;
           color: #E5E9F0;
           padding: 15px 25px;
-          border-radius: 10px;
-          transform: translateX(400px);
-          transition: transform 0.3s ease;
+          transform: translateX(120vw);
+          transition: transform var(--notification-duration) var(--notification-easing);
           z-index: 1001;
+          max-width: 90vw;
+          word-break: break-word;
       }
   
       .notification.show {
@@ -1794,5 +1797,64 @@
               margin-top: 6px;
               text-align: center;
           }
+      }
+  
+      .part-type-dropdown {
+          width: 100%;
+          padding: 8px;
+          margin-bottom: 8px;
+          font-size: 14px;
+          background: #2E3440;
+          color: #E5E9F0;
+          border: 1.5px solid #4C566A;
+          border-radius: 0;
+          font-family: 'JetBrains Mono', monospace;
+      }
+      .type-suggestion {
+          font-size: 12px;
+          color: #A3BE8C;
+          margin-bottom: 8px;
+          min-height: 16px;
+      }
+  
+      .type-pill {
+          display: inline-block;
+          background: #4C566A;
+          color: #EBCB8B;
+          font-size: 11px;
+          font-weight: 600;
+          border-radius: 8px;
+          padding: 2px 8px;
+          margin-left: 6px;
+          vertical-align: middle;
+          line-height: 1.2;
+          border: 1px solid #3B4252;
+          cursor: default;
+      }
+      .type-pill.mlcc { background: #88C0D0; color: #2E3440; }
+      .type-pill.boxfilm { background: #A3BE8C; color: #2E3440; }
+      .type-pill.electrolytic { background: #D08770; color: #2E3440; }
+      .type-pill.other { background: #B48EAD; color: #2E3440; }
+  
+      .set-type-pill {
+          display: inline-block;
+          background: #434C5E;
+          color: #EBCB8B;
+          font-size: 11px;
+          font-weight: 600;
+          border-radius: 8px;
+          padding: 2px 8px;
+          margin-left: 6px;
+          vertical-align: middle;
+          line-height: 1.2;
+          border: 1px dashed #EBCB8B;
+          cursor: pointer;
+          opacity: 0.8;
+          transition: background 0.2s, color 0.2s, opacity 0.2s;
+      }
+      .set-type-pill:hover {
+          background: #EBCB8B;
+          color: #2E3440;
+          opacity: 1;
       }
   

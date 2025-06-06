@@ -396,17 +396,14 @@ function displayInventory() {
 
         const projectEntries = part.projects ? Object.entries(part.projects) : [];
         let projectTagsHtml = '';
-        
         if (projectEntries.length > 0) {
             if (isMobile) {
-                // On mobile, show a single pill for all projects
                 projectTagsHtml = `
                     <span class="project-tag more-tags" title="Show all projects">
                         +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
                     </span>
                 `;
             } else {
-                // Desktop: show up to maxTags, then +X more
                 projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
                     const project = projects[projectId];
                     return project ? `
@@ -425,9 +422,19 @@ function displayInventory() {
             }
         }
 
+        // --- Type pill logic ---
+        let typePillHtml = '';
+        const isCap = /\b(capacitor|cap)\b/i.test(part.name);
+        if (isCap && part.type) {
+            const typeClass = part.type.toLowerCase().replace(/\s/g, '');
+            typePillHtml = `<span class="type-pill ${typeClass}">${part.type}</span>`;
+        } else if (isCap && !part.type) {
+            typePillHtml = `<span class="set-type-pill" data-set-type="${id}" title="Set capacitor type">Set Type</span>`;
+        }
+
         item.innerHTML = `
             <div class="item-info">
-                <div class="item-name">${part.name}</div>
+                <div class="item-name">${part.name}${typePillHtml}</div>
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
@@ -478,6 +485,15 @@ function displayInventory() {
         if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
         if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
 
+        // Add click handler for Set Type pill
+        const setTypePill = item.querySelector('.set-type-pill');
+        if (setTypePill) {
+            setTypePill.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showEditPartModal(id);
+            });
+        }
+
         inventoryItems.appendChild(item);
     });
 }
@@ -518,11 +534,34 @@ function hideAddPartModal() {
 function showEditPartModal(partId) {
     editingPartId = partId;
     const part = inventory[partId];
-    
     document.getElementById('editPartName').value = part.name;
     document.getElementById('editPartQuantity').value = part.quantity;
     document.getElementById('editPartUrl').value = part.purchaseUrl || '';
     document.getElementById('editPartId').value = partId;
+    const typeDropdown = document.getElementById('editPartType');
+    const typeSuggestion = document.getElementById('editPartTypeSuggestion');
+    const editPartNameInput = document.getElementById('editPartName');
+    if (typeDropdown && typeSuggestion && editPartNameInput) {
+        typeDropdown.value = part.type || '';
+        // Always update dropdown/suggestion visibility and content on modal open
+        updateTypeDropdownVisibility(editPartNameInput, typeDropdown, typeSuggestion);
+        // Also update suggestion text if visible
+        if (!typeDropdown.classList.contains('hidden')) {
+            const suggestion = suggestCapacitorType(editPartNameInput.value);
+            if (suggestion) {
+                typeSuggestion.textContent = `Suggested type: ${suggestion}`;
+                if (!typeDropdown.value) {
+                    for (const opt of typeDropdown.options) {
+                        if (opt.value === suggestion) typeDropdown.value = suggestion;
+                    }
+                }
+            } else {
+                typeSuggestion.textContent = '';
+            }
+        } else {
+            typeSuggestion.textContent = '';
+        }
+    }
     document.getElementById('editPartModal').style.display = 'block';
 
     // --- In showEditPartModal(partId), render a project list styled like inventory items ---
@@ -570,76 +609,50 @@ function hideEditPartModal() {
 
 function saveEditPart() {
     if (!editingPartId) return;
-    
     const newName = document.getElementById('editPartName').value.trim();
     const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
     const newUrl = document.getElementById('editPartUrl').value.trim();
-    const newId = document.getElementById('editPartId').value.trim();
-    
+    let newId = document.getElementById('editPartId').value.trim();
+    const newType = document.getElementById('editPartType').value;
     if (!newName) {
         showNotification('Please enter a part name', 'error');
         return;
     }
-    
+    // Generate ID: normalize name + _ + normalize type (if type is selected)
     if (!newId) {
-        showNotification('Please enter a part ID', 'error');
-        return;
+        newId = normalizeValue(newName);
+        if (newType) {
+            newId += '_' + normalizeValue(newType);
+        }
     }
-    
-    // If ID is changing, check if new ID already exists
     if (newId !== editingPartId && inventory[newId]) {
         showNotification('Part ID already exists', 'error');
         return;
     }
-    
-    // If ID is changing, we need to create a new entry and delete the old one
     if (newId !== editingPartId) {
         const part = inventory[editingPartId];
         inventory[newId] = {
             name: newName,
             quantity: newQuantity,
             purchaseUrl: newUrl,
-            projects: part.projects || {} // Preserve project tags
+            projects: part.projects || {},
+            type: newType || undefined
         };
         delete inventory[editingPartId];
         editingPartId = newId;
     } else {
-        // Just update the existing entry
         inventory[editingPartId].name = newName;
         inventory[editingPartId].quantity = newQuantity;
         inventory[editingPartId].purchaseUrl = newUrl;
-        // Preserve existing projects object
         if (!inventory[editingPartId].projects) {
             inventory[editingPartId].projects = {};
         }
+        inventory[editingPartId].type = newType || undefined;
     }
-    
     if (currentPartId === editingPartId) {
         selectPart(editingPartId);
     }
-    
-    // --- In saveEditPart(), update to use the new UI ---
-    const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
-    const newProjects = {};
-    projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
-        const projectId = row.dataset.projectId;
-        const qtyInput = row.querySelector('.edit-project-qty');
-        const qty = Math.max(0, parseInt(qtyInput.value) || 0);
-        if (qty > 0) {
-            newProjects[projectId] = qty;
-            // Update project BOM
-            if (!projects[projectId].bom) projects[projectId].bom = {};
-            projects[projectId].bom[newId] = { name: newName, quantity: qty };
-        } else {
-            // Remove from project BOM if present
-            if (projects[projectId] && projects[projectId].bom && projects[projectId].bom[newId]) {
-                delete projects[projectId].bom[newId];
-            }
-        }
-    });
-    inventory[newId].projects = newProjects;
     saveProjects();
-    
     saveInventory();
     displayInventory();
     hideEditPartModal();
@@ -681,28 +694,29 @@ function addNewPart() {
     const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
     const purchaseUrl = document.getElementById('newPartUrl').value.trim();
     let id = document.getElementById('newPartId').value.trim();
-    
+    const type = document.getElementById('newPartType').value;
     if (!name) {
         showNotification('Please enter a part name', 'error');
         return;
     }
-    
+    // Generate ID: normalize name + _ + normalize type (if type is selected)
     if (!id) {
         id = normalizeValue(name);
+        if (type) {
+            id += '_' + normalizeValue(type);
+        }
     }
-    
     if (inventory[id]) {
         showNotification('Part ID already exists', 'error');
         return;
     }
-    
     inventory[id] = { 
         name, 
         quantity, 
         purchaseUrl,
-        projects: {} // Initialize empty projects object
+        projects: {}, // Initialize empty projects object
+        type: type || undefined
     };
-    
     saveInventory();
     displayInventory();
     hideAddPartModal();
@@ -724,7 +738,7 @@ function showNotification(message, type = 'success') {
     
     setTimeout(() => {
         notification.classList.remove('show');
-    }, 3000);
+    }, 5000); // Show for 5 seconds
 }
 
 function checkUrlForPart() {
@@ -1729,4 +1743,85 @@ function mergeDuplicateInventoryEntries() {
     displayInventory();
     
     showNotification(`Merged ${duplicates.length} duplicate entries`);
+}
+
+// --- Auto-suggest capacitor type based on value ---
+function suggestCapacitorType(partName) {
+    // Extract value and unit (e.g., 100nF, 2.2uF, 1nF, 10uF, etc.)
+    const match = partName.match(/([0-9.]+)\s*(pF|nF|uF|μF|mf|F)/i);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    let valueUF = value;
+    if (unit === 'pf') valueUF = value / 1e6;
+    else if (unit === 'nf') valueUF = value / 1e3;
+    else if (unit === 'μf' || unit === 'uf') valueUF = value;
+    else if (unit === 'mf') valueUF = value * 1000;
+    else if (unit === 'f') valueUF = value * 1e6;
+    // Suggest type based on value in uF
+    if (valueUF <= 0.001) return 'MLCC'; // ≤1nF
+    if (valueUF > 0.001 && valueUF <= 2.2) return 'Box Film'; // >1nF to 2.2uF
+    if (valueUF > 2.2) return 'Electrolytic';
+    return null;
+}
+
+// Utility to show/hide type dropdown and suggestion based on part name
+function updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion) {
+    const name = nameInput.value.toLowerCase();
+    const isCap = /\b(capacitor|cap)\b/i.test(name);
+    if (isCap) {
+        typeDropdown.classList.remove('hidden');
+        typeSuggestion.classList.remove('hidden');
+    } else {
+        typeDropdown.classList.add('hidden');
+        typeSuggestion.classList.add('hidden');
+        typeDropdown.value = '';
+        typeSuggestion.textContent = '';
+    }
+}
+
+// Add Part Modal: Show/hide type dropdown
+const newPartNameInput = document.getElementById('newPartName');
+const newPartTypeDropdown = document.getElementById('newPartType');
+const newPartTypeSuggestion = document.getElementById('newPartTypeSuggestion');
+if (newPartNameInput && newPartTypeDropdown && newPartTypeSuggestion) {
+    newPartTypeDropdown.classList.add('hidden');
+    newPartTypeSuggestion.classList.add('hidden');
+    newPartNameInput.addEventListener('input', () => {
+        updateTypeDropdownVisibility(newPartNameInput, newPartTypeDropdown, newPartTypeSuggestion);
+        const suggestion = suggestCapacitorType(newPartNameInput.value);
+        if (suggestion && !newPartTypeDropdown.classList.contains('hidden')) {
+            newPartTypeSuggestion.textContent = `Suggested type: ${suggestion}`;
+            if (!newPartTypeDropdown.value) {
+                for (const opt of newPartTypeDropdown.options) {
+                    if (opt.value === suggestion) newPartTypeDropdown.value = suggestion;
+                }
+            }
+        } else if (!newPartTypeDropdown.classList.contains('hidden')) {
+            newPartTypeSuggestion.textContent = '';
+        }
+    });
+}
+
+// Edit Part Modal: Show/hide type dropdown
+const editPartNameInput = document.getElementById('editPartName');
+const editPartTypeDropdown = document.getElementById('editPartType');
+const editPartTypeSuggestion = document.getElementById('editPartTypeSuggestion');
+if (editPartNameInput && editPartTypeDropdown && editPartTypeSuggestion) {
+    editPartTypeDropdown.classList.add('hidden');
+    editPartTypeSuggestion.classList.add('hidden');
+    editPartNameInput.addEventListener('input', () => {
+        updateTypeDropdownVisibility(editPartNameInput, editPartTypeDropdown, editPartTypeSuggestion);
+        const suggestion = suggestCapacitorType(editPartNameInput.value);
+        if (suggestion && !editPartTypeDropdown.classList.contains('hidden')) {
+            editPartTypeSuggestion.textContent = `Suggested type: ${suggestion}`;
+            if (!editPartTypeDropdown.value) {
+                for (const opt of editPartTypeDropdown.options) {
+                    if (opt.value === suggestion) editPartTypeDropdown.value = suggestion;
+                }
+            }
+        } else if (!editPartTypeDropdown.classList.contains('hidden')) {
+            editPartTypeSuggestion.textContent = '';
+        }
+    });
 }

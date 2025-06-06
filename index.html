@@ -150,6 +150,14 @@
         <div class="modal-content">
             <h2>Add New Part</h2>
             <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
+            <select id="newPartType" class="part-type-dropdown">
+                <option value="">-- Select Type (optional) --</option>
+                <option value="MLCC">MLCC (Ceramic)</option>
+                <option value="Box Film">Box Film</option>
+                <option value="Electrolytic">Electrolytic</option>
+                <option value="Other">Other</option>
+            </select>
+            <div id="newPartTypeSuggestion" class="type-suggestion"></div>
             <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
             <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
@@ -165,6 +173,14 @@
         <div class="modal-content">
             <h2>Edit Part</h2>
             <input type="text" id="editPartName" placeholder="Part name">
+            <select id="editPartType" class="part-type-dropdown">
+                <option value="">-- Select Type (optional) --</option>
+                <option value="MLCC">MLCC (Ceramic)</option>
+                <option value="Box Film">Box Film</option>
+                <option value="Electrolytic">Electrolytic</option>
+                <option value="Other">Other</option>
+            </select>
+            <div id="editPartTypeSuggestion" class="type-suggestion"></div>
             <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
             <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
             <input type="text" id="editPartId" placeholder="NFC Tag ID" class="readonly-input">

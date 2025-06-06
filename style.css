@@ -835,8 +835,26 @@
           }
   
           .item-name {
-              margin-right: 0;
-              margin-bottom: 4px;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 0;
+          }
+          .item-name .part-name-text {
+              display: block;
+              font-size: 14px;
+              font-weight: 500;
+              color: #F8F8F2;
+              margin-bottom: 2px;
+          }
+          .type-pill {
+              display: block;
+              margin: 2px 0 0 0;
+              max-width: 100%;
+              font-size: 11px;
+              white-space: normal;
+              overflow-wrap: break-word;
+              text-overflow: initial;
           }
   
           .item-quantity {
@@ -1856,5 +1874,41 @@
           background: #EBCB8B;
           color: #2E3440;
           opacity: 1;
+      }
+  
+      @media (max-width: 768px) {
+          .type-pill {
+              max-width: 60px;
+              min-width: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: inline-block;
+              vertical-align: middle;
+              font-size: 10px;
+              line-height: 1.1;
+              padding: 2px 4px;
+              margin-left: 4px;
+          }
+          .type-pill.electrolytic {
+              font-size: 9px;
+              letter-spacing: -0.2px;
+          }
+          .type-pill[title]:hover::after {
+              content: attr(title);
+              position: absolute;
+              left: 0;
+              top: 100%;
+              background: #2E3440;
+              color: #E5E9F0;
+              padding: 6px 10px;
+              border-radius: 4px;
+              z-index: 1000;
+              white-space: normal;
+              max-width: 200px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+              font-size: 12px;
+              display: block;
+          }
       }
   

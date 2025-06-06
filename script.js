@@ -432,9 +432,13 @@ function displayInventory() {
             typePillHtml = `<span class="set-type-pill" data-set-type="${id}" title="Set capacitor type">Set Type</span>`;
         }
 
+        // Responsive: type pill below name on mobile, inline on desktop
         item.innerHTML = `
             <div class="item-info">
-                <div class="item-name">${part.name}${typePillHtml}</div>
+                <div class="item-name" title="${part.name}">
+                    <span class="part-name-text">${part.name}</span>
+                    ${typePillHtml}
+                </div>
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">

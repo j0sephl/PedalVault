@@ -1002,6 +1002,13 @@
               width: 100%;
               justify-content: flex-end;
           }
+  
+          .item-name {
+              white-space: normal;
+              overflow: visible;
+              text-overflow: initial;
+              word-break: break-word;
+          }
       }
   
       /* Project Management Modal */

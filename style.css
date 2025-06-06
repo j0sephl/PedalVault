@@ -1228,25 +1228,10 @@
       }
   
       @media (max-width: 1280px) {
-          .project-tag {
-              max-width: 80px;
-              font-size: 0.8em;
-              padding: 2px 6px !important;
-          }
-          
-          .project-tags {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 2px;
-              margin-top: 2px;
-              max-width: 100%;
-          }
-          
-          .project-tag:nth-child(n+2) {
+          .inventory-list .project-tag:nth-child(n+2) {
               display: none;
           }
-          
-          .project-tag.more-tags {
+          .inventory-list .project-tag.more-tags {
               display: inline-block !important;
           }
       }

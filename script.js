@@ -120,6 +120,9 @@ function normalizeValue(str) {
     // Remove all non-alphanumeric characters
     normalized = normalized.replace(/[^a-z0-9]/g, '');
 
+    // Remove trailing underscores (if any remain)
+    normalized = normalized.replace(/_+$/, '');
+
     // Special case handling for common variations
     normalized = normalized
         .replace(/capacitor/g, 'cap')
@@ -164,6 +167,8 @@ function initializeInventory() {
         saveInventory();
     }
     initializeProjects();
+    // Normalize BOMs after loading everything
+    normalizeAllBOMReferences();
     displayInventory();
     checkUrlForPart();
     
@@ -683,6 +688,32 @@ function saveEditPart() {
         }
         inventory[editingPartId].type = newType || undefined;
     }
+    // --- Begin: Read project assignments from modal ---
+    const projectRows = document.querySelectorAll('.edit-project-qty');
+    const newProjects = {};
+    projectRows.forEach(input => {
+        const projectId = input.getAttribute('data-project-qty');
+        const qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            newProjects[projectId] = qty;
+        }
+    });
+    // Update part's projects
+    inventory[newId].projects = newProjects;
+    // Update project BOMs
+    for (const projectId in projects) {
+        if (!projects[projectId].bom) projects[projectId].bom = {};
+        if (newProjects[projectId]) {
+            projects[projectId].bom[newId] = {
+                name: newName,
+                quantity: newProjects[projectId]
+            };
+        } else {
+            // Remove from BOM if not present
+            delete projects[projectId].bom[newId];
+        }
+    }
+    // --- End: Read project assignments from modal ---
     if (currentPartId === editingPartId) {
         selectPart(editingPartId);
     }
@@ -1679,7 +1710,10 @@ function showAllProjectTagsModal(partId) {
     const tagsList = document.getElementById('allProjectTagsList');
     tagsList.innerHTML = '';
 
-    Object.entries(part.projects).forEach(([projectId, qty]) => {
+    // Only show projects this part is actually assigned to (qty > 0)
+    const assignedProjects = Object.entries(part.projects).filter(([_, qty]) => qty > 0);
+    console.log('showAllProjectTagsModal:', partId, assignedProjects);
+    assignedProjects.forEach(([projectId, qty]) => {
         const project = projects[projectId];
         if (project) {
             const tag = document.createElement('span');
@@ -1779,6 +1813,8 @@ function mergeDuplicateInventoryEntries() {
     displayInventory();
     
     showNotification(`Merged ${duplicates.length} duplicate entries`);
+    // Automatically normalize all BOM references after merging
+    normalizeAllBOMReferences();
 }
 
 // --- Auto-suggest capacitor type based on value ---
@@ -1861,3 +1897,36 @@ if (editPartNameInput && editPartTypeDropdown && editPartTypeSuggestion) {
         }
     });
 }
+
+// ... existing code ...
+function normalizeAllBOMReferences() {
+    // Build a map from normalized ID to canonical inventory ID
+    const normToCanonical = {};
+    for (const id in inventory) {
+        const norm = normalizeValue(id);
+        if (!normToCanonical[norm]) {
+            normToCanonical[norm] = id;
+        }
+    }
+    // For each project and BOM, update part IDs to canonical
+    for (const projectId in projects) {
+        const bom = projects[projectId].bom;
+        if (!bom) continue;
+        const newBOM = {};
+        for (const partId in bom) {
+            const norm = normalizeValue(partId);
+            const canonicalId = normToCanonical[norm] || partId;
+            if (canonicalId !== partId) {
+                console.log(`Updating BOM in project ${projectId}: ${partId} -> ${canonicalId}`);
+            }
+            if (newBOM[canonicalId]) {
+                newBOM[canonicalId].quantity += bom[partId].quantity;
+            } else {
+                newBOM[canonicalId] = { ...bom[partId] };
+            }
+        }
+        projects[projectId].bom = newBOM;
+    }
+    saveProjects();
+}
+// ... existing code ...

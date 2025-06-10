@@ -93,11 +93,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
 });
 
+// Flag to prevent multiple initialization
+let isInitialized = false;
+
 /**
  * Initialize the application by setting up event listeners and loading data
  * This function connects all UI elements to their corresponding functionality
  */
 function initializeApp() {
+    // Prevent multiple initialization
+    if (isInitialized) {
+        console.log('🔄 App already initialized, skipping...');
+        return;
+    }
+    
+    console.log('🚀 Initializing app for the first time...');
+    isInitialized = true;
+    
     // =============================================================================
     // BUTTON REFERENCES - Main action buttons
     // =============================================================================
@@ -323,14 +335,20 @@ function initializeInventory() {
  * Show the export options modal dialog
  */
 function showExportModal() {
-    document.getElementById('exportModal').style.display = 'block';
+    const modal = document.getElementById('exportModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 /**
  * Hide the export options modal dialog
  */
 function hideExportModal() {
-    document.getElementById('exportModal').style.display = 'none';
+    const modal = document.getElementById('exportModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
 }
 
 /**
@@ -764,11 +782,17 @@ function adjustStockInline(partId, action) {
 }
 
 function showAddPartModal() {
-    document.getElementById('addPartModal').style.display = 'block';
+    const modal = document.getElementById('addPartModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideAddPartModal() {
-    document.getElementById('addPartModal').style.display = 'none';
+    const modal = document.getElementById('addPartModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
     document.getElementById('newPartName').value = '';
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
@@ -806,7 +830,17 @@ function showEditPartModal(partId) {
             typeSuggestion.textContent = '';
         }
     }
-    document.getElementById('editPartModal').style.display = 'block';
+    const modal = document.getElementById('editPartModal');
+    // Only lock body scroll if modal is not already open
+    const isAlreadyOpen = modal.style.display === 'block';
+    if (!isAlreadyOpen) {
+        lockBodyScroll();
+        modal.style.display = 'block';
+        positionModalOnMobile(modal);
+        console.log('📝 Debug: Edit Part modal opened for first time');
+    } else {
+        console.log('📝 Debug: Edit Part modal refreshed (already open)');
+    }
 
     // --- In showEditPartModal(partId), render a project list styled like inventory items ---
     const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
@@ -847,7 +881,10 @@ function showEditPartModal(partId) {
 }
 
 function hideEditPartModal() {
-    document.getElementById('editPartModal').style.display = 'none';
+    const modal = document.getElementById('editPartModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
     editingPartId = null;
 }
 
@@ -932,11 +969,17 @@ function showDeletePartModal(partId) {
     const part = inventory[partId];
     document.getElementById('deletePartMessage').textContent = 
         `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-    document.getElementById('deletePartModal').style.display = 'block';
+    const modal = document.getElementById('deletePartModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideDeletePartModal() {
-    document.getElementById('deletePartModal').style.display = 'none';
+    const modal = document.getElementById('deletePartModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
     deletingPartId = null;
 }
 
@@ -1013,6 +1056,132 @@ function handlePurchaseClick(partId) {
 // =============================================================================
 // USER INTERFACE UTILITIES
 // =============================================================================
+
+/**
+ * Track how many modals are currently open
+ * Used to prevent unlocking body scroll when nested modals are open
+ */
+let openModalCount = 0;
+
+/**
+ * Lock body scroll and store current scroll position
+ * Prevents background scrolling when modals are open
+ */
+function lockBodyScroll() {
+    openModalCount++;
+    // Get stack trace to see who called this
+    const stack = new Error().stack;
+    const caller = stack.split('\n')[2].trim();
+    console.log('🔒 Debug: Modal count increased to:', openModalCount, 'called by:', caller);
+    
+    // Only lock if this is the first modal
+    if (openModalCount === 1) {
+        const currentScrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${currentScrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.setAttribute('data-scroll-y', currentScrollY);
+        console.log('🔒 Debug: Body scroll locked at position:', currentScrollY);
+    } else {
+        console.log('🔒 Debug: Body scroll already locked, just tracking modal count');
+    }
+}
+
+/**
+ * Unlock body scroll and restore scroll position
+ * Restores normal scrolling when modals are closed
+ */
+function unlockBodyScroll() {
+    openModalCount = Math.max(0, openModalCount - 1);
+    // Get stack trace to see who called this
+    const stack = new Error().stack;
+    const caller = stack.split('\n')[2].trim();
+    console.log('🔓 Debug: Modal count decreased to:', openModalCount, 'called by:', caller);
+    
+    // Only unlock if no modals are open
+    if (openModalCount === 0) {
+        const scrollY = document.body.getAttribute('data-scroll-y');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.removeAttribute('data-scroll-y');
+        
+        if (scrollY) {
+            window.scrollTo(0, parseInt(scrollY));
+            console.log('🔓 Debug: Body scroll unlocked, restored to position:', scrollY);
+        }
+    } else {
+        console.log('🔓 Debug: Other modals still open, keeping body scroll locked');
+    }
+}
+
+/**
+ * Position modal at viewport top on mobile devices
+ * Ensures modal is visible when body scroll is locked
+ */
+function positionModalOnMobile(modal) {
+    if (window.innerWidth <= 1024) {
+        console.log('📱 Debug: Mobile detected, adjusting modal position');
+        
+        requestAnimationFrame(() => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // Position modal relative to viewport, not the fixed body
+                modalContent.style.position = 'fixed';
+                modalContent.style.top = '20px';
+                modalContent.style.left = '50%';
+                modalContent.style.transform = 'translateX(-50%)';
+                modalContent.style.margin = '0';
+                modalContent.style.maxHeight = 'calc(100vh - 40px)';
+                modalContent.style.overflow = 'auto';
+                console.log('📍 Debug: Modal positioned fixed to viewport top');
+                
+                // Reset modal content scroll
+                modalContent.scrollTop = 0;
+            }
+        });
+    }
+}
+
+/**
+ * Clean up mobile-specific modal positioning
+ * Removes custom positioning styles applied for mobile
+ */
+function cleanupMobileModalStyles(modal) {
+    if (window.innerWidth <= 1024) {
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.position = '';
+            modalContent.style.top = '';
+            modalContent.style.left = '';
+            modalContent.style.transform = '';
+            modalContent.style.margin = '';
+            modalContent.style.maxHeight = '';
+            modalContent.style.overflow = '';
+            console.log('📍 Debug: Mobile modal styles cleaned up');
+        }
+    }
+}
+
+/**
+ * Reset modal counter and force unlock body scroll
+ * Emergency function to fix body scroll if modals get out of sync
+ */
+function resetBodyScrollLock() {
+    console.log('🔄 Debug: Resetting body scroll lock, was:', openModalCount);
+    openModalCount = 0;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.body.removeAttribute('data-scroll-y');
+    console.log('🔄 Debug: Body scroll lock reset');
+}
+
+// Add emergency reset function to window for debugging
+window.resetBodyScrollLock = resetBodyScrollLock;
 
 /**
  * Display a notification message to the user
@@ -1210,13 +1379,25 @@ function showProjectDetails(projectId) {
         }
     }
     
-    // Add summary to the projectStatus element
+    // Add summary to the projectStatus element with styled cards
     const statusContainer = document.getElementById('projectStatus');
+    const sufficientParts = totalParts - missingParts - lowStockParts;
     statusContainer.innerHTML = `
-        <div class="project-header">
-            <div>Total Parts: ${totalParts}</div>
-            <div>Missing: ${missingParts}</div>
-            <div>Low Stock: ${lowStockParts}</div>
+        <div class="requirements-summary">
+            <div class="summary-stats">
+                <div class="stat-item missing">
+                    <span class="stat-number">${missingParts}</span>
+                    <span class="stat-label">Missing</span>
+                </div>
+                <div class="stat-item low">
+                    <span class="stat-number">${lowStockParts}</span>
+                    <span class="stat-label">Low Stock</span>
+                </div>
+                <div class="stat-item sufficient">
+                    <span class="stat-number">${sufficientParts}</span>
+                    <span class="stat-label">Sufficient</span>
+                </div>
+            </div>
         </div>
     `;
     
@@ -1228,11 +1409,17 @@ function showProjectDetails(projectId) {
     
     // Show the modal
     console.log('Showing project details modal');
-    document.getElementById('projectDetailsModal').style.display = 'block';
+    const modal = document.getElementById('projectDetailsModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideProjectDetailsModal() {
-    document.getElementById('projectDetailsModal').style.display = 'none';
+    const modal = document.getElementById('projectDetailsModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
 }
 
 function removeProjectTag(partId, projectId) {
@@ -1258,13 +1445,17 @@ function removeProjectTag(partId, projectId) {
 
 function showProjectNameModal() {
     const modal = document.getElementById('projectNameModal');
+    lockBodyScroll();
     modal.classList.add('show');
+    positionModalOnMobile(modal);
     document.getElementById('projectNameInput').value = '';
     document.getElementById('projectNameInput').focus();
 }
 
 function hideProjectNameModal() {
     const modal = document.getElementById('projectNameModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
     modal.classList.remove('show');
     pendingBomData = null;
     // Also clear the input for safety
@@ -1462,16 +1653,32 @@ function createProjectFromBom(projectName, projectId, bom) {
     }
 
     const resultsContainer = document.getElementById("bomResults");
+    const sufficientParts = totalParts - missingParts - lowStockParts;
     resultsContainer.innerHTML = `
-        <div class="project-header">
-            <div>Total Parts: ${totalParts}</div>
-            <div>Missing: ${missingParts}</div>
-            <div>Low Stock: ${lowStockParts}</div>
+        <div class="requirements-summary">
+            <div class="summary-stats">
+                <div class="stat-item missing">
+                    <span class="stat-number">${missingParts}</span>
+                    <span class="stat-label">Missing</span>
+                </div>
+                <div class="stat-item low">
+                    <span class="stat-number">${lowStockParts}</span>
+                    <span class="stat-label">Low Stock</span>
+                </div>
+                <div class="stat-item sufficient">
+                    <span class="stat-number">${sufficientParts}</span>
+                    <span class="stat-label">Sufficient</span>
+                </div>
+            </div>
         </div>
         <ul class="project-info">${results.join("")}</ul>
     `;
-    document.getElementById("bomModal").style.display = "block";
-    showBOMModal();
+    console.log('📋 Debug: About to call showBOMModal() with delay');
+    // Small delay to ensure hideProjectNameModal() completes first
+    setTimeout(() => {
+        showBOMModal();
+        console.log('📋 Debug: showBOMModal() called successfully with delay');
+    }, 10);
 }
 
 function compareBOM(event) {
@@ -1595,11 +1802,20 @@ function addMissingParts() {
 }
 
 function showBOMModal() {
-    document.getElementById('bomModal').style.display = 'block';
+    console.log('📋 Debug: showBOMModal() function called');
+    const modal = document.getElementById('bomModal');
+    // Always ensure body scroll is locked, even if it was previously unlocked
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
+    console.log('📋 Debug: BOM modal should now be visible');
 }
 
 function hideBOMModal() {
-    document.getElementById('bomModal').style.display = 'none';
+    const modal = document.getElementById('bomModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
     window.currentBom = null;
 }
 
@@ -1636,12 +1852,24 @@ function showProjectManagementModal() {
         projectList.appendChild(projectElement);
     }
     
-    document.getElementById('projectManagementModal').style.display = 'block';
+    const modal = document.getElementById('projectManagementModal');
+    // Only lock body scroll if modal is not already open
+    const isAlreadyOpen = modal.style.display === 'block';
+    if (!isAlreadyOpen) {
+        lockBodyScroll();
+        modal.style.display = 'block';
+        positionModalOnMobile(modal);
+        console.log('📋 Debug: Project Management modal opened for first time');
+    } else {
+        console.log('📋 Debug: Project Management modal refreshed (already open)');
+    }
 }
 
 function hideProjectManagementModal() {
     const modal = document.getElementById('projectManagementModal');
     if (modal) {
+        cleanupMobileModalStyles(modal);
+        unlockBodyScroll();
         modal.style.display = 'none';
     }
 }
@@ -1654,13 +1882,17 @@ function showDeleteProjectModal(projectId) {
     
     if (modal && message) {
         message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
+        lockBodyScroll();
         modal.style.display = 'block';
+        positionModalOnMobile(modal);
     }
 }
 
 function hideDeleteProjectModal() {
     const modal = document.getElementById('deleteProjectModal');
     if (modal) {
+        cleanupMobileModalStyles(modal);
+        unlockBodyScroll();
         modal.style.display = 'none';
     }
     deletingProjectId = null;
@@ -1693,17 +1925,9 @@ function confirmDeleteProject() {
     updateProjectFilter();
     displayInventory();
     
-    // Hide modals
-    const deleteModal = document.getElementById('deleteProjectModal');
-    const manageModal = document.getElementById('projectManagementModal');
-    
-    if (deleteModal) {
-        deleteModal.style.display = 'none';
-    }
-    
-    if (manageModal) {
-        manageModal.style.display = 'none';
-    }
+    // Hide modals properly (using the hide functions to manage body scroll)
+    hideDeleteProjectModal();
+    hideProjectManagementModal();
     
     // Reset state
     deletingProjectId = null;
@@ -1860,15 +2084,25 @@ function showAllProjectRequirements() {
     function createSection(title, parts, className) {
         if (parts.length === 0) return '';
         
+        // SVG icons for section titles
+        const sectionIcons = {
+            missing: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
+            low: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+            sufficient: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
+        };
+        
         let sectionHtml = `
             <div class="requirements-section ${className}">
-                <h3 class="section-title">${title} (${parts.length})</h3>
+                <h3 class="section-title">
+                    ${sectionIcons[className] || ''}
+                    <span class="section-title-text">${title} (${parts.length})</span>
+                </h3>
                 <div class="parts-grid">
         `;
         
         parts.forEach(([normId, part]) => {
             const statusIcon = {
-                missing: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                missing: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
                 low: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
                 sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
             };
@@ -1913,15 +2147,15 @@ function showAllProjectRequirements() {
 
     // Add sections in priority order
     if (groupedParts.missing.length > 0) {
-        html += createSection('⚠️ Missing Parts', groupedParts.missing, 'missing');
+        html += createSection('Missing Parts', groupedParts.missing, 'missing');
     }
     
     if (groupedParts.low.length > 0) {
-        html += createSection('📉 Low Stock', groupedParts.low, 'low');
+        html += createSection('Low Stock', groupedParts.low, 'low');
     }
     
     if (groupedParts.sufficient.length > 0) {
-        html += createSection('✅ Sufficient Stock', groupedParts.sufficient, 'sufficient');
+        html += createSection('Sufficient Stock', groupedParts.sufficient, 'sufficient');
     }
 
     // Update the modal title
@@ -1929,11 +2163,17 @@ function showAllProjectRequirements() {
         'All Project Requirements';
     
     document.getElementById('allProjectRequirements').innerHTML = html;
-    document.getElementById('allProjectRequirementsModal').style.display = 'block';
+    const modal = document.getElementById('allProjectRequirementsModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideAllProjectRequirementsModal() {
-    document.getElementById('allProjectRequirementsModal').style.display = 'none';
+    const modal = document.getElementById('allProjectRequirementsModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
 }
 
 function showExportBOMModal() {
@@ -1947,11 +2187,17 @@ function showExportBOMModal() {
         select.appendChild(option);
     }
     
-    document.getElementById('exportBOMModal').style.display = 'block';
+    const modal = document.getElementById('exportBOMModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideExportBOMModal() {
-    document.getElementById('exportBOMModal').style.display = 'none';
+    const modal = document.getElementById('exportBOMModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
 }
 
 function exportProjectBOM(format) {
@@ -2152,20 +2398,34 @@ function showAllProjectTagsModal(partId) {
         }
     });
 
+    lockBodyScroll();
     modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideAllProjectTagsModal() {
     const modal = document.getElementById('allProjectTagsModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
     modal.style.display = 'none';
 }
 
 function showAboutModal() {
-    document.getElementById('aboutModal').style.display = 'block';
+    const modal = document.getElementById('aboutModal');
+    
+    // Lock body scroll and position modal for mobile
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
 }
 
 function hideAboutModal() {
-    document.getElementById('aboutModal').style.display = 'none';
+    const modal = document.getElementById('aboutModal');
+    
+    // Clean up mobile styles and unlock body scroll
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
 }
 
 // Update tag display responsively on window resize

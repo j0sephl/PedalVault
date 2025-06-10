@@ -123,6 +123,12 @@ function initializeApp() {
     const manageProjectsBtn = DOM.get('manageProjectsBtn');
     const compareAllProjectsBtn = DOM.get('compareAllProjectsBtn');
     
+    // BOM Assistant button
+    const bomAssistantBtn = DOM.get('bomAssistantBtn');
+    
+    // Quick Paste BOM button  
+    const quickPasteBOMBtn = DOM.get('quickPasteBOMBtn');
+    
     // Search and filter controls
     const searchInput = DOM.get('searchInput');
     const projectFilter = DOM.get('projectFilter');
@@ -178,6 +184,12 @@ function initializeApp() {
     // Project management button event listeners
     if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
     if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
+    
+    // BOM Assistant button event listener
+    if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
+    
+    // Quick Paste BOM button event listener
+    if (quickPasteBOMBtn) quickPasteBOMBtn.addEventListener('click', showQuickPasteBOMModal);
     
     // Search and filter event listeners with performance optimization
     // Debounce search input to avoid excessive filtering during typing
@@ -2276,11 +2288,23 @@ function createSyncButtons() {
             </svg>
             Add New Part
         </button>
+        <button class="sync-btn import-btn full-width" onclick="showBOMAssistantModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            BOM Assistant
+        </button>
         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
             Compare BOM
+        </button>
+        <button class="sync-btn import-btn full-width" onclick="showQuickPasteBOMModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/>
+            </svg>
+            Quick Paste BOM
         </button>
         <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
@@ -2696,3 +2720,336 @@ function repairBOMData() {
     saveProjects();
     console.log('\nBOM data repair complete');
 }
+
+// =============================================================================
+// BOM ASSISTANT FUNCTIONALITY
+// =============================================================================
+
+/**
+ * Show the BOM Assistant modal with LLM prompt templates
+ */
+function showBOMAssistantModal() {
+    const modal = document.getElementById('bomAssistantModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
+}
+
+/**
+ * Hide the BOM Assistant modal
+ */
+function hideBOMAssistantModal() {
+    const modal = document.getElementById('bomAssistantModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
+    // Clear the text input
+    const textInput = document.getElementById('bomTextInput');
+    if (textInput) textInput.value = '';
+}
+
+/**
+ * Copy the prompt template to clipboard
+ */
+function copyPromptTemplate() {
+    const promptText = document.getElementById('promptTemplate').textContent;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        // Use modern clipboard API if available
+        navigator.clipboard.writeText(promptText).then(() => {
+            showNotification('Prompt copied to clipboard!');
+        }).catch(() => {
+            fallbackCopyToClipboard(promptText);
+        });
+    } else {
+        // Fallback for older browsers or non-HTTPS
+        fallbackCopyToClipboard(promptText);
+    }
+}
+
+/**
+ * Fallback copy method for older browsers
+ */
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showNotification('Prompt copied to clipboard!');
+    } catch (err) {
+        showNotification('Unable to copy to clipboard. Please copy manually.', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+/**
+ * Process BOM data pasted directly from AI tools
+ * Handles various formats including CSV, tables, and unstructured text
+ */
+function processPastedBOM() {
+    const textInput = document.getElementById('bomTextInput');
+    const bomText = textInput.value.trim();
+    
+    if (!bomText) {
+        showNotification('Please paste BOM data first', 'error');
+        return;
+    }
+    
+    try {
+        let bom = {};
+        let processedCount = 0;
+        
+        // First, try to detect if it's CSV format
+        if (bomText.includes(',') && bomText.includes('\n')) {
+            console.log('Detected CSV format, using PapaParse');
+            const parsed = Papa.parse(bomText, { header: true, skipEmptyLines: true });
+            
+            if (parsed.errors.length > 0) {
+                console.warn('CSV parse errors:', parsed.errors);
+                // Continue with fallback parsing if CSV parsing fails
+            } else if (parsed.data.length > 0) {
+                // Successfully parsed as CSV
+                parsed.data.forEach((row, index) => {
+                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || 
+                                row['Component'] || row['component'] || row['Description'] || row['description'] || '';
+                    const quantity = parseInt(row['Quantity'] || row['quantity'] || row['Qty'] || row['qty'] || '0') || 0;
+                    
+                    if (name && quantity > 0) {
+                        const id = findOrCreatePartId(name);
+                        bom[id] = { name: name, quantity: quantity };
+                        processedCount++;
+                    }
+                });
+                
+                if (processedCount > 0) {
+                    console.log('Successfully parsed as CSV');
+                    processBOMData(bom, processedCount);
+                    return;
+                }
+            }
+        }
+        
+        // Fallback: Try to parse as unstructured text
+        console.log('Trying unstructured text parsing');
+        
+        // Split into lines and process each line
+        const lines = bomText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        for (const line of lines) {
+            // Skip header lines
+            if (line.toLowerCase().includes('name') && line.toLowerCase().includes('quantity')) {
+                continue;
+            }
+            
+            // Try various patterns to extract component and quantity
+            let name = '';
+            let quantity = 0;
+            
+            // Pattern 1: "ComponentName, Quantity" or "ComponentName - Quantity"
+            let match = line.match(/^(.+?)[,\-\s]+(\d+)\s*$/);
+            if (match) {
+                name = match[1].trim();
+                quantity = parseInt(match[2]);
+            }
+            
+            // Pattern 2: "Quantity x ComponentName" or "Quantity ComponentName"
+            if (!match) {
+                match = line.match(/^(\d+)\s*[x×]\s*(.+)$/i);
+                if (match) {
+                    quantity = parseInt(match[1]);
+                    name = match[2].trim();
+                }
+            }
+            
+            // Pattern 3: "ComponentName (Quantity)" or "ComponentName [Quantity]"
+            if (!match) {
+                match = line.match(/^(.+?)\s*[\(\[]\s*(\d+)\s*[\)\]]$/);
+                if (match) {
+                    name = match[1].trim();
+                    quantity = parseInt(match[2]);
+                }
+            }
+            
+            // Pattern 4: Tab or multiple spaces separation
+            if (!match) {
+                const parts = line.split(/\s{2,}|\t/);
+                if (parts.length >= 2) {
+                    // Try to find which part is the quantity
+                    for (let i = 0; i < parts.length; i++) {
+                        const num = parseInt(parts[i]);
+                        if (!isNaN(num) && num > 0 && num < 1000) {
+                            quantity = num;
+                            name = parts.filter((_, idx) => idx !== i).join(' ').trim();
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Pattern 5: Simple format with quantity at the end
+            if (!match && !name) {
+                match = line.match(/^(.+?)\s+(\d+)\s*$/);
+                if (match) {
+                    name = match[1].trim();
+                    quantity = parseInt(match[2]);
+                }
+            }
+            
+            // Clean up the name
+            if (name) {
+                // Remove common prefixes/suffixes
+                name = name.replace(/^[\-\*\•]\s*/, ''); // Remove bullet points
+                name = name.replace(/[,\.]$/, ''); // Remove trailing commas/periods
+                name = name.trim();
+                
+                // Skip if it looks like a header or section title
+                if (name.toLowerCase().includes('bom') || 
+                    name.toLowerCase().includes('bill of materials') ||
+                    name.toLowerCase().includes('component') ||
+                    name.toLowerCase().includes('part') ||
+                    name.length < 3) {
+                    continue;
+                }
+            }
+            
+            if (name && quantity > 0) {
+                const id = findOrCreatePartId(name);
+                
+                // If this component already exists, add quantities
+                if (bom[id]) {
+                    bom[id].quantity += quantity;
+                } else {
+                    bom[id] = { name: name, quantity: quantity };
+                }
+                processedCount++;
+                console.log(`Extracted: "${name}" (qty: ${quantity})`);
+            } else {
+                console.log(`Could not parse line: "${line}"`);
+            }
+        }
+        
+        if (processedCount === 0) {
+            showNotification('No valid components found. Please check the format or try the CSV format.', 'error');
+            return;
+        }
+        
+        processBOMData(bom, processedCount);
+        
+    } catch (error) {
+        console.error('Error processing pasted BOM:', error);
+        showNotification('Error processing BOM data: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Helper function to find existing part ID or create a new one
+ */
+function findOrCreatePartId(name) {
+    // Try to find exact match by name first
+    for (const [invId, invPart] of Object.entries(inventory)) {
+        if (invPart.name.toLowerCase() === name.toLowerCase()) {
+            return invId;
+        }
+    }
+    
+    // If no exact match, try normalized matching
+    const normalizedName = normalizeValue(name);
+    for (const [invId, invPart] of Object.entries(inventory)) {
+        if (normalizeValue(invPart.name) === normalizedName) {
+            return invId;
+        }
+    }
+    
+    // Use normalized name as ID if no match found
+    return normalizeValue(name);
+}
+
+/**
+ * Helper function to process the final BOM data
+ */
+function processBOMData(bom, processedCount) {
+    console.log('Final processed BOM:', bom);
+    console.log(`Successfully processed ${processedCount} components`);
+    
+    // Store the BOM data and show project name modal
+    pendingBomData = bom;
+    hideBOMAssistantModal();
+    showProjectNameModal();
+    
+    showNotification(`Successfully processed ${processedCount} components from pasted BOM`);
+}
+
+// =============================================================================
+// QUICK PASTE BOM FUNCTIONALITY  
+// =============================================================================
+
+/**
+ * Show the Quick Paste BOM modal
+ */
+function showQuickPasteBOMModal() {
+    const modal = document.getElementById('quickPasteBOMModal');
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
+    
+    // Focus the textarea for immediate pasting
+    const textarea = document.getElementById('quickBOMTextInput');
+    if (textarea) {
+        setTimeout(() => textarea.focus(), 100);
+    }
+}
+
+/**
+ * Hide the Quick Paste BOM modal
+ */
+function hideQuickPasteBOMModal() {
+    const modal = document.getElementById('quickPasteBOMModal');
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
+    
+    // Clear the text input
+    const textInput = document.getElementById('quickBOMTextInput');
+    if (textInput) textInput.value = '';
+}
+
+/**
+ * Process BOM data from the Quick Paste modal
+ */
+function processQuickPastedBOM() {
+    const textInput = document.getElementById('quickBOMTextInput');
+    const bomText = textInput.value.trim();
+    
+    if (!bomText) {
+        showNotification('Please paste BOM data first', 'error');
+        return;
+    }
+    
+    // Use the same processing logic as the BOM Assistant
+    // Temporarily set the main BOM text input and process it
+    const mainTextInput = document.getElementById('bomTextInput');
+    if (mainTextInput) {
+        const originalValue = mainTextInput.value;
+        mainTextInput.value = bomText;
+        
+        // Call the main processing function
+        processPastedBOM();
+        
+        // Restore original value
+        mainTextInput.value = originalValue;
+        
+        // Hide the quick paste modal
+        hideQuickPasteBOMModal();
+    } else {
+        showNotification('Error accessing BOM processing functionality', 'error');
+    }
+}
+

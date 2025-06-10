@@ -171,10 +171,12 @@
                 <aside class="left-panel">
                     <nav class="sync-buttons" role="navigation" aria-label="Main actions"> 
                         <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
-                        <button class="sync-btn import-btn full-width" id="compareBOMBtn">📋 Compare BOM</button>
-                        <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">📋 Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" id="loadDataBtn">📥 Load Data</button>
-                        <button class="sync-btn export-btn full-width" id="saveDataBtn">💾 Save Data</button>
+                        <button class="sync-btn import-btn full-width" id="bomAssistantBtn">BOM Assistant</button>
+                        <button class="sync-btn import-btn full-width" id="compareBOMBtn">Compare BOM</button>
+                        <button class="sync-btn import-btn full-width" id="quickPasteBOMBtn">Quick Paste BOM</button>
+                        <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">Export Project BOM</button>
+                        <button class="sync-btn import-btn full-width" id="loadDataBtn">Load Data</button>
+                        <button class="sync-btn export-btn full-width" id="saveDataBtn">Save Data</button>
                     </nav>
                 </aside>
 
@@ -387,6 +389,128 @@
             <div id="allProjectTagsList" class="all-project-tags-list"></div>
             <div class="modal-buttons">
                 <button class="btn close-btn flex-1" onclick="hideAllProjectTagsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOM Assistant Modal -->
+    <div class="modal" id="bomAssistantModal">
+        <div class="modal-content modal-content-wide">
+            <h2>🤖 BOM Assistant - Generate BOMs with AI</h2>
+            <div class="bom-assistant-content">
+                <p class="assistant-intro">Use AI tools like ChatGPT, Claude, or Gemini to generate BOMs from schematics and import them directly into PedalVault.</p>
+                
+                <div class="assistant-section">
+                    <h3>Step 1: Prepare Your Schematic</h3>
+                    <ul class="step-list">
+                        <li>Take a clear photo or screenshot of your schematic</li>
+                        <li>Ensure all component values and designators (R1, C2, etc.) are visible</li>
+                        <li>For PDF schematics, you can upload them directly to most AI tools</li>
+                    </ul>
+                </div>
+
+                <div class="assistant-section">
+                    <h3>Step 2: Use This Prompt Template</h3>
+                    <div class="prompt-template">
+                        <div class="template-header">
+                            <span>Copy this prompt and paste it with your schematic:</span>
+                            <button class="copy-prompt-btn" onclick="copyPromptTemplate()">Copy Prompt</button>
+                        </div>
+                        <pre id="promptTemplate">Please analyze this guitar pedal schematic and create a Bill of Materials (BOM) in CSV format.
+
+Format requirements:
+- Column headers: "Name", "Quantity" 
+- Use clear component names (e.g., "Resistor 10kΩ", "Capacitor 100nF")
+- Include component values in the name
+- Count total quantity needed for each unique component
+- Do not include connectors, wires, or mechanical parts
+- Combine duplicate components (e.g. if there are 3x 10kΩ resistors, show "Resistor 10kΩ, 3")
+
+Example format:
+Name,Quantity
+Resistor 10kΩ,3
+Capacitor 100nF,2
+Op-Amp TL072,1
+
+Please provide only the CSV data, no additional text or explanations.</pre>
+                    </div>
+                </div>
+
+                <div class="assistant-section">
+                    <h3>Step 3: Copy & Import</h3>
+                    <div class="import-methods">
+                        <div class="import-method">
+                            <h4>Method A: Paste Text Directly</h4>
+                            <p>Copy the AI's CSV response and paste it below:</p>
+                            <textarea id="bomTextInput" placeholder="Paste CSV data from your AI tool here...
+Example:
+Name,Quantity
+Resistor 10kΩ,3
+Capacitor 100nF,2" rows="8" class="full-width"></textarea>
+                            <button class="btn btn-add" onclick="processPastedBOM()">Import Pasted BOM</button>
+                        </div>
+                        <div class="import-method">
+                            <h4>Method B: Save as File & Upload</h4>
+                            <p>Save the AI's response as a .csv file and use the regular Compare BOM button.</p>
+                            <button class="btn import-btn" onclick="hideBOMAssistantModal(); document.getElementById('importBOM').click();">Upload BOM File</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="assistant-section">
+                    <h3>Tips for Better Results</h3>
+                    <ul class="tips-list">
+                        <li><strong>Be specific:</strong> Ask for "guitar pedal components" to avoid getting things like enclosures</li>
+                        <li><strong>Check the output:</strong> AI tools sometimes make mistakes - verify component values</li>
+                        <li><strong>Multiple tries:</strong> If results aren't good, try rephrasing your request</li>
+                        <li><strong>Combine similar parts:</strong> Ask the AI to merge similar components (e.g., all 10kΩ resistors)</li>
+                    </ul>
+                </div>
+
+                <div class="assistant-section popular-ais">
+                    <h3>Popular AI Tools</h3>
+                    <div class="ai-links">
+                        <a href="https://chat.openai.com" target="_blank" class="ai-link">
+                            <span class="ai-name">ChatGPT</span>
+                            <span class="ai-desc">Excellent for schematic analysis</span>
+                        </a>
+                        <a href="https://claude.ai" target="_blank" class="ai-link">
+                            <span class="ai-name">Claude</span>
+                            <span class="ai-desc">Great with technical documents</span>
+                        </a>
+                        <a href="https://gemini.google.com" target="_blank" class="ai-link">
+                            <span class="ai-name">Gemini</span>
+                            <span class="ai-desc">Good for image analysis</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn close-btn flex-1" onclick="hideBOMAssistantModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Paste BOM Modal -->
+    <div class="modal" id="quickPasteBOMModal">
+        <div class="modal-content">
+            <h2>Quick Paste BOM</h2>
+            <p class="quick-paste-intro">Paste BOM data directly from AI tools like ChatGPT, Claude, or any text format:</p>
+            <textarea id="quickBOMTextInput" placeholder="Paste your BOM data here...
+
+Supports various formats:
+• CSV: Name,Quantity
+• Simple list: Component Name, 3
+• Quantities first: 2 x Resistor 10kΩ
+• Parentheses: Capacitor 100nF (2)
+
+Example:
+Resistor 10kΩ, 3
+Capacitor 100nF, 2
+Op-Amp TL072, 1" rows="12" class="full-width"></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-add flex-1" onclick="processQuickPastedBOM()">Import BOM</button>
+                <button class="btn cancel-btn flex-1" onclick="hideQuickPasteBOMModal()">Cancel</button>
             </div>
         </div>
     </div>

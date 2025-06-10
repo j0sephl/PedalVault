@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,10 +7,37 @@
     <!-- Content Security Policy for enhanced security -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
     
+    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PedalVault</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>PedalVault - Guitar Pedal Parts Inventory Management System</title>
+    <meta name="description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, import/export BOMs, and organize your electronics parts with offline PWA support.">
+    <meta name="keywords" content="guitar pedal, inventory management, electronics parts, BOM, bill of materials, DIY pedals, components tracker, parts organizer, guitar effects, electronics inventory">
+    <meta name="author" content="Joseph Lindsay">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    <canonical href="https://pedalvault.app/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pedalvault.app/">
+    <meta property="og:title" content="PedalVault - Guitar Pedal Parts Inventory Management">
+    <meta property="og:description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, and organize your electronics parts.">
+    <meta property="og:image" content="https://pedalvault.app/icons/icon-512x512.png">
+    <meta property="og:site_name" content="PedalVault">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pedalvault.app/">
+    <meta name="twitter:title" content="PedalVault - Guitar Pedal Parts Inventory Management">
+    <meta name="twitter:description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, and organize your electronics parts.">
+    <meta name="twitter:image" content="https://pedalvault.app/icons/icon-512x512.png">
+    <meta name="twitter:creator" content="@j0sephl">
     
     <!-- Load styles -->
     <link rel="stylesheet" href="style.css">
@@ -58,15 +85,56 @@
     
     <!-- Preconnect to external resources -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PedalVault",
+        "description": "Professional inventory management system for guitar pedal builders. Track components, manage projects, import/export BOMs, and organize your electronics parts.",
+        "url": "https://pedalvault.app",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Joseph Lindsay",
+            "url": "https://github.com/j0sephl"
+        },
+        "creator": {
+            "@type": "Person",
+            "name": "Joseph Lindsay",
+            "url": "https://github.com/j0sephl"
+        },
+        "keywords": "guitar pedal, inventory management, electronics parts, BOM, bill of materials, DIY pedals, components tracker",
+        "applicationSubCategory": "Inventory Management",
+        "featureList": [
+            "Track component inventory with quantities",
+            "Manage multiple pedal projects",
+            "Import/export BOMs (Bill of Materials)",
+            "NFC tag support for quick access",
+            "Progressive Web App (works offline)",
+            "Secure and privacy-focused (data stays local)"
+        ],
+        "screenshot": "https://pedalvault.app/icons/icon-512x512.png",
+        "softwareVersion": "1.4.0",
+        "releaseNotes": "Enhanced project management and BOM comparison features"
+    }
+    </script>
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <header class="header">
             <div class="logo">
-                <canvas id="rive-logo" width="400" height="400"></canvas>
+                <canvas id="rive-logo" width="400" height="400" role="img" aria-label="PedalVault animated logo"></canvas>
             </div>
             <div class="header-content">
-                <svg class="wordmark-svg" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 655.62 148.27">
+                <svg class="wordmark-svg" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 655.62 148.27" role="img" aria-label="PedalVault wordmark logo">
                   <defs>
                     <style>
                       .cls-1 {
@@ -96,19 +164,19 @@
                 </svg>
                 <p>Pedal Part Inventory</p>
             </div>
-        </div>
+        </header>
 
-        <div class="content">
+        <main class="content">
             <div class="main-content">
-                <div class="left-panel">
-                    <div class="sync-buttons"> 
+                <aside class="left-panel">
+                    <nav class="sync-buttons" role="navigation" aria-label="Main actions"> 
                         <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
                         <button class="sync-btn import-btn full-width" id="compareBOMBtn">📋 Compare BOM</button>
                         <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">📋 Export Project BOM</button>
                         <button class="sync-btn import-btn full-width" id="loadDataBtn">📥 Load Data</button>
                         <button class="sync-btn export-btn full-width" id="saveDataBtn">💾 Save Data</button>
-                    </div>
-                </div>
+                    </nav>
+                </aside>
 
                 <div class="right-panel">
                     <div class="inventory-header">
@@ -133,9 +201,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
 
-        <div class="footer">
+        <footer class="footer">
             <div class="footer-content">
                 <span class="data-note">Your data is stored in your browser. <b>Save regularly</b> to avoid loss.</span>
                 <div class="footer-links">
@@ -143,7 +211,7 @@
                     <span class="version">v1.4.0</span>
                 </div>
             </div>
-        </div>
+        </footer>
     </div>
 
     <!-- Add Part Modal -->

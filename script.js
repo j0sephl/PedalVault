@@ -1,4 +1,27 @@
-// Utility functions
+/**
+ * GUITAR PEDAL INVENTORY MANAGEMENT SYSTEM
+ * 
+ * This application manages electronic components for guitar pedal building projects.
+ * Key features:
+ * - Inventory tracking with quantities and purchase URLs
+ * - Project management with Bill of Materials (BOM)
+ * - BOM comparison and requirements analysis
+ * - Data import/export (JSON/CSV)
+ * - Duplicate detection and merging
+ * - Responsive design for mobile and desktop
+ */
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Debounce function to limit how often a function can be called
+ * Prevents excessive API calls or DOM updates during rapid user input
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Delay in milliseconds
+ * @returns {Function} Debounced function
+ */
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -11,16 +34,38 @@ function debounce(func, wait) {
     };
 }
 
-// Cache DOM elements
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} str - String to escape
+ * @returns {string} HTML-escaped string
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// =============================================================================
+// DOM ELEMENT CACHE
+// =============================================================================
+
+/**
+ * Cache frequently accessed DOM elements for better performance
+ * Avoids repeated getElementById calls throughout the application
+ */
 const DOM = {
     get: function(id) {
         return document.getElementById(id);
     },
+    // Main inventory display container
     inventoryItems: document.getElementById('inventoryItems'),
+    // Search and filter controls
     searchInput: document.getElementById('searchInput'),
     sortDropdown: document.getElementById('sortDropdown'),
     projectFilter: document.getElementById('projectFilter'),
     inventoryList: document.querySelector('.inventory-list'),
+    // Modal dialog references for quick access
     modals: {
         addPart: document.getElementById('addPartModal'),
         editPart: document.getElementById('editPartModal'),
@@ -33,129 +78,213 @@ const DOM = {
     }
 };
 
-// Event Listeners
+// =============================================================================
+// APPLICATION INITIALIZATION
+// =============================================================================
+
+/**
+ * Main application entry point
+ * Waits for DOM to load, then initializes the application with a small delay
+ * to ensure all elements are properly rendered
+ */
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         initializeApp();
     }, 100);
 });
 
+/**
+ * Initialize the application by setting up event listeners and loading data
+ * This function connects all UI elements to their corresponding functionality
+ */
 function initializeApp() {
-    // Main buttons
+    // =============================================================================
+    // BUTTON REFERENCES - Main action buttons
+    // =============================================================================
     const addPartBtn = DOM.get('addPartBtn');
     const compareBOMBtn = DOM.get('compareBOMBtn');
     const exportBOMModalBtn = DOM.get('exportBOMModalBtn');
     const saveDataBtn = DOM.get('saveDataBtn');
     const loadDataBtn = DOM.get('loadDataBtn');
     
-    // Project management buttons
+    // Project management specific buttons
     const manageProjectsBtn = DOM.get('manageProjectsBtn');
     const compareAllProjectsBtn = DOM.get('compareAllProjectsBtn');
     
-    // Search and filters
+    // Search and filter controls
     const searchInput = DOM.get('searchInput');
     const projectFilter = DOM.get('projectFilter');
     const sortDropdown = DOM.get('sortDropdown');
 
-    // Add event listeners only if elements exist
+    // =============================================================================
+    // EVENT LISTENER SETUP - Connect UI elements to functionality
+    // =============================================================================
+    
+    // Add event listeners only if elements exist (defensive programming)
     if (addPartBtn) addPartBtn.addEventListener('click', showAddPartModal);
     if (compareBOMBtn) compareBOMBtn.addEventListener('click', () => DOM.get('importBOM').click());
     if (exportBOMModalBtn) exportBOMModalBtn.addEventListener('click', showExportBOMModal);
     if (saveDataBtn) saveDataBtn.addEventListener('click', showExportModal);
-    if (loadDataBtn) loadDataBtn.addEventListener('click', () => DOM.get('importFile').click());
     
+    // Load Data button with modern File System Access API support
+    if (loadDataBtn) {
+        loadDataBtn.addEventListener('click', async () => {
+            try {
+                // Try using the File System Access API first (Chrome/Edge)
+                // This provides a better user experience with native file dialogs
+                if ('showOpenFilePicker' in window) {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Inventory Files',
+                            accept: {
+                                'application/json': ['.json'],
+                                'text/csv': ['.csv']
+                            }
+                        }]
+                    });
+                    const file = await fileHandle.getFile();
+                    const event = { target: { files: [file] } };
+                    importInventory(event);
+                } else {
+                    // Fallback for browsers that don't support File System Access API
+                    // Uses traditional hidden file input approach
+                    const importFile = DOM.get('importFile');
+                    if (importFile) {
+                        importFile.value = '';
+                        importFile.click();
+                    }
+                }
+            } catch (err) {
+                // User cancelled file selection - not an error
+                if (err.name !== 'AbortError') {
+                    console.error('Error opening file:', err);
+                }
+            }
+        });
+    }
+    
+    // Project management button event listeners
     if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
     if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
     
-    // Debounce search input for better performance
+    // Search and filter event listeners with performance optimization
+    // Debounce search input to avoid excessive filtering during typing
     if (searchInput) searchInput.addEventListener('input', debounce(searchParts, 250));
     if (projectFilter) projectFilter.addEventListener('change', filterByProject);
     if (sortDropdown) sortDropdown.addEventListener('change', changeSortOrder);
 
-    // Initialize the app
+    // Initialize the application data and display
     initializeInventory();
 }
 
+// =============================================================================
+// GLOBAL STATE VARIABLES
+// =============================================================================
+
+/**
+ * Main inventory data structure
+ * Format: { partId: { name, quantity, purchaseUrl, projects: {projectId: quantity}, type } }
+ */
 let inventory = {};
-let currentPartId = null;
-let editingPartId = null;
-let deletingPartId = null;
-let currentSortOrder = 'name-asc';
+
+/**
+ * Projects data structure  
+ * Format: { projectId: { name, bom: {partId: {name, quantity}} } }
+ */
 let projects = {};
-let currentProjectFilter = 'all';
-let pendingBomData = null;
-let currentSearchQuery = '';
 
-// Remove all File System Access API demo logic
+// UI state tracking variables
+let currentPartId = null;        // Currently selected part for detailed view
+let editingPartId = null;        // Part currently being edited in modal
+let deletingPartId = null;       // Part pending deletion confirmation
+let deletingProjectId = null;    // Project pending deletion confirmation
 
+// Display and filtering state
+let currentSortOrder = 'name-asc';     // Current sort order for inventory display
+let currentProjectFilter = 'all';      // Current project filter selection
+let currentSearchQuery = '';           // Current search query string
+
+// Temporary data holders for multi-step operations
+let pendingBomData = null;             // BOM data awaiting project name assignment
+
+// =============================================================================
+// DATA NORMALIZATION AND PERSISTENCE
+// =============================================================================
+
+/**
+ * Normalize component names and values for consistent matching
+ * This function standardizes electronic component names to help identify duplicates
+ * and match components across different naming conventions
+ * 
+ * @param {string} str - The component name or value to normalize
+ * @returns {string} Normalized string for comparison
+ */
 function normalizeValue(str) {
     if (!str) return '';
-    let normalized = str.toLowerCase();
-
-    // Convert all 'µ' and '_' to 'u' for microfarad compatibility
-    normalized = normalized.replace(/[µ_]/g, 'u');
-
-    // Replace common decimal notations with letter notation (e.g., 2.2m -> 2m2)
-    // Handles: 2.2m, 2_2m, 2 2m, 2-2m, 2m2, etc.
-    // For M, K, R, N, P, U, F
-    normalized = normalized
-        // Replace decimal with letter for M (mega)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)m(?![a-z])/g, '$1m$2')
-        // For K (kilo)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)k(?![a-z])/g, '$1k$2')
-        // For R (ohm)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)r(?![a-z])/g, '$1r$2')
-        // For N (nano)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)n(?![a-z])/g, '$1n$2')
-        // For P (pico)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)p(?![a-z])/g, '$1p$2')
-        // For U (micro)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)u(?![a-z])/g, '$1u$2')
-        // For F (farad)
-        .replace(/([0-9]+)[\.,\- ]([0-9]+)f(?![a-z])/g, '$1f$2');
-
-    // Special: treat '100n' as '100nf' (and similar)
-    normalized = normalized.replace(/([0-9]+)n(?!f)/g, '$1nf');
-
-    // Remove all non-alphanumeric characters
-    normalized = normalized.replace(/[^a-z0-9]/g, '');
-
-    // Remove trailing underscores (if any remain)
-    normalized = normalized.replace(/_+$/, '');
-
-    // Special case handling for common variations
-    normalized = normalized
-        .replace(/capacitor/g, 'cap')
-        .replace(/resistor/g, 'res')
-        .replace(/potentiometer/g, 'pot')
-        .replace(/transistor/g, 'trans')
-        .replace(/diode/g, 'diode')
-        .replace(/switch/g, 'sw')
-        .replace(/ic/g, 'ic')
-        .replace(/led/g, 'led')
-        .replace(/voltage/g, 'v')
-        .replace(/regulator/g, 'reg');
+    
+    let normalized = str.toLowerCase()
+        // Remove all non-alphanumeric characters except spaces (which become empty)
+        .replace(/[^a-z0-9]/g, '')
+        // Standardize common electronic component terms
+        .replace(/ohm/g, '')              // Remove 'ohm' suffix
+        .replace(/ohms/g, '')             // Remove 'ohms' suffix
+        .replace(/resistor/g, 'res')      // Shorten 'resistor' to 'res'
+        .replace(/capacitor/g, 'cap')     // Shorten 'capacitor' to 'cap'
+        .replace(/potentiometer/g, 'pot') // Shorten 'potentiometer' to 'pot'
+        .replace(/kilo/g, 'k')            // Standardize 'kilo' to 'k'
+        .replace(/mega/g, 'm')            // Standardize 'mega' to 'm'
+        // Handle various resistor value formats (10k, 1M, etc.)
+        .replace(/(\d+)k(?![a-z])/g, '$1k')
+        .replace(/(\d+)m(?![a-z])/g, '$1m')
+        .replace(/(\d+)r(?![a-z])/g, '$1r')
+        // Clean up any remaining inconsistencies
+        .replace(/[ur]$/g, '')
+        // Ensure consistent format for component values
+        .replace(/(\d+)k(?!\d)/g, '$1k')
+        .replace(/(\d+)m(?!\d)/g, '$1m')
+        .replace(/(\d+)r(?!\d)/g, '$1r');
 
     return normalized;
 }
 
+/**
+ * Save projects data to browser's local storage
+ * Persists project information including BOMs between browser sessions
+ */
 function saveProjects() {
     localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
 }
 
+/**
+ * Save inventory data to browser's local storage
+ * Persists component inventory between browser sessions
+ */
 function saveInventory() {
     localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
 }
 
-// Initialize with some sample data
+// =============================================================================
+// APPLICATION DATA INITIALIZATION
+// =============================================================================
+
+/**
+ * Initialize the inventory data from localStorage or create sample data
+ * This function handles the initial setup of the application including:
+ * - Loading saved inventory data
+ * - Creating sample data for new users
+ * - Merging duplicate entries
+ * - Setting up project data
+ * - Rendering the initial display
+ */
 function initializeInventory() {
+    // Try to load existing inventory data from browser storage
     const savedInventory = localStorage.getItem('guitarPedalInventory');
     if (savedInventory) {
         inventory = JSON.parse(savedInventory);
-        // Auto-merge duplicates on load
-        mergeDuplicateInventoryEntries();
+        // Auto-merge any duplicate entries that may have been created (silently)
+        mergeDuplicateInventoryEntries(false);
     } else {
-        // Sample data
+        // Create sample data for new users to demonstrate functionality
         inventory = {
             'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
             'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
@@ -166,64 +295,101 @@ function initializeInventory() {
         };
         saveInventory();
     }
+    
+    // Initialize project data and relationships
     initializeProjects();
-    // Normalize BOMs after loading everything
+    
+    // Ensure all BOM references use consistent part IDs
     normalizeAllBOMReferences();
+    
+    // Render the inventory display
     displayInventory();
+    
+    // Check if URL contains part-specific parameters (for deep linking)
     checkUrlForPart();
     
-    // Update sync buttons
+    // Update the sync buttons container with current functionality
     const syncButtonsContainer = document.querySelector('.sync-buttons');
     if (syncButtonsContainer) {
         syncButtonsContainer.innerHTML = createSyncButtons();
     }
 }
 
+// =============================================================================
+// DATA EXPORT/IMPORT FUNCTIONALITY
+// =============================================================================
+
+/**
+ * Show the export options modal dialog
+ */
 function showExportModal() {
     document.getElementById('exportModal').style.display = 'block';
 }
 
+/**
+ * Hide the export options modal dialog
+ */
 function hideExportModal() {
     document.getElementById('exportModal').style.display = 'none';
 }
 
+/**
+ * Export inventory data in the specified format (JSON or CSV)
+ * Creates a downloadable file containing all inventory and project data
+ * 
+ * @param {string} format - Either 'csv' or 'json' (default)
+ */
 function exportInventory(format) {
+    // Create timestamp for unique filename
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
     let filename, dataStr, mimeType, defaultName;
     
+    // Handle CSV format export
     if (format === 'csv') {
         defaultName = `guitar-pedal-inventory-${timestamp}.csv`;
-        // Create CSV header
-        const headers = ['Part ID', 'Name', 'Quantity', 'Purchase URL', 'Projects'];
+        
+        // Define CSV column headers
+        const headers = ['Part ID', 'Name', 'Type', 'Quantity', 'Purchase URL', 'Projects'];
+        
+        /**
+         * Escape CSV field values to handle commas, quotes, and newlines
+         * @param {*} val - Value to escape
+         * @returns {string} Properly escaped CSV field
+         */
         function csvEscape(val) {
             if (val == null) return '';
             val = String(val);
+            // Escape quotes by doubling them
             if (val.includes('"')) val = val.replace(/"/g, '""');
+            // Wrap in quotes if contains comma, quote, or newline
             if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
             return val;
         }
+        
+        // Convert inventory entries to CSV rows
         const rows = Object.entries(inventory).map(([id, part]) => [
             id,
             part.name,
+            part.type || '',
             part.quantity,
             part.purchaseUrl || '',
+            // Serialize project assignments as "projectId:quantity" pairs
             part.projects ? Object.entries(part.projects).map(([pid, qty]) => `${pid}:${qty}`).join(';') : ''
         ].map(csvEscape));
+        
+        // Combine headers and data rows
         dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\n');
         mimeType = 'text/csv';
     } else {
+        // Handle JSON format export (default)
         defaultName = `guitar-pedal-inventory-${timestamp}.json`;
+        // Export both inventory and projects data with pretty formatting
         dataStr = JSON.stringify({ inventory, projects }, null, 2);
         mimeType = 'application/json';
     }
     
-    // Prompt user for filename
-    filename = prompt('Enter a file name to save:', defaultName);
-    if (!filename) {
-        showNotification('Save cancelled', 'error');
-        hideExportModal();
-        return;
-    }
+    // Use default filename for better UX (avoids prompt dialog)
+    filename = defaultName;
     // Ensure correct extension
     if (format === 'csv' && !filename.endsWith('.csv')) filename += '.csv';
     if (format !== 'csv' && !filename.endsWith('.json')) filename += '.json';
@@ -263,6 +429,7 @@ function importInventory(event) {
                     const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
                     const name = row['Name'] || row['name'] || '';
                     if (!name) return; // skip if no name
+                    const type = row['Type'] || row['type'] || '';
                     const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
                     const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
                     let projects = {};
@@ -275,6 +442,7 @@ function importInventory(event) {
                     }
                     importedData[id] = {
                         name: name,
+                        type: type || undefined,
                         quantity: quantity,
                         purchaseUrl: purchaseUrl,
                         projects: projects
@@ -288,8 +456,8 @@ function importInventory(event) {
             if (importedData.inventory && importedData.projects) {
                 inventory = importedData.inventory;
                 projects = importedData.projects;
-                // Auto-merge duplicates after import
-                mergeDuplicateInventoryEntries();
+                // Auto-merge duplicates after import (silently)
+                mergeDuplicateInventoryEntries(false);
                 saveProjects();
                 updateProjectFilter();
             } else if (typeof importedData === 'object' && importedData !== null) {
@@ -316,8 +484,8 @@ function importInventory(event) {
                         }
                     }
                 }
-                // Auto-merge duplicates after import
-                mergeDuplicateInventoryEntries();
+                // Auto-merge duplicates after import (silently)
+                mergeDuplicateInventoryEntries(false);
                 saveProjects();
                 updateProjectFilter();
             } else {
@@ -335,6 +503,14 @@ function importInventory(event) {
     event.target.value = '';
 }
 
+// =============================================================================
+// SEARCH AND FILTERING FUNCTIONALITY
+// =============================================================================
+
+/**
+ * Handle search input changes
+ * Updates the current search query and refreshes the inventory display
+ */
 function searchParts() {
     const searchInput = DOM.get('searchInput');
     if (!searchInput) return;
@@ -342,10 +518,16 @@ function searchParts() {
     displayInventory();
 }
 
+/**
+ * Get inventory entries filtered and sorted according to current settings
+ * Applies search query, project filter, and sort order in sequence
+ * 
+ * @returns {Array} Array of [partId, partData] tuples, filtered and sorted
+ */
 function getSortedInventoryEntries() {
     const entries = Object.entries(inventory);
     
-    // First filter by search query if one exists
+    // Step 1: Filter by search query if one exists
     const filteredEntries = currentSearchQuery 
         ? entries.filter(([_, part]) => {
             const searchStr = part.name.toLowerCase();
@@ -353,12 +535,12 @@ function getSortedInventoryEntries() {
         })
         : entries;
     
-    // Then apply project filter
+    // Step 2: Apply project filter
     const projectFilteredEntries = currentProjectFilter !== 'all'
         ? filteredEntries.filter(([_, part]) => part.projects && part.projects[currentProjectFilter])
         : filteredEntries;
     
-    // Finally apply sorting
+    // Step 3: Apply sorting based on current sort order
     switch (currentSortOrder) {
         case 'name-asc':
             return projectFilteredEntries.sort((a, b) => a[1].name.localeCompare(b[1].name));
@@ -369,6 +551,7 @@ function getSortedInventoryEntries() {
         case 'quantity-desc':
             return projectFilteredEntries.sort((a, b) => b[1].quantity - a[1].quantity);
         case 'stock-status':
+            // Sort by stock status (low stock first), then by name
             return projectFilteredEntries.sort((a, b) => {
                 const aLowStock = a[1].quantity < 5;
                 const bLowStock = b[1].quantity < 5;
@@ -381,19 +564,36 @@ function getSortedInventoryEntries() {
     }
 }
 
+/**
+ * Handle sort order changes from dropdown
+ * Updates the current sort order and refreshes the inventory display
+ */
 function changeSortOrder() {
     currentSortOrder = document.getElementById('sortDropdown').value;
     displayInventory();
 }
 
+// =============================================================================
+// INVENTORY DISPLAY AND RENDERING
+// =============================================================================
+
+/**
+ * Render the main inventory display
+ * Creates responsive HTML for each inventory item with:
+ * - Component name, quantity, and type
+ * - Project tags showing which projects need this component
+ * - Quantity adjustment buttons
+ * - Edit, delete, and purchase link buttons
+ * - Responsive layout for mobile and desktop
+ */
 function displayInventory() {
     const inventoryItems = document.getElementById('inventoryItems');
     inventoryItems.innerHTML = '';
 
-    // Responsive tag limit logic
-    let maxTags = 3;
-    if (window.innerWidth <= 1280) maxTags = 1;
-    const isMobile = window.innerWidth <= 1024;
+    // Responsive design: adjust project tag display based on screen size
+    let maxTags = 3;  // Default number of project tags to show
+    if (window.innerWidth <= 1280) maxTags = 1;  // Fewer tags on smaller screens
+    const isMobile = window.innerWidth <= 1024;  // Mobile layout threshold
 
     const sortedEntries = getSortedInventoryEntries();
     sortedEntries.forEach(([id, part]) => {
@@ -405,8 +605,9 @@ function displayInventory() {
         let projectTagsHtml = '';
         if (projectEntries.length > 0) {
             if (isMobile) {
+                // On mobile, always show a clickable tag for projects
                 projectTagsHtml = `
-                    <span class="project-tag more-tags" title="Show all projects">
+                    <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">
                         +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
                     </span>
                 `;
@@ -443,8 +644,8 @@ function displayInventory() {
         if (isMobile) {
             item.innerHTML = `
                 <div class="item-left">
-                    <div class="item-name" title="${part.name}">
-                        <span class="part-name-text">${part.name}</span>
+                    <div class="item-name" title="${escapeHtml(part.name)}">
+                        <span class="part-name-text">${escapeHtml(part.name)}</span>
                         ${typePillHtml}
                     </div>
                     <div class="project-tags">${projectTagsHtml}</div>
@@ -471,8 +672,8 @@ function displayInventory() {
         } else {
             item.innerHTML = `
                 <div class="item-info">
-                    <div class="item-name" title="${part.name}">
-                        <span class="part-name-text">${part.name}</span>
+                    <div class="item-name" title="${escapeHtml(part.name)}">
+                        <span class="part-name-text">${escapeHtml(part.name)}</span>
                         ${typePillHtml}
                     </div>
                     <div class="project-tags">${projectTagsHtml}</div>
@@ -496,27 +697,31 @@ function displayInventory() {
             `;
         }
 
-        // Add click handler for the "+X more" or mobile tag
-        const moreTag = item.querySelector('.more-tags');
-        if (moreTag) {
-            moreTag.addEventListener('click', (e) => {
+        // Add click handlers for all project tags
+        item.querySelectorAll('.project-tag').forEach(tag => {
+            tag.addEventListener('click', (e) => {
                 e.stopPropagation();
-                showAllProjectTagsModal(id);
-            });
-        }
-
-        // Add click handlers for project tags (desktop only)
-        if (!isMobile) {
-            item.querySelectorAll('.project-tag:not(.more-tags)').forEach(tag => {
-                tag.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                // Project tag clicked
+                
+                if (tag.classList.contains('more-tags')) {
+                    // Always show all project tags modal for "more-tags" button
+                    showAllProjectTagsModal(id);
+                } else {
+                    // For individual project tags
                     const projectId = tag.getAttribute('data-project-id');
+                    // Individual tag clicked
                     if (projectId) {
-                        showProjectDetails(projectId);
+                        if (isMobile) {
+                            // On mobile, show all project tags modal instead of project details
+                            showAllProjectTagsModal(id);
+                        } else {
+                            // On desktop, show project details
+                            showProjectDetails(projectId);
+                        }
                     }
-                });
+                }
             });
-        }
+        });
 
         // Restore quantity button event listeners
         const decreaseBtn = item.querySelector('[data-action="decrease"]');
@@ -714,9 +919,7 @@ function saveEditPart() {
         }
     }
     // --- End: Read project assignments from modal ---
-    if (currentPartId === editingPartId) {
-        selectPart(editingPartId);
-    }
+    // Removed selectPart call as function doesn't exist
     saveProjects();
     saveInventory();
     displayInventory();
@@ -744,7 +947,7 @@ function confirmDeletePart() {
     
     if (currentPartId === deletingPartId) {
         currentPartId = null;
-        hidePartInfoPanel();
+        // Removed hidePartInfoPanel call as function doesn't exist
     }
     
     delete inventory[deletingPartId];
@@ -760,8 +963,18 @@ function addNewPart() {
     const purchaseUrl = document.getElementById('newPartUrl').value.trim();
     let id = document.getElementById('newPartId').value.trim();
     const type = document.getElementById('newPartType').value;
+    
+    // Input validation
     if (!name) {
         showNotification('Please enter a part name', 'error');
+        return;
+    }
+    if (name.length > 200) {
+        showNotification('Part name too long (max 200 characters)', 'error');
+        return;
+    }
+    if (quantity < 0 || quantity > 999999) {
+        showNotification('Invalid quantity (0-999999)', 'error');
         return;
     }
     // Generate ID: normalize name + _ + normalize type (if type is selected)
@@ -797,17 +1010,34 @@ function handlePurchaseClick(partId) {
     }
 }
 
+// =============================================================================
+// USER INTERFACE UTILITIES
+// =============================================================================
+
+/**
+ * Display a notification message to the user
+ * Shows a temporary notification that auto-hides after 5 seconds
+ * 
+ * @param {string} message - The message to display
+ * @param {string} type - 'success' (default) or 'error' for styling
+ */
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.className = `notification ${type === 'error' ? 'error' : ''}`;
     notification.classList.add('show');
     
+    // Auto-hide notification after 5 seconds
     setTimeout(() => {
         notification.classList.remove('show');
-    }, 5000); // Show for 5 seconds
+    }, 5000);
 }
 
+/**
+ * Check URL parameters for part-specific actions (deep linking support)
+ * Supports actions like quickly removing stock for a specific part
+ * Example: ?part=resistor_10k&remove=1
+ */
 function checkUrlForPart() {
     const urlParams = new URLSearchParams(window.location.search);
     const partId = urlParams.get('part');
@@ -820,19 +1050,16 @@ function checkUrlForPart() {
     }
 }
 
-function quickRemoveOne(partId) {
-    const part = inventory[partId];
-    if (part.quantity > 0) {
-        part.quantity -= 1;
-        document.getElementById('currentStock').textContent = part.quantity;
-        saveInventory();
-        displayInventory();
-        showNotification(`Used 1 ${part.name} (${part.quantity} remaining)`);
-    } else {
-        showNotification(`No ${part.name} in stock!`, 'error');
-    }
-}
 
+
+// =============================================================================
+// PROJECT MANAGEMENT FUNCTIONALITY
+// =============================================================================
+
+/**
+ * Initialize projects data from localStorage
+ * Loads saved project information and updates the project filter dropdown
+ */
 function initializeProjects() {
     const savedProjects = localStorage.getItem('guitarPedalProjects');
     if (savedProjects) {
@@ -841,16 +1068,21 @@ function initializeProjects() {
     }
 }
 
+/**
+ * Update the project filter dropdown with current projects
+ * Rebuilds the dropdown options while preserving the current selection
+ */
 function updateProjectFilter() {
     const filter = document.getElementById('projectFilter');
     if (!filter) return;
     
-    // Store current selection
+    // Store current selection to restore after rebuilding
     const currentValue = filter.value;
     
-    // Clear and rebuild options
+    // Clear existing options and add default "All Projects" option
     filter.innerHTML = '<option value="all">All Projects</option>';
     
+    // Add option for each project
     for (const projectId in projects) {
         const option = document.createElement('option');
         option.value = projectId;
@@ -858,7 +1090,7 @@ function updateProjectFilter() {
         filter.appendChild(option);
     }
     
-    // Restore selection if it still exists
+    // Restore previous selection if the project still exists
     if (currentValue !== 'all' && projects[currentValue]) {
         filter.value = currentValue;
     } else {
@@ -866,13 +1098,27 @@ function updateProjectFilter() {
     }
 }
 
+/**
+ * Handle project filter changes
+ * Updates the current project filter and refreshes the inventory display
+ */
 function filterByProject() {
     currentProjectFilter = document.getElementById('projectFilter').value;
     displayInventory();
 }
 
 function showProjectDetails(projectId) {
+    console.log('showProjectDetails called with projectId:', projectId);
+    console.log('Available projects:', Object.keys(projects));
     const project = projects[projectId];
+    console.log('Found project:', project);
+    
+    if (!project) {
+        console.error('Project not found:', projectId);
+        showNotification('Project not found', 'error');
+        return;
+    }
+    
     const bom = project.bom;
     let totalParts = 0;
     let missingParts = 0;
@@ -885,6 +1131,11 @@ function showProjectDetails(projectId) {
     
     const results = [];
     for (const id in bom) {
+        // Skip if BOM entry is invalid
+        if (!bom[id] || typeof bom[id] !== 'object') {
+            continue;
+        }
+        
         totalParts++;
         let part = inventory[id];
         let matchedId = id;
@@ -919,7 +1170,12 @@ function showProjectDetails(projectId) {
                 }
             }
         }
-        if (!part || part.quantity === 0) {
+        
+        // Handle cases where part exists but has no quantity property
+        const partQuantity = part ? (part.quantity || 0) : 0;
+        const bomQuantity = bom[id].quantity || 0;
+        
+        if (!part || partQuantity === 0) {
             // Missing entirely
             missingParts++;
             results.push(`
@@ -930,15 +1186,14 @@ function showProjectDetails(projectId) {
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                             </svg>
                         </span>
-                        <strong>${bom[id].name}</strong>
+                        <strong>${escapeHtml(bom[id].name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))}</strong>
                     </span>
-                    <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
+                    <span class="bom-part-status">: Missing entirely (need ${bomQuantity})</span>
                 </li>
             `);
-        } else if (part.quantity < bom[id].quantity) {
+        } else if (partQuantity < bomQuantity) {
             // Low stock
             lowStockParts++;
-            const have = part.quantity;
             results.push(`
                 <li>
                     <span class="bom-part-label">
@@ -947,39 +1202,33 @@ function showProjectDetails(projectId) {
                                 <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
                             </svg>
                         </span>
-                        <strong>${bom[id].name}</strong>
+                        <strong>${escapeHtml(bom[id].name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))}</strong>
                     </span>
-                    <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
-                </li>
-            `);
-        } else {
-            // Sufficient stock
-            results.push(`
-                <li>
-                    <span class="bom-part-label">
-                        <span class="status-icon status-success">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
-                        </span>
-                        <strong>${bom[id].name}</strong>
-                    </span>
-                    <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
+                    <span class="bom-part-status">: Have ${partQuantity}, need ${bomQuantity}</span>
                 </li>
             `);
         }
     }
-
-    const resultsContainer = document.getElementById("bomResults");
-    resultsContainer.innerHTML = `
+    
+    // Add summary to the projectStatus element
+    const statusContainer = document.getElementById('projectStatus');
+    statusContainer.innerHTML = `
         <div class="project-header">
             <div>Total Parts: ${totalParts}</div>
             <div>Missing: ${missingParts}</div>
             <div>Low Stock: ${lowStockParts}</div>
         </div>
-        <ul class="project-info">${results.join("")}</ul>
     `;
-    document.getElementById("bomModal").style.display = "block";
+    
+    // Add parts list
+    const partsList = document.createElement('ul');
+    partsList.className = 'project-parts-list';
+    partsList.innerHTML = results.join('');
+    partsContainer.appendChild(partsList);
+    
+    // Show the modal
+    console.log('Showing project details modal');
+    document.getElementById('projectDetailsModal').style.display = 'block';
 }
 
 function hideProjectDetailsModal() {
@@ -1069,24 +1318,43 @@ function createProjectFromBom(projectName, projectId, bom) {
     
     // Tag parts in the main inventory with this project
     for (const id in bom) {
-        // Find the part in inventory by name if ID doesn't match
+        // Find the part in inventory using multiple matching strategies
         let partId = id;
         if (!inventory[id]) {
-            // Try to find by name
+            // Strategy 1: Try exact name match
+            let found = false;
             for (const existingId in inventory) {
                 if (inventory[existingId].name.toLowerCase() === bom[id].name.toLowerCase()) {
                     partId = existingId;
+                    found = true;
                     break;
+                }
+            }
+            
+            // Strategy 2: Try normalized matching if exact match failed
+            if (!found) {
+                const normalizedBomName = normalizeValue(bom[id].name);
+                const normalizedBomId = normalizeValue(id);
+                for (const existingId in inventory) {
+                    const normalizedInvName = normalizeValue(inventory[existingId].name);
+                    const normalizedInvId = normalizeValue(existingId);
+                    if (normalizedInvName === normalizedBomName || normalizedInvId === normalizedBomId) {
+                        partId = existingId;
+                        found = true;
+                        break;
+                    }
                 }
             }
         }
         
         if (inventory[partId]) {
+            console.log(`✓ Found part in inventory: "${bom[id].name}" -> ${partId}`);
             if (!inventory[partId].projects) {
                 inventory[partId].projects = {};
             }
             inventory[partId].projects[projectId] = bom[id].quantity;
         } else {
+            console.log(`✗ Part not found in inventory, creating new: "${bom[id].name}" with ID: ${id}`);
             // Create the part if it doesn't exist
             inventory[id] = {
                 name: bom[id].name,
@@ -1220,31 +1488,56 @@ function compareBOM(event) {
             if (file.name.toLowerCase().endsWith('.csv')) {
                 // Use PapaParse to parse CSV
                 const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
+                console.log('CSV Parse Result:', parsed);
+                console.log('Parsed data length:', parsed.data.length);
+                console.log('First row:', parsed.data[0]);
                 if (parsed.errors.length) {
+                    console.error('CSV parse errors:', parsed.errors);
                     throw new Error('CSV parse error: ' + parsed.errors[0].message);
                 }
-                importedData = {};
-                parsed.data.forEach(row => {
+                parsed.data.forEach((row, index) => {
+                    console.log(`Processing row ${index}:`, row);
                     // Normalize headers
-                    const id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || normalizeValue(row['Name'] || row['name'] || '');
-                    const name = row['Name'] || row['name'] || '';
-                    if (!name) return; // skip if no name
-                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
-                    const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
-                    let projects = {};
-                    const projectsRaw = row['Projects'] || row['projects'] || '';
-                    if (projectsRaw) {
-                        projectsRaw.split(';').forEach(pair => {
-                            const [pid, qty] = pair.split(':').map(s => s.trim());
-                            if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
-                        });
+                    let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
+                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
+                    console.log(`Row ${index}: name="${name}", original_id="${row['Part ID'] || row['part id'] || row['ID'] || row['id']}", quantity="${row['Quantity'] || row['quantity']}"`);
+                    if (!name) {
+                        console.log(`Skipping row ${index}: no name found`);
+                        return; // skip if no name
                     }
-                    importedData[id] = {
+                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
+                    
+                    // If no explicit ID provided, try to find matching part in inventory first
+                    if (!id) {
+                        // Try to find exact match by name first
+                        let foundId = null;
+                        for (const [invId, invPart] of Object.entries(inventory)) {
+                            if (invPart.name.toLowerCase() === name.toLowerCase()) {
+                                foundId = invId;
+                                break;
+                            }
+                        }
+                        
+                        // If no exact match, try normalized matching
+                        if (!foundId) {
+                            const normalizedName = normalizeValue(name);
+                            for (const [invId, invPart] of Object.entries(inventory)) {
+                                if (normalizeValue(invPart.name) === normalizedName) {
+                                    foundId = invId;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Use found ID or create a normalized one as fallback
+                        id = foundId || normalizeValue(name);
+                    }
+                    
+                    bom[id] = {
                         name: name,
-                        quantity: quantity,
-                        purchaseUrl: purchaseUrl,
-                        projects: projects
+                        quantity: quantity
                     };
+                    console.log(`Added to BOM: "${name}" (ID: ${id}, Qty: ${quantity})`);
                 });
             } else {
                 // Parse JSON
@@ -1257,6 +1550,10 @@ function compareBOM(event) {
                 }
             }
 
+            // Debug: Log the processed BOM data
+            console.log('Processed BOM data:', bom);
+            console.log('Number of parts in BOM:', Object.keys(bom).length);
+            
             // Store the BOM data and show the project name modal
             pendingBomData = bom;
             showProjectNameModal();
@@ -1349,8 +1646,6 @@ function hideProjectManagementModal() {
     }
 }
 
-let deletingProjectId = null;
-
 function showDeleteProjectModal(projectId) {
     deletingProjectId = projectId;
     const project = projects[projectId];
@@ -1418,24 +1713,32 @@ function confirmDeleteProject() {
 }
 
 function showAllProjectRequirements() {
+    // First repair any malformed BOM data
+    repairBOMData();
+    
     const partTotals = {};
+    // Processing all project requirements
+
     for (const projectId in projects) {
         const bom = projects[projectId].bom;
+        // Processing project BOM
+
         for (const partId in bom) {
             const normId = normalizeValue(partId);
-            // Use inventory name if available, otherwise BOM name
-            let canonicalName = bom[partId].name;
-            for (const id in inventory) {
-                if (normalizeValue(id) === normId) {
-                    canonicalName = inventory[id].name;
-                    break;
-                }
-            }
+            const bomPart = bom[partId];
+            
+            // Get name and quantity from the BOM part
+            const name = bomPart.name || partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const quantity = typeof bomPart.quantity === 'number' ? bomPart.quantity : 
+                           (typeof bomPart.quantity === 'string' ? parseInt(bomPart.quantity) || 0 : 0);
+
             if (!partTotals[normId]) {
                 partTotals[normId] = {
-                    name: canonicalName,
+                    name: name,
                     total: 0,
-                    projects: []
+                    projects: [],
+                    inventoryQty: 0,
+                    status: 'missing'
                 };
             } else {
                 // Always update the name to the inventory name if found
@@ -1446,41 +1749,184 @@ function showAllProjectRequirements() {
                     }
                 }
             }
-            partTotals[normId].total += bom[partId].quantity;
+            
+            console.log(`Part ${partId} quantity:`, quantity, 'from BOM:', bomPart);
+            partTotals[normId].total += quantity;
             partTotals[normId].projects.push({
                 project: projects[projectId].name,
-                quantity: bom[partId].quantity
+                quantity: quantity
             });
         }
     }
 
-    // Build HTML table
-    let html = '<table id="allProjectRequirementsTable">';
-    html += '<tr><th>Part Name</th><th>Total Needed</th><th>Projects</th></tr>';
+    console.log('Part totals:', partTotals);
+
+    // Add inventory quantities and determine status
+    console.log('\n=== STARTING INVENTORY MATCHING ===');
+    console.log('partTotals keys:', Object.keys(partTotals));
+    console.log('inventory keys:', Object.keys(inventory));
+    
     for (const normId in partTotals) {
         const part = partTotals[normId];
-        // Check inventory for low stock
-        let lowStock = false;
-        // Try to find the actual inventory part by normalized ID
-        let invId = null;
+        let foundInInventory = false;
+        
+        console.log(`\nLooking for part with normId: "${normId}"`);
+        console.log('Part object before matching:', JSON.stringify(part, null, 2));
+        
+        // Try to find the part in inventory
         for (const id in inventory) {
-            if (normalizeValue(id) === normId) {
-                invId = id;
+            const invNormId = normalizeValue(id);
+            console.log(`  Checking inventory id: "${id}" -> normalized: "${invNormId}"`);
+            if (invNormId === normId) {
+                part.inventoryQty = inventory[id].quantity || 0;
+                foundInInventory = true;
+                console.log(`  ✓ MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
                 break;
             }
         }
-        if (invId && inventory[invId].quantity < part.total) lowStock = true;
-        html += `<tr${lowStock ? ' class="low-stock"' : ''}>`;
-        html += `<td>${part.name}</td>`;
-        html += `<td${lowStock ? ' class="low-stock"' : ''}>${part.total}</td>`;
-        html += `<td>${part.projects.map(p => `${p.project} (${p.quantity})`).join(', ')}</td>`;
-        html += '</tr>';
+        
+        // Also try matching by name if normId didn't work
+        if (!foundInInventory) {
+            console.log(`  No normId match, trying by name: "${part.name}"`);
+            for (const id in inventory) {
+                const invPart = inventory[id];
+                if (normalizeValue(invPart.name) === normalizeValue(part.name)) {
+                    part.inventoryQty = invPart.quantity || 0;
+                    foundInInventory = true;
+                    console.log(`  ✓ NAME MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
+                    break;
+                }
+            }
+        }
+        
+        // If not found in inventory, it's completely missing
+        if (!foundInInventory) {
+            part.inventoryQty = 0;
+            console.log(`  ✗ NOT FOUND in inventory`);
+        }
+        
+        // Determine status based on actual quantities
+        if (part.inventoryQty === 0) {
+            part.status = 'missing';
+        } else if (part.inventoryQty < part.total) {
+            part.status = 'low';
+        } else {
+            part.status = 'sufficient';
+        }
+        
+        console.log(`Final: ${part.name} - Have: ${part.inventoryQty}, Need: ${part.total}, Status: ${part.status}`);
     }
-    html += '</table>';
+
+    console.log('\n=== FINAL PART TOTALS ===');
+    console.log('Final partTotals:', JSON.stringify(partTotals, null, 2));
+
+    // Sort parts by status priority (missing first, then low stock, then sufficient)
+    const sortedParts = Object.entries(partTotals).sort(([, a], [, b]) => {
+        const statusOrder = { missing: 0, low: 1, sufficient: 2 };
+        if (statusOrder[a.status] !== statusOrder[b.status]) {
+            return statusOrder[a.status] - statusOrder[b.status];
+        }
+        return a.name.localeCompare(b.name);
+    });
+
+    // Group parts by status
+    const groupedParts = {
+        missing: sortedParts.filter(([, part]) => part.status === 'missing'),
+        low: sortedParts.filter(([, part]) => part.status === 'low'),
+        sufficient: sortedParts.filter(([, part]) => part.status === 'sufficient')
+    };
+
+    // Build HTML with organized sections
+    let html = `
+        <div class="requirements-summary">
+            <div class="summary-stats">
+                <div class="stat-item missing">
+                    <span class="stat-number">${groupedParts.missing.length}</span>
+                    <span class="stat-label">Missing</span>
+                </div>
+                <div class="stat-item low">
+                    <span class="stat-number">${groupedParts.low.length}</span>
+                    <span class="stat-label">Low Stock</span>
+                </div>
+                <div class="stat-item sufficient">
+                    <span class="stat-number">${groupedParts.sufficient.length}</span>
+                    <span class="stat-label">Sufficient</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Function to create section HTML
+    function createSection(title, parts, className) {
+        if (parts.length === 0) return '';
+        
+        let sectionHtml = `
+            <div class="requirements-section ${className}">
+                <h3 class="section-title">${title} (${parts.length})</h3>
+                <div class="parts-grid">
+        `;
+        
+        parts.forEach(([normId, part]) => {
+            const statusIcon = {
+                missing: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                low: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+                sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
+            };
+            
+            sectionHtml += `
+                <div class="part-card ${part.status}" data-status="${part.status}">
+                    <div class="part-header">
+                        <span class="status-icon status-${part.status}">${statusIcon[part.status]}</span>
+                        <span class="part-name">${part.name}</span>
+                    </div>
+                    <div class="part-quantities">
+                        <div class="quantity-row">
+                            <span class="qty-label">Have:</span>
+                            <span class="qty-value qty-${part.status}">${part.inventoryQty}</span>
+                        </div>
+                        <div class="quantity-row">
+                            <span class="qty-label">Need:</span>
+                            <span class="qty-value">${part.total}</span>
+                        </div>
+                        ${part.status !== 'sufficient' ? `
+                        <div class="quantity-row shortage">
+                            <span class="qty-label">Short:</span>
+                            <span class="qty-value shortage">${Math.max(0, part.total - part.inventoryQty)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="project-breakdown">
+                        <span class="breakdown-label">Used in:</span>
+                        <div class="project-list">
+                            ${part.projects.map(p => `
+                                <span class="project-usage">${p.project} (${p.quantity})</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        sectionHtml += '</div></div>';
+        return sectionHtml;
+    }
+
+    // Add sections in priority order
+    if (groupedParts.missing.length > 0) {
+        html += createSection('⚠️ Missing Parts', groupedParts.missing, 'missing');
+    }
     
-    // Update the modal title to include the explanation
+    if (groupedParts.low.length > 0) {
+        html += createSection('📉 Low Stock', groupedParts.low, 'low');
+    }
+    
+    if (groupedParts.sufficient.length > 0) {
+        html += createSection('✅ Sufficient Stock', groupedParts.sufficient, 'sufficient');
+    }
+
+    // Update the modal title
     document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
-        'All Project Requirements<br><span style="font-size:13px;color:#BF616A;font-weight:normal;">* Red means you do not have enough in stock for all projects.</span>';
+        'All Project Requirements';
     
     document.getElementById('allProjectRequirements').innerHTML = html;
     document.getElementById('allProjectRequirementsModal').style.display = 'block';
@@ -1524,17 +1970,27 @@ function exportProjectBOM(format) {
         filename = `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}-bom-${timestamp}.csv`;
         // Create CSV header
         const headers = ['Part Name', 'Quantity', 'Purchase URL'];
+        
+        // Helper function to escape CSV fields
+        function csvEscape(val) {
+            if (val == null) return '';
+            val = String(val);
+            if (val.includes('"')) val = val.replace(/"/g, '""');
+            if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
+            return val;
+        }
+
         // Create CSV rows
         const rows = Object.entries(bom).map(([id, part]) => {
             const inventoryPart = inventory[id];
             return [
-                part.name,
-                part.quantity,
-                inventoryPart ? inventoryPart.purchaseUrl || '' : ''
+                csvEscape(part.name),
+                csvEscape(part.quantity),
+                csvEscape(inventoryPart ? inventoryPart.purchaseUrl || '' : '')
             ];
         });
         // Combine header and rows
-        dataStr = [headers, ...rows].map(row => row.join(',')).join('\n');
+        dataStr = [headers.map(csvEscape), ...rows].map(row => row.join(',')).join('\n');
         mimeType = 'text/csv';
     } else {
         filename = `${project.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}-bom-${timestamp}.json`;
@@ -1562,9 +2018,7 @@ function exportProjectBOM(format) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
     hideExportBOMModal();
-    showNotification(`Exported BOM for ${project.name}`);
 }
 
 // Add this function to create the sync buttons HTML
@@ -1600,42 +2054,16 @@ function createSyncButtons() {
             </svg>
             Save Data
         </button>
+        <button class="sync-btn import-btn full-width" onclick="mergeDuplicateInventoryEntries()">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+            </svg>
+            Merge Duplicates
+        </button>
     `;
 }
 
-function showQuantityInput(partId, currentQuantity) {
-    // Find the specific quantity span for this part
-    const quantitySpan = document.querySelector(`.item-quantity[data-part-id="${partId}"] .quantity-number`);
-    if (!quantitySpan) return;
 
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = '0';
-    input.value = currentQuantity;
-    input.className = 'quantity-input-inline';
-    
-    // Replace span with input
-    quantitySpan.replaceWith(input);
-    input.focus();
-    input.select();
-
-    // Handle input events
-    input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            updateQuantity(partId, parseInt(input.value) || 0);
-        }
-    });
-
-    input.addEventListener('blur', function() {
-        updateQuantity(partId, parseInt(input.value) || 0);
-    });
-
-    // Prevent click propagation to avoid immediate blur
-    input.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-}
 
 function updateQuantity(partId, newQuantity) {
     if (newQuantity < 0) newQuantity = 0;
@@ -1654,43 +2082,35 @@ function updateQuantity(partId, newQuantity) {
     }
 }
 
-// --- CSV Import: Parse quoted fields ---
-function parseCsvLine(line) {
-    const result = [];
-    let cur = '', inQuotes = false;
-    for (let j = 0; j < line.length; j++) {
-        const char = line[j];
-        if (inQuotes) {
-            if (char === '"') {
-                if (line[j+1] === '"') { cur += '"'; j++; } // Escaped quote
-                else inQuotes = false;
-            } else {
-                cur += char;
-            }
-        } else {
-            if (char === ',') {
-                result.push(cur);
-                cur = '';
-            } else if (char === '"') {
-                inQuotes = true;
-            } else {
-                cur += char;
-            }
-        }
-    }
-    result.push(cur);
-    return result;
-}
 
-// --- Add Levenshtein distance function near the top ---
+
+// =============================================================================
+// ALGORITHMS AND DATA PROCESSING
+// =============================================================================
+
+/**
+ * Calculate Levenshtein distance between two strings
+ * Used for fuzzy matching of component names to find potential duplicates
+ * 
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {number} Edit distance between the strings
+ */
 function levenshtein(a, b) {
+    // Create a matrix to store edit distances
     const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+    
+    // Initialize first row with increasing values
     for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    
+    // Fill the matrix using dynamic programming
     for (let i = 1; i <= b.length; i++) {
         for (let j = 1; j <= a.length; j++) {
             if (b[i - 1] === a[j - 1]) {
+                // Characters match, no operation needed
                 matrix[i][j] = matrix[i - 1][j - 1];
             } else {
+                // Choose minimum cost operation
                 matrix[i][j] = Math.min(
                     matrix[i - 1][j - 1] + 1, // substitution
                     matrix[i][j - 1] + 1,     // insertion
@@ -1699,6 +2119,8 @@ function levenshtein(a, b) {
             }
         }
     }
+    
+    // Return the final edit distance
     return matrix[b.length][a.length];
 }
 
@@ -1730,7 +2152,7 @@ function showAllProjectTagsModal(partId) {
         }
     });
 
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
 }
 
 function hideAllProjectTagsModal() {
@@ -1738,83 +2160,112 @@ function hideAllProjectTagsModal() {
     modal.style.display = 'none';
 }
 
+function showAboutModal() {
+    document.getElementById('aboutModal').style.display = 'block';
+}
+
+function hideAboutModal() {
+    document.getElementById('aboutModal').style.display = 'none';
+}
+
 // Update tag display responsively on window resize
 window.addEventListener('resize', debounce(displayInventory, 200));
 
-function mergeDuplicateInventoryEntries() {
-    // Create a map of normalized IDs to their canonical IDs
+function mergeDuplicateInventoryEntries(showNotifications = true) {
     const normalizedToCanonical = {};
     const duplicates = [];
     
-    // First pass: identify duplicates and choose canonical IDs
-    for (const id in inventory) {
-        const normId = normalizeValue(id);
-        if (!normalizedToCanonical[normId]) {
-            normalizedToCanonical[normId] = id;
+    // First pass: identify duplicates and choose canonical entries
+    for (const [id, part] of Object.entries(inventory)) {
+        const normalizedId = normalizeValue(part.name);
+        
+        if (!normalizedToCanonical[normalizedId]) {
+            normalizedToCanonical[normalizedId] = id;
         } else {
-            duplicates.push({
-                canonicalId: normalizedToCanonical[normId],
-                duplicateId: id,
-                normId: normId
-            });
+            const existingId = normalizedToCanonical[normalizedId];
+            const existingPart = inventory[existingId];
+            
+            // Keep the part with more information as canonical
+            if (part.purchaseUrl && !existingPart.purchaseUrl) {
+                normalizedToCanonical[normalizedId] = id;
+                duplicates.push({ canonical: id, duplicate: existingId });
+            } else {
+                duplicates.push({ canonical: existingId, duplicate: id });
+            }
         }
     }
     
     if (duplicates.length === 0) {
-        // Do not notify the user if there are no duplicates
+        if (showNotifications) {
+            showNotification('No duplicate entries found', 'info');
+        }
         return;
     }
     
     // Second pass: merge duplicates
-    for (const dup of duplicates) {
-        const canonical = inventory[dup.canonicalId];
-        const duplicate = inventory[dup.duplicateId];
+    for (const { canonical, duplicate } of duplicates) {
+        const canonicalPart = inventory[canonical];
+        const duplicatePart = inventory[duplicate];
         
         // Merge quantities
-        canonical.quantity += duplicate.quantity;
+        canonicalPart.quantity = (canonicalPart.quantity || 0) + (duplicatePart.quantity || 0);
         
-        // Merge project tags
-        if (duplicate.projects) {
-            if (!canonical.projects) canonical.projects = {};
-            for (const projectId in duplicate.projects) {
-                if (!canonical.projects[projectId]) {
-                    canonical.projects[projectId] = 0;
+        // Merge projects - handle both array and object formats
+        if (duplicatePart.projects) {
+            canonicalPart.projects = canonicalPart.projects || {};
+            
+            // If projects is an array, convert to object format
+            if (Array.isArray(duplicatePart.projects)) {
+                duplicatePart.projects.forEach(projectId => {
+                    canonicalPart.projects[projectId] = (canonicalPart.projects[projectId] || 0) + 1;
+                });
+            } else {
+                // If projects is an object, merge quantities
+                for (const [projectId, quantity] of Object.entries(duplicatePart.projects)) {
+                    canonicalPart.projects[projectId] = (canonicalPart.projects[projectId] || 0) + (quantity || 1);
                 }
-                canonical.projects[projectId] += duplicate.projects[projectId];
             }
         }
         
-        // Update project BOMs
-        for (const projectId in projects) {
-            const bom = projects[projectId].bom;
-            if (bom[dup.duplicateId]) {
-                // If canonical doesn't exist in BOM, add it
-                if (!bom[dup.canonicalId]) {
-                    bom[dup.canonicalId] = {
-                        name: canonical.name,
-                        quantity: bom[dup.duplicateId].quantity
-                    };
-                } else {
-                    // Add quantities if both exist
-                    bom[dup.canonicalId].quantity += bom[dup.duplicateId].quantity;
-                }
-                // Remove the duplicate entry
-                delete bom[dup.duplicateId];
-            }
+        // Keep the longer purchase URL if available
+        if (duplicatePart.purchaseUrl && (!canonicalPart.purchaseUrl || duplicatePart.purchaseUrl.length > canonicalPart.purchaseUrl.length)) {
+            canonicalPart.purchaseUrl = duplicatePart.purchaseUrl;
         }
         
-        // Remove the duplicate inventory entry
-        delete inventory[dup.duplicateId];
+        // Keep the more specific type if available
+        if (duplicatePart.type && (!canonicalPart.type || duplicatePart.type !== 'Other')) {
+            canonicalPart.type = duplicatePart.type;
+        }
+        
+        // Delete the duplicate entry
+        delete inventory[duplicate];
+    }
+    
+    // Update project BOMs to use canonical IDs
+    for (const project of Object.values(projects)) {
+        if (project.bom) {
+            const updatedBom = {};
+            for (const [id, quantity] of Object.entries(project.bom)) {
+                const normalizedId = normalizeValue(inventory[id]?.name || '');
+                const canonicalId = normalizedToCanonical[normalizedId];
+                if (canonicalId) {
+                    updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
+                }
+            }
+            project.bom = updatedBom;
+        }
     }
     
     // Save changes
     saveInventory();
     saveProjects();
+    
+    // Update display
     displayInventory();
     
-    showNotification(`Merged ${duplicates.length} duplicate entries`);
-    // Automatically normalize all BOM references after merging
-    normalizeAllBOMReferences();
+    if (showNotifications) {
+        showNotification(`Merged ${duplicates.length} duplicate entries`, 'success');
+    }
 }
 
 // --- Auto-suggest capacitor type based on value ---
@@ -1930,3 +2381,58 @@ function normalizeAllBOMReferences() {
     saveProjects();
 }
 // ... existing code ...
+
+function repairBOMData() {
+    console.log('Repairing BOM data...');
+    for (const projectId in projects) {
+        const bom = projects[projectId].bom;
+        const newBom = {};
+        
+        console.log(`\nRepairing BOM for project: ${projects[projectId].name}`);
+        
+        for (const partId in bom) {
+            const part = bom[partId];
+            // Check if the part data is malformed (stored as string characters)
+            if (part && typeof part === 'object' && part['0'] === '0' && part['1'] === '[') {
+                // Try to find the part in inventory to get the correct data
+                let found = false;
+                for (const invId in inventory) {
+                    if (normalizeValue(invId) === normalizeValue(partId)) {
+                        // Get quantity from the part's projects
+                        const quantity = inventory[invId].projects?.[projectId] || 0;
+                        newBom[partId] = {
+                            name: inventory[invId].name,
+                            quantity: quantity
+                        };
+                        console.log(`Repaired ${partId}:`, {
+                            name: inventory[invId].name,
+                            quantity: quantity,
+                            'from inventory projects': inventory[invId].projects
+                        });
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    // If not found in inventory, create a basic entry
+                    newBom[partId] = {
+                        name: partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                        quantity: 0
+                    };
+                    console.log(`Created new entry for ${partId}:`, newBom[partId]);
+                }
+            } else {
+                // Keep valid entries as is
+                newBom[partId] = part;
+                console.log(`Kept existing entry for ${partId}:`, part);
+            }
+        }
+        
+        // Update the project's BOM
+        projects[projectId].bom = newBom;
+    }
+    
+    // Save the repaired data
+    saveProjects();
+    console.log('\nBOM data repair complete');
+}

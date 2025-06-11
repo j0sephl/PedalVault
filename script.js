@@ -126,8 +126,7 @@ function initializeApp() {
     // BOM Assistant button
     const bomAssistantBtn = DOM.get('bomAssistantBtn');
     
-    // Quick Paste BOM button  
-    const quickPasteBOMBtn = DOM.get('quickPasteBOMBtn');
+
     
     // Search and filter controls
     const searchInput = DOM.get('searchInput');
@@ -188,8 +187,7 @@ function initializeApp() {
     // BOM Assistant button event listener
     if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
     
-    // Quick Paste BOM button event listener
-    if (quickPasteBOMBtn) quickPasteBOMBtn.addEventListener('click', showQuickPasteBOMModal);
+
     
     // Search and filter event listeners with performance optimization
     // Debounce search input to avoid excessive filtering during typing
@@ -2119,11 +2117,24 @@ function showAllProjectRequirements() {
                 sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
             };
             
+            // Check if this part has a purchase URL in inventory
+            let purchaseUrl = '';
+            for (const invId in inventory) {
+                if (normalizeValue(inventory[invId].name) === normId || normalizeValue(invId) === normId) {
+                    purchaseUrl = inventory[invId].purchaseUrl || '';
+                    break;
+                }
+            }
+            
+            const clickableClass = purchaseUrl ? ' has-purchase-url' : '';
+            const clickableAttrs = purchaseUrl ? ` style="cursor: pointer;" title="Click to open purchase link"` : '';
+            
             sectionHtml += `
-                <div class="part-card ${part.status}" data-status="${part.status}">
+                <div class="part-card ${part.status}${clickableClass}" data-status="${part.status}" data-purchase-url="${purchaseUrl}"${clickableAttrs}>
                     <div class="part-header">
                         <span class="status-icon status-${part.status}">${statusIcon[part.status]}</span>
                         <span class="part-name">${part.name}</span>
+                        ${purchaseUrl ? '<span class="purchase-link-icon"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></span>' : ''}
                     </div>
                     <div class="part-quantities">
                         <div class="quantity-row">
@@ -2175,6 +2186,18 @@ function showAllProjectRequirements() {
         'All Project Requirements';
     
     document.getElementById('allProjectRequirements').innerHTML = html;
+    
+    // Add click handlers for clickable part cards
+    const clickableCards = document.querySelectorAll('.part-card.has-purchase-url');
+    clickableCards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            const purchaseUrl = card.getAttribute('data-purchase-url');
+            if (purchaseUrl) {
+                window.open(purchaseUrl, '_blank');
+            }
+        });
+    });
+    
     const modal = document.getElementById('allProjectRequirementsModal');
     lockBodyScroll();
     modal.style.display = 'block';
@@ -2290,7 +2313,9 @@ function createSyncButtons() {
         </button>
         <button class="sync-btn import-btn full-width" onclick="showBOMAssistantModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <polygon points="13.9 2.6 16.4 9.3 23.1 11.8 16.4 14.3 13.9 21 11.4 14.3 4.7 11.8 11.4 9.3 13.9 2.6"/>
+                <polygon points="7.1 14.9 7.9 17.3 10.4 18.2 7.9 19.1 7.1 21.6 6.2 19.1 3.7 18.2 6.2 17.3 7.1 14.9"/>
+                <polygon points="4.2 2.1 5.1 4.5 7.5 5.4 5.1 6.3 4.2 8.8 3.3 6.3 0.8 5.4 3.3 4.5 4.2 2.1"/>
             </svg>
             BOM Assistant
         </button>
@@ -2300,12 +2325,7 @@ function createSyncButtons() {
             </svg>
             Compare BOM
         </button>
-        <button class="sync-btn import-btn full-width" onclick="showQuickPasteBOMModal()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/>
-            </svg>
-            Quick Paste BOM
-        </button>
+
         <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
@@ -2987,69 +3007,5 @@ function processBOMData(bom, processedCount) {
     showNotification(`Successfully processed ${processedCount} components from pasted BOM`);
 }
 
-// =============================================================================
-// QUICK PASTE BOM FUNCTIONALITY  
-// =============================================================================
 
-/**
- * Show the Quick Paste BOM modal
- */
-function showQuickPasteBOMModal() {
-    const modal = document.getElementById('quickPasteBOMModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    
-    // Focus the textarea for immediate pasting
-    const textarea = document.getElementById('quickBOMTextInput');
-    if (textarea) {
-        setTimeout(() => textarea.focus(), 100);
-    }
-}
-
-/**
- * Hide the Quick Paste BOM modal
- */
-function hideQuickPasteBOMModal() {
-    const modal = document.getElementById('quickPasteBOMModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    
-    // Clear the text input
-    const textInput = document.getElementById('quickBOMTextInput');
-    if (textInput) textInput.value = '';
-}
-
-/**
- * Process BOM data from the Quick Paste modal
- */
-function processQuickPastedBOM() {
-    const textInput = document.getElementById('quickBOMTextInput');
-    const bomText = textInput.value.trim();
-    
-    if (!bomText) {
-        showNotification('Please paste BOM data first', 'error');
-        return;
-    }
-    
-    // Use the same processing logic as the BOM Assistant
-    // Temporarily set the main BOM text input and process it
-    const mainTextInput = document.getElementById('bomTextInput');
-    if (mainTextInput) {
-        const originalValue = mainTextInput.value;
-        mainTextInput.value = bomText;
-        
-        // Call the main processing function
-        processPastedBOM();
-        
-        // Restore original value
-        mainTextInput.value = originalValue;
-        
-        // Hide the quick paste modal
-        hideQuickPasteBOMModal();
-    } else {
-        showNotification('Error accessing BOM processing functionality', 'error');
-    }
-}
 

@@ -53,7 +53,8 @@
     
     <!-- Icons -->
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <link rel="icon" type="x-icon" href="icons/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     
     <!-- External scripts -->
       <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
@@ -396,7 +397,7 @@
     <!-- BOM Assistant Modal -->
     <div class="modal" id="bomAssistantModal">
         <div class="modal-content modal-content-wide">
-            <h2>🤖 BOM Assistant - Generate BOMs with AI</h2>
+            <h2>BOM Assistant - Generate BOMs with AI</h2>
             <div class="bom-assistant-content">
                 <p class="assistant-intro">Use AI tools like ChatGPT, Claude, or Gemini to generate BOMs from schematics and import them directly into PedalVault.</p>
                 
@@ -487,30 +488,6 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
             </div>
             <div class="modal-buttons">
                 <button class="btn close-btn flex-1" onclick="hideBOMAssistantModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Paste BOM Modal -->
-    <div class="modal" id="quickPasteBOMModal">
-        <div class="modal-content">
-            <h2>Quick Paste BOM</h2>
-            <p class="quick-paste-intro">Paste BOM data directly from AI tools like ChatGPT, Claude, or any text format:</p>
-            <textarea id="quickBOMTextInput" placeholder="Paste your BOM data here...
-
-Supports various formats:
-• CSV: Name,Quantity
-• Simple list: Component Name, 3
-• Quantities first: 2 x Resistor 10kΩ
-• Parentheses: Capacitor 100nF (2)
-
-Example:
-Resistor 10kΩ, 3
-Capacitor 100nF, 2
-Op-Amp TL072, 1" rows="12" class="full-width"></textarea>
-            <div class="modal-buttons">
-                <button class="btn btn-add flex-1" onclick="processQuickPastedBOM()">Import BOM</button>
-                <button class="btn cancel-btn flex-1" onclick="hideQuickPasteBOMModal()">Cancel</button>
             </div>
         </div>
     </div>

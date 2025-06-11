@@ -61,25 +61,17 @@
     <script src="rive-logo.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     
-    <!-- Service Worker -->
+    <!-- Service Worker for PWA functionality -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                        for(let registration of registrations) {
-                            registration.unregister();
-                        }
-                        navigator.serviceWorker.register('sw.js')
-                            .then(registration => {
-                                console.log('ServiceWorker registration successful');
-                                registration.update();
-                            })
-                            .catch(err => {
-                                console.log('ServiceWorker registration failed: ', err);
-                            });
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
                     });
-                }
             });
         }
     </script>

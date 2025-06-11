@@ -1,30 +1,54 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const riveInstance = new rive.Rive({
-        src: 'gpi.riv',
-        canvas: document.getElementById('rive-logo'),
-        autoplay: true,
-        stateMachines: 'State Machine 1'
-    });
-
-    // Get the canvas element
     const canvas = document.getElementById('rive-logo');
+    
+    if (!canvas) {
+        console.error('Rive logo canvas not found');
+        return;
+    }
 
-    // Wait for the intro animation to complete before enabling hover
-    riveInstance.on('play', (event) => {
-        if (event.name === 'Intro') {
-            // When intro finishes, switch to idle
-            riveInstance.on('stop', () => {
+    try {
+        const riveInstance = new rive.Rive({
+            src: 'gpi.riv',
+            canvas: canvas,
+            autoplay: true,
+            stateMachines: 'State Machine 1',
+            onLoad: () => {
+                console.log('Rive animation loaded successfully');
+                // Ensure the animation starts in Idle state after loading
                 riveInstance.play('Idle');
-            }, { once: true }); // Use once: true to only listen for the first stop event
-        }
-    });
+            },
+            onLoadError: (error) => {
+                console.error('Failed to load Rive animation:', error);
+                // Hide the canvas if animation fails to load
+                canvas.style.display = 'none';
+            }
+        });
 
-    // Add hover event listeners
-    canvas.addEventListener('mouseenter', () => {
-        riveInstance.play('Hover');
-    });
+        // Add hover event listeners with error handling
+        canvas.addEventListener('mouseenter', () => {
+            try {
+                riveInstance.play('Hover');
+            } catch (error) {
+                console.error('Error playing hover animation:', error);
+            }
+        });
 
-    canvas.addEventListener('mouseleave', () => {
-        riveInstance.play('Idle');
-    });
+        canvas.addEventListener('mouseleave', () => {
+            try {
+                riveInstance.play('Idle');
+            } catch (error) {
+                console.error('Error playing idle animation:', error);
+            }
+        });
+
+        // Add error handling for runtime errors
+        riveInstance.on('error', (error) => {
+            console.error('Rive runtime error:', error);
+        });
+
+    } catch (error) {
+        console.error('Failed to initialize Rive:', error);
+        // Hide the canvas if Rive fails to initialize
+        canvas.style.display = 'none';
+    }
 });

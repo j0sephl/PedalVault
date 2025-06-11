@@ -3007,5 +3007,3 @@ function processBOMData(bom, processedCount) {
     showNotification(`Successfully processed ${processedCount} components from pasted BOM`);
 }
 
-
-

@@ -1163,14 +1163,13 @@ function unlockBodyScroll() {
  */
 function positionModalOnMobile(modal) {
     if (window.innerWidth <= 1024) {
-        console.log('📱 Debug: Mobile detected, relying on CSS for positioning');
-        
         requestAnimationFrame(() => {
             const modalContent = modal.querySelector('.modal-content');
             if (modalContent) {
-                // Reset modal content scroll - CSS handles positioning now
+                // Ensure modal content is properly positioned
+                modalContent.style.position = 'relative';
+                modalContent.style.margin = '20px auto';
                 modalContent.scrollTop = 0;
-                console.log('📍 Debug: Modal scroll reset, positioning handled by CSS');
             }
         });
     }
@@ -1181,18 +1180,25 @@ function positionModalOnMobile(modal) {
  * Removes custom positioning styles applied for mobile
  */
 function cleanupMobileModalStyles(modal) {
-    if (window.innerWidth <= 1024) {
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.style.position = '';
-            modalContent.style.top = '';
-            modalContent.style.left = '';
-            modalContent.style.transform = '';
-            modalContent.style.margin = '';
-            modalContent.style.maxHeight = '';
-            modalContent.style.overflow = '';
-            console.log('📍 Debug: Mobile modal styles cleaned up');
-        }
+    if (!modal) return;
+    
+    // Reset any inline styles
+    modal.style.display = '';
+    modal.style.position = '';
+    modal.style.top = '';
+    modal.style.left = '';
+    modal.style.width = '';
+    modal.style.height = '';
+    modal.style.overflow = '';
+    
+    // Reset modal content styles
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.position = '';
+        modalContent.style.top = '';
+        modalContent.style.left = '';
+        modalContent.style.transform = '';
+        modalContent.style.margin = '';
     }
 }
 
@@ -2723,17 +2729,33 @@ function processBOMData(bom, processedCount) {
 // Utility: Prevent overlay scroll stealing on mobile (for all modals)
 function enableModalScrollLock(modal) {
     function handleTouchMove(e) {
+        // Only prevent default if touching outside modal content
         if (!e.target.closest('.modal-content')) {
             e.preventDefault();
         }
     }
+
+    function handleTouchStart(e) {
+        // Prevent touch events from propagating to background
+        if (!e.target.closest('.modal-content')) {
+            e.stopPropagation();
+        }
+    }
+
     modal.addEventListener('touchmove', handleTouchMove, { passive: false });
+    modal.addEventListener('touchstart', handleTouchStart, { passive: false });
     modal._touchMoveHandler = handleTouchMove;
+    modal._touchStartHandler = handleTouchStart;
 }
+
 function disableModalScrollLock(modal) {
     if (modal._touchMoveHandler) {
         modal.removeEventListener('touchmove', modal._touchMoveHandler);
         delete modal._touchMoveHandler;
+    }
+    if (modal._touchStartHandler) {
+        modal.removeEventListener('touchstart', modal._touchStartHandler);
+        delete modal._touchStartHandler;
     }
 }
 

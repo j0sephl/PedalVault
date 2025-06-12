@@ -180,9 +180,23 @@ function initializeApp() {
         });
     }
     
-    // Project management button event listeners
-    if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
-    if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
+    // Project management button event listeners with mobile touch support
+    if (manageProjectsBtn) {
+        manageProjectsBtn.addEventListener('click', showProjectManagementModal);
+        // Add touch event for mobile Safari
+        manageProjectsBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            showProjectManagementModal();
+        });
+    }
+    if (compareAllProjectsBtn) {
+        compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
+        // Add touch event for mobile Safari
+        compareAllProjectsBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            showAllProjectRequirements();
+        });
+    }
     
     // BOM Assistant button event listener
     if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);

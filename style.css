@@ -209,22 +209,29 @@
           font-size: 20px;
       }
   
-      .manage-projects-btn {
-          background: #4C566A;
-          color: #E5E9F0;
-          border: none;
-          padding: 8px 12px;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-family: 'JetBrains Mono', monospace;
-          white-space: nowrap;
-      }
-  
-      .manage-projects-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-      }
+          .manage-projects-btn {
+        background: #4C566A;
+        color: #E5E9F0;
+        border: none;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+        /* iOS Safari touch fixes */
+        -webkit-tap-highlight-color: rgba(94, 129, 172, 0.3);
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: manipulation;
+    }
+
+    .manage-projects-btn:hover,
+    .manage-projects-btn:active {
+        background: #5E81AC;
+        color: #ECEFF4;
+    }
   
       .inventory-controls {
           display: flex;

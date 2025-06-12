@@ -625,7 +625,6 @@
           touch-action: pan-y; /* Allow vertical scrolling within modal content */
           -webkit-overflow-scrolling: touch;
           overflow-y: auto;
-          max-height: calc(100vh - 40px); /* Prevent modal from being taller than viewport */
       }
   
       .modal-content-wide {

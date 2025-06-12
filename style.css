@@ -608,7 +608,6 @@
           background: rgba(46, 52, 64, 0.8);
           z-index: 1000;
           padding: 20px;
-          overflow-y: auto;
           -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
           touch-action: none; /* Prevent browser handling of touch events */
       }
@@ -2281,15 +2280,6 @@
 /* About Modal Styling */
 .about-content {
     line-height: 1.6;
-    max-height: none; /* Remove max-height constraint */
-    overflow-y: visible; /* Remove scroll from content */
-}
-
-#aboutModal .modal-content {
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
 }
 
 #aboutModal .modal-buttons {

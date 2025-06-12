@@ -609,6 +609,8 @@
           z-index: 1000;
           padding: 20px;
           overflow-y: auto;
+          -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+          touch-action: none; /* Prevent browser handling of touch events */
       }
   
       .modal-content {
@@ -621,7 +623,10 @@
           margin: 20px auto;
           box-shadow: 0 8px 32px 0 #2E3440cc;
           border: 2px solid #4C566A;
-    
+          touch-action: pan-y; /* Allow vertical scrolling within modal content */
+          -webkit-overflow-scrolling: touch;
+          overflow-y: auto;
+          max-height: calc(100vh - 40px); /* Prevent modal from being taller than viewport */
       }
   
       .modal-content-wide {
@@ -2276,8 +2281,20 @@
 /* About Modal Styling */
 .about-content {
     line-height: 1.6;
-    max-height: 70vh;
-  overflow-y: auto;
+    max-height: none; /* Remove max-height constraint */
+    overflow-y: visible; /* Remove scroll from content */
+}
+
+#aboutModal .modal-content {
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#aboutModal .modal-buttons {
+    margin-top: auto;
+    padding-top: 20px;
 }
 
 .about-content h3 {

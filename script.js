@@ -2469,20 +2469,18 @@ function hideAllProjectTagsModal() {
 
 function showAboutModal() {
     const modal = document.getElementById('aboutModal');
-    
-    // Lock body scroll and position modal for mobile
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideAboutModal() {
     const modal = document.getElementById('aboutModal');
-    
-    // Clean up mobile styles and unlock body scroll
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 // Update tag display responsively on window resize
@@ -3018,5 +3016,22 @@ function processBOMData(bom, processedCount) {
     showProjectNameModal();
     
     showNotification(`Successfully processed ${processedCount} components from pasted BOM`);
+}
+
+// Utility: Prevent overlay scroll stealing on mobile (for all modals)
+function enableModalScrollLock(modal) {
+    function handleTouchMove(e) {
+        if (!e.target.closest('.modal-content')) {
+            e.preventDefault();
+        }
+    }
+    modal.addEventListener('touchmove', handleTouchMove, { passive: false });
+    modal._touchMoveHandler = handleTouchMove;
+}
+function disableModalScrollLock(modal) {
+    if (modal._touchMoveHandler) {
+        modal.removeEventListener('touchmove', modal._touchMoveHandler);
+        delete modal._touchMoveHandler;
+    }
 }
 

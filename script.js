@@ -2729,19 +2729,33 @@ function processBOMData(bom, processedCount) {
 // Utility: Prevent overlay scroll stealing on mobile (for all modals)
 function enableModalScrollLock(modal) {
     function handleTouchMove(e) {
-        // Only prevent default if touching outside modal content
-        if (!e.target.closest('.modal-content')) {
+        const modalContent = modal.querySelector('.modal-content');
+        const isContentScrollable = modalContent.scrollHeight > modalContent.clientHeight;
+        const isAtTop = modalContent.scrollTop === 0;
+        const isAtBottom = modalContent.scrollHeight - modalContent.scrollTop === modalContent.clientHeight;
+        
+        // Only prevent default if:
+        // 1. Touching outside modal content, or
+        // 2. At the top/bottom of scrollable content and trying to scroll further
+        if (!e.target.closest('.modal-content') || 
+            (isContentScrollable && 
+             ((isAtTop && e.touches[0].clientY > e.touches[0].clientY) || 
+              (isAtBottom && e.touches[0].clientY < e.touches[0].clientY)))) {
             e.preventDefault();
         }
     }
 
     function handleTouchStart(e) {
-        // Prevent touch events from propagating to background
+        // Only prevent propagation if touching outside modal content
         if (!e.target.closest('.modal-content')) {
             e.stopPropagation();
         }
     }
 
+    // Remove any existing handlers first
+    disableModalScrollLock(modal);
+
+    // Add new handlers
     modal.addEventListener('touchmove', handleTouchMove, { passive: false });
     modal.addEventListener('touchstart', handleTouchStart, { passive: false });
     modal._touchMoveHandler = handleTouchMove;

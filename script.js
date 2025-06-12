@@ -2179,6 +2179,9 @@ function showAboutModal() {
     modal.style.display = 'block';
     positionModalOnMobile(modal);
     enableModalScrollLock(modal);
+    
+    // Force a reflow to ensure proper touch handling
+    modal.offsetHeight; // Force reflow
 }
 
 function hideAboutModal() {
@@ -2755,11 +2758,16 @@ function enableModalScrollLock(modal) {
     // Remove any existing handlers first
     disableModalScrollLock(modal);
 
-    // Add new handlers
+    // Add new handlers with passive: true for better touch response
     modal.addEventListener('touchmove', handleTouchMove, { passive: false });
-    modal.addEventListener('touchstart', handleTouchStart, { passive: false });
+    modal.addEventListener('touchstart', handleTouchStart, { passive: true });
     modal._touchMoveHandler = handleTouchMove;
     modal._touchStartHandler = handleTouchStart;
+
+    // Force a reflow to ensure proper touch handling
+    modal.style.display = 'none';
+    modal.offsetHeight; // Force reflow
+    modal.style.display = 'block';
 }
 
 function disableModalScrollLock(modal) {

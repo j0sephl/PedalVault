@@ -621,7 +621,14 @@
           margin: 20px auto;
           box-shadow: 0 8px 32px 0 #2E3440cc;
           border: 2px solid #4C566A;
-          
+          touch-action: manipulation;
+          -webkit-overflow-scrolling: touch;
+          overflow-y: auto;
+          max-height: 70vh;
+          margin: 20% auto;
+          position: relative;
+          z-index: 1000;
+          transform: none;
     
       }
   

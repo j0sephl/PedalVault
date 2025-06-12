@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Essential PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Basic Meta Tags -->
+    <title>PedalVault - Guitar Pedal Parts Inventory Management System</title>
+    <meta name="description" content="Professional inventory management system for guitar pedal builders.">
+    
+    <!-- Load styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Meta tags -->
+    <meta name="theme-color" content="#3B4252">
+    <meta name="application-name" content="PedalVault">
+    <meta name="apple-mobile-web-app-title" content="PedalVault">
+    
+    <!-- MINIMAL ICONS - Just the essential one -->
+    <link rel="apple-touch-icon" href="/icons/ios/180.png?v=2024-new">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png?v=2024-new">
+    
+    <!-- External scripts -->
+    <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
+    <script src="rive-logo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- NO SERVICE WORKER FOR THIS TEST -->
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #2E3440; 
+            color: #D8DEE9; 
+        }
+        .test-info {
+            background: #3B4252;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-info">
+            <h1>🔬 Minimal Main App Test</h1>
+            <p>This is a stripped-down version of the main app with:</p>
+            <ul style="text-align: left;">
+                <li>✅ Same CSS and scripts as main app</li>
+                <li>✅ Same manifest.json</li>
+                <li>✅ Essential PWA meta tags</li>
+                <li>✅ Only ONE apple-touch-icon (180x180)</li>
+                <li>🚫 No Service Worker</li>
+                <li>🚫 No CSP</li>
+                <li>🚫 No duplicate meta tags</li>
+                <li>🚫 No social media meta tags</li>
+            </ul>
+            <p><strong>Test:</strong> Try adding this page to home screen. If it works, we know what's causing the conflict in the main app.</p>
+        </div>
+        
+        <!-- Include the main app structure but simplified -->
+        <header class="header">
+            <div class="logo">
+                <canvas id="rive-logo" width="400" height="400" role="img" aria-label="PedalVault animated logo"></canvas>
+            </div>
+            <div class="header-content">
+                <h1>PedalVault</h1>
+                <p>Pedal Part Inventory</p>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="test-info">
+                <h2>🎯 If This Works But Main App Doesn't</h2>
+                <p>Then the issue is one of these in the main app:</p>
+                <ul style="text-align: left;">
+                    <li>Content Security Policy blocking icons</li>
+                    <li>Too many apple-touch-icon sizes confusing iOS</li>
+                    <li>Duplicate meta tags</li>
+                    <li>Service Worker interference</li>
+                    <li>Social media meta tags conflict</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

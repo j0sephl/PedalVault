@@ -12,7 +12,7 @@ const STATIC_ASSETS = [
     './manifest.json',
     './offline.html',
     './lib/rive.min.js',
-    '/icons/ios/180.png',
+    '/icons/ios/180.png?v=2024-new',
     './favicon.ico'
 ];
 

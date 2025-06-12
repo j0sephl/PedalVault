@@ -349,6 +349,18 @@ function initializeInventory() {
     if (syncButtonsContainer) {
         syncButtonsContainer.innerHTML = createSyncButtons();
     }
+
+    // Add touch handling for main inventory
+    const inventoryList = document.querySelector('.inventory-list');
+    if (inventoryList) {
+        inventoryList.addEventListener('touchstart', (e) => {
+            // Allow touch events to propagate normally
+        }, { passive: true });
+        
+        inventoryList.addEventListener('touchmove', (e) => {
+            // Allow touch events to propagate normally
+        }, { passive: true });
+    }
 }
 
 // =============================================================================
@@ -1149,8 +1161,11 @@ function unlockBodyScroll() {
         document.body.removeAttribute('data-scroll-y');
         
         if (scrollY) {
-            window.scrollTo(0, parseInt(scrollY));
-            console.log('🔓 Debug: Body scroll unlocked, restored to position:', scrollY);
+            // Use requestAnimationFrame to ensure smooth scroll restoration
+            requestAnimationFrame(() => {
+                window.scrollTo(0, parseInt(scrollY));
+                console.log('🔓 Debug: Body scroll unlocked, restored to position:', scrollY);
+            });
         }
     } else {
         console.log('🔓 Debug: Other modals still open, keeping body scroll locked');

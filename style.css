@@ -88,12 +88,12 @@
       }
   
       .logo {
-          position: relative;
-          width: 100px;
-          height: 100px;
           display: flex;
           align-items: center;
           justify-content: center;
+          width: 100px;
+          height: 100px;
+          margin-right: 20px;
       }
   
       .logo canvas {
@@ -2745,4 +2745,14 @@
 }
   
 
+  
+@media (max-width: 1024px) {
+    .logo {
+        display: none;
+    }
+    
+    .header-content {
+        margin-left: 0;
+    }
+}
   

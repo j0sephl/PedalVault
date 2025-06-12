@@ -1169,7 +1169,8 @@ function positionModalOnMobile(modal) {
                 // Ensure modal content is properly positioned
                 modalContent.style.position = 'relative';
                 modalContent.style.margin = '20px auto';
-                modalContent.scrollTop = 0;
+                // Remove the forced scroll to top
+                // modalContent.scrollTop = 0;
             }
         });
     }

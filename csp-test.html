@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- SAME CSP AS MAIN APP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
+    
+    <!-- Essential PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Basic Meta Tags -->
+    <title>PedalVault - CSP Test</title>
+    <meta name="description" content="Testing if CSP blocks icons">
+    
+    <!-- Load manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Meta tags -->
+    <meta name="theme-color" content="#3B4252">
+    <meta name="application-name" content="PedalVault">
+    <meta name="apple-mobile-web-app-title" content="PedalVault">
+    
+    <!-- MINIMAL ICONS -->
+    <link rel="apple-touch-icon" href="/icons/ios/180.png?v=2024-new">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png?v=2024-new">
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #2E3440; 
+            color: #D8DEE9; 
+            text-align: center;
+        }
+        .test-info {
+            background: #3B4252;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .csp-warning {
+            background: #BF616A;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>🛡️ CSP Icon Test</h1>
+        <p>This page has the <strong>SAME Content Security Policy</strong> as the main app.</p>
+        <p>If this page's icon doesn't work when added to home screen, then <strong>CSP is the culprit!</strong></p>
+    </div>
+    
+    <div class="csp-warning">
+        <h2>⚠️ CSP Policy Active</h2>
+        <p>The following CSP is applied (same as main app):</p>
+        <code style="font-size: 12px; display: block; margin: 10px 0; word-break: break-all;">
+            default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; ...
+        </code>
+    </div>
+    
+    <div class="test-info">
+        <h2>🔍 What to Check</h2>
+        <ul style="text-align: left;">
+            <li>Add this page to home screen</li>
+            <li>If icon shows as "P" → CSP is blocking icons</li>
+            <li>If icon shows correctly → CSP is NOT the issue</li>
+        </ul>
+        
+        <h3>🔧 If CSP is the problem:</h3>
+        <p>We need to modify the img-src directive to allow icon loading</p>
+    </div>
+</body>
+</html> 

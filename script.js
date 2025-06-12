@@ -2747,53 +2747,98 @@ function processBOMData(bom, processedCount) {
 
 // Utility: Prevent overlay scroll stealing on mobile (for all modals)
 function enableModalScrollLock(modal) {
-    function handleTouchMove(e) {
-        const modalContent = modal.querySelector('.modal-content');
-        const isContentScrollable = modalContent.scrollHeight > modalContent.clientHeight;
-        const isAtTop = modalContent.scrollTop === 0;
-        const isAtBottom = modalContent.scrollHeight - modalContent.scrollTop === modalContent.clientHeight;
-        
-        // Only prevent default if:
-        // 1. Touching outside modal content, or
-        // 2. At the top/bottom of scrollable content and trying to scroll further
-        if (!e.target.closest('.modal-content') || 
-            (isContentScrollable && 
-             ((isAtTop && e.touches[0].clientY > e.touches[0].clientY) || 
-              (isAtBottom && e.touches[0].clientY < e.touches[0].clientY)))) {
-            e.preventDefault();
-        }
-    }
-
-    function handleTouchStart(e) {
-        // Only prevent propagation if touching outside modal content
-        if (!e.target.closest('.modal-content')) {
-            e.stopPropagation();
-        }
-    }
-
-    // Remove any existing handlers first
-    disableModalScrollLock(modal);
-
-    // Add new handlers with passive: true for better touch response
-    modal.addEventListener('touchmove', handleTouchMove, { passive: false });
-    modal.addEventListener('touchstart', handleTouchStart, { passive: true });
-    modal._touchMoveHandler = handleTouchMove;
-    modal._touchStartHandler = handleTouchStart;
-
+    if (!modal) return;
+    
     // Force a reflow to ensure proper touch handling
     modal.style.display = 'none';
     modal.offsetHeight; // Force reflow
     modal.style.display = 'block';
+    
+    // Add touch event listeners with passive option for better performance
+    modal.addEventListener('touchstart', handleTouchStart, { passive: true });
+    modal.addEventListener('touchmove', handleTouchMove, { passive: false });
+    
+    // Add touch event listeners to modal content for better scrolling
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+        
+        modalContent.addEventListener('touchmove', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+    }
+    
+    // Lock body scroll
+    lockBodyScroll();
+}
+
+function handleTouchMove(e) {
+    const modalContent = e.currentTarget.querySelector('.modal-content');
+    if (!modalContent) return;
+    
+    const touch = e.touches[0];
+    const modalRect = modalContent.getBoundingClientRect();
+    
+    // If touch is outside modal content, prevent default
+    if (touch.clientY < modalRect.top || touch.clientY > modalRect.bottom) {
+        e.preventDefault();
+    }
+}
+
+function handleTouchStart(e) {
+    const modalContent = e.currentTarget.querySelector('.modal-content');
+    if (!modalContent) return;
+    
+    const touch = e.touches[0];
+    const modalRect = modalContent.getBoundingClientRect();
+    
+    // If touch is outside modal content, prevent default
+    if (touch.clientY < modalRect.top || touch.clientY > modalRect.bottom) {
+        e.preventDefault();
+    }
 }
 
 function disableModalScrollLock(modal) {
-    if (modal._touchMoveHandler) {
-        modal.removeEventListener('touchmove', modal._touchMoveHandler);
-        delete modal._touchMoveHandler;
+    if (!modal) return;
+    
+    // Remove touch event listeners
+    modal.removeEventListener('touchstart', handleTouchStart);
+    modal.removeEventListener('touchmove', handleTouchMove);
+    
+    // Remove touch event listeners from modal content
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.removeEventListener('touchstart', (e) => e.stopPropagation());
+        modalContent.removeEventListener('touchmove', (e) => e.stopPropagation());
     }
-    if (modal._touchStartHandler) {
-        modal.removeEventListener('touchstart', modal._touchStartHandler);
-        delete modal._touchStartHandler;
-    }
+    
+    // Unlock body scroll
+    unlockBodyScroll();
+}
+
+function lockBodyScroll() {
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    // Store scroll position for restoration
+    document.body.dataset.scrollY = scrollY;
+}
+
+function unlockBodyScroll() {
+    const scrollY = document.body.dataset.scrollY;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    
+    // Restore scroll position using requestAnimationFrame for smoother experience
+    requestAnimationFrame(() => {
+        window.scrollTo(0, parseInt(scrollY || '0'));
+    });
 }
 

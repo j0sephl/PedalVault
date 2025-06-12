@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Test - New Structure</title>
+    
+    <!-- Test the new folder structure -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/ios/180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/android/android-launchericon-192-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/ios/16.png">
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #2E3440; 
+            color: #D8DEE9; 
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #3B4252; 
+            border-radius: 8px; 
+        }
+        .icon-test { 
+            display: flex; 
+            align-items: center; 
+            margin: 10px 0; 
+        }
+        .icon-test img { 
+            margin-right: 10px; 
+            border: 1px solid #4C566A; 
+        }
+        .status { 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            margin-left: 10px; 
+        }
+        .success { background: #A3BE8C; color: #2E3440; }
+        .error { background: #BF616A; color: #ECEFF4; }
+    </style>
+</head>
+<body>
+    <h1>PedalVault Icon Test - New Structure</h1>
+    
+    <div class="test-section">
+        <h2>Icon Loading Test</h2>
+        <div class="icon-test">
+            <img src="/icons/ios/16.png" width="16" height="16" alt="16x16">
+            <span>16x16 (iOS folder)</span>
+            <span class="status" id="status-16"></span>
+        </div>
+        <div class="icon-test">
+            <img src="/icons/ios/32.png" width="32" height="32" alt="32x32">
+            <span>32x32 (iOS folder)</span>
+            <span class="status" id="status-32"></span>
+        </div>
+        <div class="icon-test">
+            <img src="/icons/ios/180.png" width="64" height="64" alt="180x180">
+            <span>180x180 (iOS folder)</span>
+            <span class="status" id="status-180"></span>
+        </div>
+        <div class="icon-test">
+            <img src="/icons/android/android-launchericon-192-192.png" width="64" height="64" alt="192x192">
+            <span>192x192 (Android folder)</span>
+            <span class="status" id="status-192"></span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Check if all icons above load correctly</li>
+            <li>Try adding this page to your home screen on iOS</li>
+            <li>Check if the 180x180 icon appears correctly</li>
+            <li>Open browser developer tools and check for any 404 errors</li>
+        </ol>
+    </div>
+
+    <script>
+        // Test icon loading
+        function testIcon(src, statusId) {
+            const img = new Image();
+            const statusEl = document.getElementById(statusId);
+            
+            img.onload = function() {
+                statusEl.textContent = 'Loaded ✓';
+                statusEl.className = 'status success';
+            };
+            
+            img.onerror = function() {
+                statusEl.textContent = 'Failed ✗';
+                statusEl.className = 'status error';
+            };
+            
+            img.src = src;
+        }
+        
+        // Test all icons
+        testIcon('/icons/ios/16.png', 'status-16');
+        testIcon('/icons/ios/32.png', 'status-32');
+        testIcon('/icons/ios/180.png', 'status-180');
+        testIcon('/icons/android/android-launchericon-192-192.png', 'status-192');
+        
+        console.log('Icon test page loaded. Check the status indicators above.');
+    </script>
+</body>
+</html> 

@@ -99,14 +99,30 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
+                console.log('🔧 Attempting to register Service Worker...');
+                navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker registration successful');
+                        console.log('✅ ServiceWorker registration successful:', registration);
+                        console.log('📍 Scope:', registration.scope);
+                        console.log('🔄 Update found:', registration.updatefound ? 'Yes' : 'No');
+                        
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            console.log('🆕 Service Worker update found');
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                console.log('🔄 Service Worker state changed to:', newWorker.state);
+                            });
+                        });
                     })
                     .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
+                        console.error('❌ ServiceWorker registration failed:', err);
+                        console.error('📄 Error details:', err.message);
+                        console.error('🔍 Stack trace:', err.stack);
                     });
             });
+        } else {
+            console.warn('⚠️ Service Worker not supported in this browser');
         }
     </script>
     

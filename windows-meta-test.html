@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Essential PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Basic Meta Tags -->
+    <title>PedalVault - Windows Meta Test</title>
+    <meta name="description" content="Testing if Windows 11 meta tags block iOS icons">
+    
+    <!-- Load manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Meta tags -->
+    <meta name="theme-color" content="#3B4252">
+    <meta name="application-name" content="PedalVault">
+    <meta name="apple-mobile-web-app-title" content="PedalVault">
+    
+    <!-- MINIMAL ICONS -->
+    <link rel="apple-touch-icon" href="/icons/ios/180.png?v=2024-new">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png?v=2024-new">
+    
+    <!-- ONLY WINDOWS 11 META TAGS - TESTING IF THESE BREAK iOS ICONS -->
+    <meta name="msapplication-TileColor" content="#3B4252">
+    <meta name="msapplication-TileImage" content="/icons/windows11/Square150x150Logo.scale-200.png">
+    <meta name="msapplication-square70x70logo" content="/icons/windows11/SmallTile.scale-200.png">
+    <meta name="msapplication-square150x150logo" content="/icons/windows11/Square150x150Logo.scale-200.png">
+    <meta name="msapplication-wide310x150logo" content="/icons/windows11/Wide310x150Logo.scale-200.png">
+    <meta name="msapplication-square310x310logo" content="/icons/windows11/LargeTile.scale-200.png">
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #2E3440; 
+            color: #D8DEE9; 
+            text-align: center;
+        }
+        .test-info {
+            background: #3B4252;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .windows-warning {
+            background: #0078D4;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h1>🪟 Windows Meta Tags Test</h1>
+        <p>This page has <strong>ONLY Windows 11 meta tags</strong> added to the minimal working test.</p>
+        <p>If this page's icon doesn't work when added to home screen, then <strong>Windows meta tags are the culprit!</strong></p>
+    </div>
+    
+    <div class="windows-warning">
+        <h2>🪟 Windows 11 Meta Tags Active</h2>
+        <p>This page includes all the msapplication-* meta tags for Windows 11 tiles.</p>
+        <p>These might be confusing iOS about which icon to use.</p>
+    </div>
+    
+    <div class="test-info">
+        <h2>🔍 What to Check</h2>
+        <ul style="text-align: left;">
+            <li>Add this page to home screen</li>
+            <li>If icon shows as "P" → Windows meta tags are blocking iOS icons</li>
+            <li>If icon shows correctly → Windows meta tags are NOT the issue</li>
+        </ul>
+        
+        <h3>🔧 If Windows meta tags are the problem:</h3>
+        <p>iOS might be getting confused by the multiple platform-specific icon references</p>
+    </div>
+</body>
+</html> 

@@ -363,6 +363,7 @@ function showExportModal() {
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 /**
@@ -373,6 +374,7 @@ function hideExportModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 /**
@@ -810,6 +812,7 @@ function showAddPartModal() {
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideAddPartModal() {
@@ -817,6 +820,7 @@ function hideAddPartModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
     document.getElementById('newPartName').value = '';
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
@@ -861,6 +865,7 @@ function showEditPartModal(partId) {
         lockBodyScroll();
         modal.style.display = 'block';
         positionModalOnMobile(modal);
+        enableModalScrollLock(modal);
         console.log('📝 Debug: Edit Part modal opened for first time');
     } else {
         console.log('📝 Debug: Edit Part modal refreshed (already open)');
@@ -910,6 +915,7 @@ function hideEditPartModal() {
     unlockBodyScroll();
     modal.style.display = 'none';
     editingPartId = null;
+    disableModalScrollLock(modal);
 }
 
 function saveEditPart() {
@@ -997,6 +1003,7 @@ function showDeletePartModal(partId) {
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideDeletePartModal() {
@@ -1005,6 +1012,7 @@ function hideDeletePartModal() {
     unlockBodyScroll();
     modal.style.display = 'none';
     deletingPartId = null;
+    disableModalScrollLock(modal);
 }
 
 function confirmDeletePart() {
@@ -1436,6 +1444,7 @@ function showProjectDetails(projectId) {
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideProjectDetailsModal() {
@@ -1443,6 +1452,7 @@ function hideProjectDetailsModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 function removeProjectTag(partId, projectId) {
@@ -1471,6 +1481,7 @@ function showProjectNameModal() {
     lockBodyScroll();
     modal.classList.add('show');
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
     document.getElementById('projectNameInput').value = '';
     document.getElementById('projectNameInput').focus();
 }
@@ -1481,8 +1492,8 @@ function hideProjectNameModal() {
     unlockBodyScroll();
     modal.classList.remove('show');
     pendingBomData = null;
-    // Also clear the input for safety
     document.getElementById('projectNameInput').value = '';
+    disableModalScrollLock(modal);
 }
 
 function confirmProjectName() {
@@ -1825,13 +1836,11 @@ function addMissingParts() {
 }
 
 function showBOMModal() {
-    console.log('📋 Debug: showBOMModal() function called');
     const modal = document.getElementById('bomModal');
-    // Always ensure body scroll is locked, even if it was previously unlocked
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
-    console.log('📋 Debug: BOM modal should now be visible');
+    enableModalScrollLock(modal);
 }
 
 function hideBOMModal() {
@@ -1840,61 +1849,24 @@ function hideBOMModal() {
     unlockBodyScroll();
     modal.style.display = 'none';
     window.currentBom = null;
+    disableModalScrollLock(modal);
 }
 
 // Add these new functions for project management
 function showProjectManagementModal() {
-    const projectList = document.getElementById('projectList');
-    projectList.innerHTML = '';
-    
-    for (const projectId in projects) {
-        const project = projects[projectId];
-        const projectElement = document.createElement('div');
-        projectElement.className = 'project-list-item';
-        
-        // Count parts tagged with this project
-        let taggedParts = 0;
-        for (const id in inventory) {
-            if (inventory[id].projects && inventory[id].projects[projectId]) {
-                taggedParts++;
-            }
-        }
-        
-        projectElement.innerHTML = `
-            <div>
-                <strong>${project.name}</strong>
-                <div class="project-info">
-                    ${taggedParts} parts tagged
-                </div>
-            </div>
-            <div>
-                <button onclick="showDeleteProjectModal('${projectId}')" class="project-delete-btn">Delete</button>
-            </div>
-        `;
-        
-        projectList.appendChild(projectElement);
-    }
-    
     const modal = document.getElementById('projectManagementModal');
-    // Only lock body scroll if modal is not already open
-    const isAlreadyOpen = modal.style.display === 'block';
-    if (!isAlreadyOpen) {
-        lockBodyScroll();
-        modal.style.display = 'block';
-        positionModalOnMobile(modal);
-        console.log('📋 Debug: Project Management modal opened for first time');
-    } else {
-        console.log('📋 Debug: Project Management modal refreshed (already open)');
-    }
+    lockBodyScroll();
+    modal.style.display = 'block';
+    positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideProjectManagementModal() {
     const modal = document.getElementById('projectManagementModal');
-    if (modal) {
-        cleanupMobileModalStyles(modal);
-        unlockBodyScroll();
-        modal.style.display = 'none';
-    }
+    cleanupMobileModalStyles(modal);
+    unlockBodyScroll();
+    modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 function showDeleteProjectModal(projectId) {
@@ -1902,12 +1874,12 @@ function showDeleteProjectModal(projectId) {
     const project = projects[projectId];
     const modal = document.getElementById('deleteProjectModal');
     const message = document.getElementById('deleteProjectMessage');
-    
     if (modal && message) {
         message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
         lockBodyScroll();
         modal.style.display = 'block';
         positionModalOnMobile(modal);
+        enableModalScrollLock(modal);
     }
 }
 
@@ -1917,6 +1889,7 @@ function hideDeleteProjectModal() {
         cleanupMobileModalStyles(modal);
         unlockBodyScroll();
         modal.style.display = 'none';
+        disableModalScrollLock(modal);
     }
     deletingProjectId = null;
 }
@@ -1960,261 +1933,11 @@ function confirmDeleteProject() {
 }
 
 function showAllProjectRequirements() {
-    // First repair any malformed BOM data
-    repairBOMData();
-    
-    const partTotals = {};
-    // Processing all project requirements
-
-    for (const projectId in projects) {
-        const bom = projects[projectId].bom;
-        // Processing project BOM
-
-        for (const partId in bom) {
-            const normId = normalizeValue(partId);
-            const bomPart = bom[partId];
-            
-            // Get name and quantity from the BOM part
-            const name = bomPart.name || partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            const quantity = typeof bomPart.quantity === 'number' ? bomPart.quantity : 
-                           (typeof bomPart.quantity === 'string' ? parseInt(bomPart.quantity) || 0 : 0);
-
-            if (!partTotals[normId]) {
-                partTotals[normId] = {
-                    name: name,
-                    total: 0,
-                    projects: [],
-                    inventoryQty: 0,
-                    status: 'missing'
-                };
-            } else {
-                // Always update the name to the inventory name if found
-                for (const id in inventory) {
-                    if (normalizeValue(id) === normId) {
-                        partTotals[normId].name = inventory[id].name;
-                        break;
-                    }
-                }
-            }
-            
-            console.log(`Part ${partId} quantity:`, quantity, 'from BOM:', bomPart);
-            partTotals[normId].total += quantity;
-            partTotals[normId].projects.push({
-                project: projects[projectId].name,
-                quantity: quantity
-            });
-        }
-    }
-
-    console.log('Part totals:', partTotals);
-
-    // Add inventory quantities and determine status
-    console.log('\n=== STARTING INVENTORY MATCHING ===');
-    console.log('partTotals keys:', Object.keys(partTotals));
-    console.log('inventory keys:', Object.keys(inventory));
-    
-    for (const normId in partTotals) {
-        const part = partTotals[normId];
-        let foundInInventory = false;
-        
-        console.log(`\nLooking for part with normId: "${normId}"`);
-        console.log('Part object before matching:', JSON.stringify(part, null, 2));
-        
-        // Try to find the part in inventory
-        for (const id in inventory) {
-            const invNormId = normalizeValue(id);
-            console.log(`  Checking inventory id: "${id}" -> normalized: "${invNormId}"`);
-            if (invNormId === normId) {
-                part.inventoryQty = inventory[id].quantity || 0;
-                foundInInventory = true;
-                console.log(`  ✓ MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
-                break;
-            }
-        }
-        
-        // Also try matching by name if normId didn't work
-        if (!foundInInventory) {
-            console.log(`  No normId match, trying by name: "${part.name}"`);
-            for (const id in inventory) {
-                const invPart = inventory[id];
-                if (normalizeValue(invPart.name) === normalizeValue(part.name)) {
-                    part.inventoryQty = invPart.quantity || 0;
-                    foundInInventory = true;
-                    console.log(`  ✓ NAME MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
-                    break;
-                }
-            }
-        }
-        
-        // If not found in inventory, it's completely missing
-        if (!foundInInventory) {
-            part.inventoryQty = 0;
-            console.log(`  ✗ NOT FOUND in inventory`);
-        }
-        
-        // Determine status based on actual quantities
-        if (part.inventoryQty === 0) {
-            part.status = 'missing';
-        } else if (part.inventoryQty < part.total) {
-            part.status = 'low';
-        } else {
-            part.status = 'sufficient';
-        }
-        
-        console.log(`Final: ${part.name} - Have: ${part.inventoryQty}, Need: ${part.total}, Status: ${part.status}`);
-    }
-
-    console.log('\n=== FINAL PART TOTALS ===');
-    console.log('Final partTotals:', JSON.stringify(partTotals, null, 2));
-
-    // Sort parts by status priority (missing first, then low stock, then sufficient)
-    const sortedParts = Object.entries(partTotals).sort(([, a], [, b]) => {
-        const statusOrder = { missing: 0, low: 1, sufficient: 2 };
-        if (statusOrder[a.status] !== statusOrder[b.status]) {
-            return statusOrder[a.status] - statusOrder[b.status];
-        }
-        return a.name.localeCompare(b.name);
-    });
-
-    // Group parts by status
-    const groupedParts = {
-        missing: sortedParts.filter(([, part]) => part.status === 'missing'),
-        low: sortedParts.filter(([, part]) => part.status === 'low'),
-        sufficient: sortedParts.filter(([, part]) => part.status === 'sufficient')
-    };
-
-    // Build HTML with organized sections
-    let html = `
-        <div class="requirements-summary">
-            <div class="summary-stats">
-                <div class="stat-item missing">
-                    <span class="stat-number">${groupedParts.missing.length}</span>
-                    <span class="stat-label">Missing</span>
-                </div>
-                <div class="stat-item low">
-                    <span class="stat-number">${groupedParts.low.length}</span>
-                    <span class="stat-label">Low Stock</span>
-                </div>
-                <div class="stat-item sufficient">
-                    <span class="stat-number">${groupedParts.sufficient.length}</span>
-                    <span class="stat-label">Sufficient</span>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Function to create section HTML
-    function createSection(title, parts, className) {
-        if (parts.length === 0) return '';
-        
-        // SVG icons for section titles
-        const sectionIcons = {
-            missing: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
-            low: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
-            sufficient: '<svg class="section-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
-        };
-        
-        let sectionHtml = `
-            <div class="requirements-section ${className}">
-                <h3 class="section-title">
-                    ${sectionIcons[className] || ''}
-                    <span class="section-title-text">${title} (${parts.length})</span>
-                </h3>
-                <div class="parts-grid">
-        `;
-        
-        parts.forEach(([normId, part]) => {
-            const statusIcon = {
-                missing: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
-                low: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
-                sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
-            };
-            
-            // Check if this part has a purchase URL in inventory
-            let purchaseUrl = '';
-            for (const invId in inventory) {
-                if (normalizeValue(inventory[invId].name) === normId || normalizeValue(invId) === normId) {
-                    purchaseUrl = inventory[invId].purchaseUrl || '';
-                    break;
-                }
-            }
-            
-            const clickableClass = purchaseUrl ? ' has-purchase-url' : '';
-            const clickableAttrs = purchaseUrl ? ` style="cursor: pointer;" title="Click to open purchase link"` : '';
-            
-            sectionHtml += `
-                <div class="part-card ${part.status}${clickableClass}" data-status="${part.status}" data-purchase-url="${purchaseUrl}"${clickableAttrs}>
-                    <div class="part-header">
-                        <span class="status-icon status-${part.status}">${statusIcon[part.status]}</span>
-                        <span class="part-name">${part.name}</span>
-                        ${purchaseUrl ? '<span class="purchase-link-icon"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></span>' : ''}
-                    </div>
-                    <div class="part-quantities">
-                        <div class="quantity-row">
-                            <span class="qty-label">Have:</span>
-                            <span class="qty-value qty-${part.status}">${part.inventoryQty}</span>
-                        </div>
-                        <div class="quantity-row">
-                            <span class="qty-label">Need:</span>
-                            <span class="qty-value">${part.total}</span>
-                        </div>
-                        ${part.status !== 'sufficient' ? `
-                        <div class="quantity-row shortage">
-                            <span class="qty-label">Short:</span>
-                            <span class="qty-value shortage">${Math.max(0, part.total - part.inventoryQty)}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="project-breakdown">
-                        <span class="breakdown-label">Used in:</span>
-                        <div class="project-list">
-                            ${part.projects.map(p => `
-                                <span class="project-usage">${p.project} (${p.quantity})</span>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        sectionHtml += '</div></div>';
-        return sectionHtml;
-    }
-
-    // Add sections in priority order
-    if (groupedParts.missing.length > 0) {
-        html += createSection('Missing Parts', groupedParts.missing, 'missing');
-    }
-    
-    if (groupedParts.low.length > 0) {
-        html += createSection('Low Stock', groupedParts.low, 'low');
-    }
-    
-    if (groupedParts.sufficient.length > 0) {
-        html += createSection('Sufficient Stock', groupedParts.sufficient, 'sufficient');
-    }
-
-    // Update the modal title
-    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
-        'All Project Requirements';
-    
-    document.getElementById('allProjectRequirements').innerHTML = html;
-    
-    // Add click handlers for clickable part cards
-    const clickableCards = document.querySelectorAll('.part-card.has-purchase-url');
-    clickableCards.forEach(card => {
-        card.addEventListener('click', (e) => {
-            const purchaseUrl = card.getAttribute('data-purchase-url');
-            if (purchaseUrl) {
-                window.open(purchaseUrl, '_blank');
-            }
-        });
-    });
-    
     const modal = document.getElementById('allProjectRequirementsModal');
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideAllProjectRequirementsModal() {
@@ -2222,23 +1945,23 @@ function hideAllProjectRequirementsModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 function showExportBOMModal() {
     const select = document.getElementById('exportBOMProject');
     select.innerHTML = '<option value="">Select a project...</option>';
-    
     for (const projectId in projects) {
         const option = document.createElement('option');
         option.value = projectId;
         option.textContent = projects[projectId].name;
         select.appendChild(option);
     }
-    
     const modal = document.getElementById('exportBOMModal');
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideExportBOMModal() {
@@ -2246,6 +1969,7 @@ function hideExportBOMModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 function exportProjectBOM(format) {
@@ -2428,36 +2152,11 @@ function levenshtein(a, b) {
 }
 
 function showAllProjectTagsModal(partId) {
-    const part = inventory[partId];
-    if (!part || !part.projects) return;
-
     const modal = document.getElementById('allProjectTagsModal');
-    const tagsList = document.getElementById('allProjectTagsList');
-    tagsList.innerHTML = '';
-
-    // Only show projects this part is actually assigned to (qty > 0)
-    const assignedProjects = Object.entries(part.projects).filter(([_, qty]) => qty > 0);
-    console.log('showAllProjectTagsModal:', partId, assignedProjects);
-    assignedProjects.forEach(([projectId, qty]) => {
-        const project = projects[projectId];
-        if (project) {
-            const tag = document.createElement('span');
-            tag.className = 'project-tag';
-            tag.setAttribute('data-project-id', projectId);
-            tag.setAttribute('title', `${project.name} (${qty} needed)`);
-            tag.textContent = `${project.name} (${qty})`;
-            tag.onclick = (e) => {
-                e.stopPropagation();
-                showProjectDetails(projectId);
-                hideAllProjectTagsModal();
-            };
-            tagsList.appendChild(tag);
-        }
-    });
-
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 function hideAllProjectTagsModal() {
@@ -2465,6 +2164,7 @@ function hideAllProjectTagsModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
 }
 
 function showAboutModal() {
@@ -2764,6 +2464,7 @@ function showBOMAssistantModal() {
     lockBodyScroll();
     modal.style.display = 'block';
     positionModalOnMobile(modal);
+    enableModalScrollLock(modal);
 }
 
 /**
@@ -2774,6 +2475,7 @@ function hideBOMAssistantModal() {
     cleanupMobileModalStyles(modal);
     unlockBodyScroll();
     modal.style.display = 'none';
+    disableModalScrollLock(modal);
     // Clear the text input
     const textInput = document.getElementById('bomTextInput');
     if (textInput) textInput.value = '';

@@ -1093,10 +1093,14 @@ let openModalCount = 0;
  */
 function lockBodyScroll() {
     openModalCount++;
-    // Get stack trace to see who called this
-    const stack = new Error().stack;
-    const caller = stack.split('\n')[2].trim();
-    console.log('🔒 Debug: Modal count increased to:', openModalCount, 'called by:', caller);
+    // Get stack trace to see who called this (Safari-safe)
+    try {
+        const stack = new Error().stack;
+        const caller = stack ? stack.split('\n')[2]?.trim() : 'unknown';
+        console.log('🔒 Debug: Modal count increased to:', openModalCount, 'called by:', caller);
+    } catch (e) {
+        console.log('🔒 Debug: Modal count increased to:', openModalCount);
+    }
     
     // Only lock if this is the first modal
     if (openModalCount === 1) {
@@ -1118,10 +1122,14 @@ function lockBodyScroll() {
  */
 function unlockBodyScroll() {
     openModalCount = Math.max(0, openModalCount - 1);
-    // Get stack trace to see who called this
-    const stack = new Error().stack;
-    const caller = stack.split('\n')[2].trim();
-    console.log('🔓 Debug: Modal count decreased to:', openModalCount, 'called by:', caller);
+    // Get stack trace to see who called this (Safari-safe)
+    try {
+        const stack = new Error().stack;
+        const caller = stack ? stack.split('\n')[2]?.trim() : 'unknown';
+        console.log('🔓 Debug: Modal count decreased to:', openModalCount, 'called by:', caller);
+    } catch (e) {
+        console.log('🔓 Debug: Modal count decreased to:', openModalCount);
+    }
     
     // Only unlock if no modals are open
     if (openModalCount === 0) {

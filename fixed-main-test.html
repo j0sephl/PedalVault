@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Content Security Policy for enhanced security -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- SEO Meta Tags -->
+    <title>PedalVault - Guitar Pedal Parts Inventory Management System</title>
+    <meta name="description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, import/export BOMs, and organize your electronics parts with offline PWA support.">
+    <meta name="keywords" content="guitar pedal, inventory management, electronics parts, BOM, bill of materials, DIY pedals, components tracker, parts organizer, guitar effects, electronics inventory">
+    <meta name="author" content="Joseph Lindsay">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    <canonical href="https://pedalvault.app/">
+
+    <!-- Google Search Console Verification -->
+     <meta name="google-site-verification" content="khTu4lZRGBHa78JWUSNznjzFYW-AyzKvR2JiPC8oIV4" />
+    
+    <!-- Social Media Meta Tags - SIMPLIFIED -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PedalVault - Guitar Pedal Parts Inventory Management">
+    <meta property="og:description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, and organize your electronics parts.">
+    <meta property="og:site_name" content="PedalVault">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PedalVault - Guitar Pedal Parts Inventory Management">
+    <meta name="twitter:description" content="Professional inventory management system for guitar pedal builders. Track components, manage projects, and organize your electronics parts.">
+    
+    <!-- Load styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Meta tags -->
+    <meta name="theme-color" content="#3B4252">
+    <meta name="application-name" content="PedalVault">
+    <meta name="apple-mobile-web-app-title" content="PedalVault">
+    
+    <!-- Icons - SIMPLIFIED TO MATCH WORKING TESTS -->
+    <!-- Primary iOS icon (most important) -->
+    <link rel="apple-touch-icon" href="/icons/ios/180.png?v=2024-new">
+    
+    <!-- Essential favicons -->
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico?v=2024-new">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/ios/32.png?v=2024-new">
+    
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/android/android-launchericon-192-192.png?v=2024-new">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/android/android-launchericon-512-512.png?v=2024-new">
+    
+    <!-- Windows 11 Tiles -->
+    <meta name="msapplication-TileColor" content="#3B4252">
+    <meta name="msapplication-TileImage" content="/icons/windows11/Square150x150Logo.scale-200.png">
+    <meta name="msapplication-square70x70logo" content="/icons/windows11/SmallTile.scale-200.png">
+    <meta name="msapplication-square150x150logo" content="/icons/windows11/Square150x150Logo.scale-200.png">
+    <meta name="msapplication-wide310x150logo" content="/icons/windows11/Wide310x150Logo.scale-200.png">
+    <meta name="msapplication-square310x310logo" content="/icons/windows11/LargeTile.scale-200.png">
+    
+    <!-- External scripts -->
+      <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
+    <script src="rive-logo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <!-- Vercel Analytics -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+
+    <!-- Service Worker for PWA functionality -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                console.log('🔧 Attempting to register Service Worker...');
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('✅ ServiceWorker registration successful:', registration);
+                        console.log('📍 Scope:', registration.scope);
+                        console.log('🔄 Update found:', registration.updatefound ? 'Yes' : 'No');
+                        
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            console.log('🆕 Service Worker update found');
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                console.log('🔄 Service Worker state changed to:', newWorker.state);
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ ServiceWorker registration failed:', err);
+                        console.error('📄 Error details:', err.message);
+                        console.error('🔍 Stack trace:', err.stack);
+                    });
+            });
+        } else {
+            console.warn('⚠️ Service Worker not supported in this browser');
+        }
+    </script>
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #2E3440; 
+            color: #D8DEE9; 
+        }
+        .test-info {
+            background: #3B4252;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .fix-summary {
+            background: #A3BE8C;
+            color: #2E3440;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-info">
+            <h1>🔧 Fixed Main App Test</h1>
+            <p>This is the main app with the FIXES applied based on working tests:</p>
+        </div>
+        
+        <div class="fix-summary">
+            <h2>✅ Fixes Applied</h2>
+            <ul style="text-align: left;">
+                <li>🗑️ <strong>Removed duplicate description meta tag</strong></li>
+                <li>📱 <strong>Simplified to ONE apple-touch-icon</strong> (180x180 only)</li>
+                <li>🔗 <strong>Removed external URLs from social meta tags</strong></li>
+                <li>🧹 <strong>Cleaned up redundant icon sizes</strong></li>
+                <li>⚡ <strong>Kept all other functionality intact</strong></li>
+            </ul>
+        </div>
+        
+        <div class="test-info">
+            <h2>🎯 Test This Version</h2>
+            <p>If this works, then we've identified and fixed the exact issue!</p>
+            <p>The main app should now work with the same changes.</p>
+        </div>
+        
+        <!-- Include the main app structure -->
+        <header class="header">
+            <div class="logo">
+                <canvas id="rive-logo" width="400" height="400" role="img" aria-label="PedalVault animated logo"></canvas>
+            </div>
+            <div class="header-content">
+                <h1>PedalVault</h1>
+                <p>Pedal Part Inventory</p>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="test-info">
+                <h2>📋 What We Fixed</h2>
+                <p><strong>Before:</strong> 10 apple-touch-icon sizes + duplicate meta tags + external URLs</p>
+                <p><strong>After:</strong> 1 apple-touch-icon + clean meta tags + no external references</p>
+                <p>This matches the structure of the working test pages!</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

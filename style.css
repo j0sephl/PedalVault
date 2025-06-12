@@ -866,13 +866,14 @@
           }
   
           .modal {
-              padding: 10px 10px 80px 10px; /* Extra bottom padding for mobile browser UI */
+              padding: 10px 10px env(safe-area-inset-bottom, 80px) 10px; /* Account for mobile browser UI */
           }
   
           .modal-content {
               padding: 15px;
               margin: 20px auto 20px auto;
-              max-height: calc(100vh - 160px); /* Account for browser UI and padding */
+              max-height: calc(100dvh - 160px); /* Dynamic viewport height for mobile browsers */
+              max-height: calc(100vh - 160px); /* Fallback for older browsers */
               overflow-y: auto;
           }
   

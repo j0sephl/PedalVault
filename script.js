@@ -1155,23 +1155,14 @@ function unlockBodyScroll() {
  */
 function positionModalOnMobile(modal) {
     if (window.innerWidth <= 1024) {
-        console.log('📱 Debug: Mobile detected, adjusting modal position');
+        console.log('📱 Debug: Mobile detected, relying on CSS for positioning');
         
         requestAnimationFrame(() => {
             const modalContent = modal.querySelector('.modal-content');
             if (modalContent) {
-                // Position modal relative to viewport, not the fixed body
-                modalContent.style.position = 'fixed';
-                modalContent.style.top = '20px';
-                modalContent.style.left = '50%';
-                modalContent.style.transform = 'translateX(-50%)';
-                modalContent.style.margin = '0';
-                modalContent.style.maxHeight = 'calc(100vh - 40px)';
-                modalContent.style.overflow = 'auto';
-                console.log('📍 Debug: Modal positioned fixed to viewport top');
-                
-                // Reset modal content scroll
+                // Reset modal content scroll - CSS handles positioning now
                 modalContent.scrollTop = 0;
+                console.log('📍 Debug: Modal scroll reset, positioning handled by CSS');
             }
         });
     }

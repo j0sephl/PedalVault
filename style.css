@@ -2790,10 +2790,10 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--nord0);
+    background: var(--nord1);
     border-top: 1px solid var(--nord3);
     padding: 8px 0;
-    z-index: 1000;
+    z-index: 1100;
 }
 
 .mobile-nav-item {
@@ -2802,9 +2802,9 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    background: none;
+    background: var(--nord1);
     border: none;
-    color: var(--nord13);
+    color: var(--nord7);
     padding: 8px 0;
     font-size: 12px;
     cursor: pointer;
@@ -2812,7 +2812,7 @@
 }
 
 .mobile-nav-item.active {
-    color: var(--nord8);
+    color: var(--nord13);
 }
 
 .mobile-nav-icon {
@@ -2823,7 +2823,7 @@
 }
 
 .mobile-menu {
-    display: none;
+    display: block;
     position: fixed;
     bottom: 76px;
     left: 0;
@@ -2832,13 +2832,16 @@
     border-top: 1px solid var(--nord3);
     padding: 16px;
     transform: translateY(100%);
-    transition: transform 0.5s ease-out;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.5s cubic-bezier(0.33, 0.00, 0.00, 1.00), opacity 0.5s cubic-bezier(0.33, 0.00, 0.00, 1.00);
     z-index: 1000;
 }
 
 .mobile-menu.show {
-    display: block;
     transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .mobile-menu-item {
@@ -2849,7 +2852,6 @@
     margin-bottom: 8px;
     background: var(--nord1);
     border: 1px solid var(--nord3);
-    border-radius: 8px;
     color: var(--nord9);
     font-size: 16px;
     cursor: pointer;

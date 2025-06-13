@@ -1557,10 +1557,21 @@ function compareBOM(event) {
             } else {
                 // Parse JSON
                 const parsedBom = JSON.parse(fileContent);
-                // Only include parts that have a quantity specified
-                for (const id in parsedBom) {
-                    if (parsedBom[id].quantity !== undefined) {
-                        bom[id] = parsedBom[id];
+                if (Array.isArray(parsedBom.parts)) {
+                    // Handle exported format with metadata and parts array
+                    parsedBom.parts.forEach(part => {
+                        if (part.name && part.quantity !== undefined) {
+                            // Use normalized name as ID
+                            const id = normalizeValue(part.name);
+                            bom[id] = { name: part.name, quantity: part.quantity };
+                        }
+                    });
+                } else {
+                    // Handle flat object format
+                    for (const id in parsedBom) {
+                        if (parsedBom[id] && parsedBom[id].quantity !== undefined) {
+                            bom[id] = parsedBom[id];
+                        }
                     }
                 }
             }
@@ -2490,6 +2501,14 @@ function initializeMobileNav() {
             menus.forEach(menu => menu.classList.remove('show'));
             navItems.forEach(item => item.classList.remove('active'));
         }
+    });
+
+    // Close menu when clicking a menu item
+    document.querySelectorAll('.mobile-menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            menus.forEach(menu => menu.classList.remove('show'));
+            navItems.forEach(nav => nav.classList.remove('active'));
+        });
     });
 }
 

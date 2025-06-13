@@ -2195,6 +2195,11 @@ function hideAllProjectTagsModal() {
 }
 
 function showAboutModal() {
+    // Auto-close BOM Assistant modal if open
+    const bomAssistantModal = document.getElementById('bomAssistantModal');
+    if (bomAssistantModal && bomAssistantModal.style.display === 'block') {
+        bomAssistantModal.style.display = 'none';
+    }
     document.getElementById('aboutModal').style.display = 'block';
 }
 
@@ -2520,6 +2525,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ... existing code ...
 function showBOMAssistantModal() {
+    // Auto-close About modal if open
+    const aboutModal = document.getElementById('aboutModal');
+    if (aboutModal && aboutModal.style.display === 'block') {
+        aboutModal.style.display = 'none';
+    }
     document.getElementById('bomAssistantModal').style.display = 'block';
 }
 

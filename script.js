@@ -2478,20 +2478,22 @@ function initializeMobileNav() {
     
     navItems.forEach(item => {
         item.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
             // Remove active class from all items
             navItems.forEach(navItem => navItem.classList.remove('active'));
             // Hide all menus
             menus.forEach(menu => menu.classList.remove('show'));
-            
-            // Add active class to clicked item
-            item.classList.add('active');
-            
-            // Show corresponding menu
-            const menuId = item.dataset.tab + 'Menu';
-            const menu = document.getElementById(menuId);
-            if (menu) {
-                menu.classList.add('show');
+            if (!isActive) {
+                // Add active class to clicked item
+                item.classList.add('active');
+                // Show corresponding menu
+                const menuId = item.dataset.tab + 'Menu';
+                const menu = document.getElementById(menuId);
+                if (menu) {
+                    menu.classList.add('show');
+                }
             }
+            // If isActive, do nothing (all menus/items are now closed)
         });
     });
     

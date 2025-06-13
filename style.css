@@ -2825,7 +2825,7 @@
 .mobile-menu {
     display: block;
     position: fixed;
-    bottom: 76px;
+    bottom: 95px;
     left: 0;
     right: 0;
     background: var(--nord1);

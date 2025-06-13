@@ -93,23 +93,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
 });
 
-// Flag to prevent multiple initialization
-let isInitialized = false;
-
 /**
  * Initialize the application by setting up event listeners and loading data
  * This function connects all UI elements to their corresponding functionality
  */
 function initializeApp() {
-    // Prevent multiple initialization
-    if (isInitialized) {
-        console.log('🔄 App already initialized, skipping...');
-        return;
-    }
-    
-    console.log('🚀 Initializing app for the first time...');
-    isInitialized = true;
-    
     // =============================================================================
     // BUTTON REFERENCES - Main action buttons
     // =============================================================================
@@ -122,11 +110,6 @@ function initializeApp() {
     // Project management specific buttons
     const manageProjectsBtn = DOM.get('manageProjectsBtn');
     const compareAllProjectsBtn = DOM.get('compareAllProjectsBtn');
-    
-    // BOM Assistant button
-    const bomAssistantBtn = DOM.get('bomAssistantBtn');
-    
-
     
     // Search and filter controls
     const searchInput = DOM.get('searchInput');
@@ -180,28 +163,9 @@ function initializeApp() {
         });
     }
     
-    // Project management button event listeners with mobile touch support
-    if (manageProjectsBtn) {
-        manageProjectsBtn.addEventListener('click', showProjectManagementModal);
-        // Add touch event for mobile Safari
-        manageProjectsBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            showProjectManagementModal();
-        });
-    }
-    if (compareAllProjectsBtn) {
-        compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
-        // Add touch event for mobile Safari
-        compareAllProjectsBtn.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            showAllProjectRequirements();
-        });
-    }
-    
-    // BOM Assistant button event listener
-    if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
-    
-
+    // Project management button event listeners
+    if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
+    if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
     
     // Search and filter event listeners with performance optimization
     // Debounce search input to avoid excessive filtering during typing
@@ -349,18 +313,6 @@ function initializeInventory() {
     if (syncButtonsContainer) {
         syncButtonsContainer.innerHTML = createSyncButtons();
     }
-
-    // Add touch handling for main inventory
-    const inventoryList = document.querySelector('.inventory-list');
-    if (inventoryList) {
-        inventoryList.addEventListener('touchstart', (e) => {
-            // Allow touch events to propagate normally
-        }, { passive: true });
-        
-        inventoryList.addEventListener('touchmove', (e) => {
-            // Allow touch events to propagate normally
-        }, { passive: true });
-    }
 }
 
 // =============================================================================
@@ -371,22 +323,14 @@ function initializeInventory() {
  * Show the export options modal dialog
  */
 function showExportModal() {
-    const modal = document.getElementById('exportModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    document.getElementById('exportModal').style.display = 'block';
 }
 
 /**
  * Hide the export options modal dialog
  */
 function hideExportModal() {
-    const modal = document.getElementById('exportModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('exportModal').style.display = 'none';
 }
 
 /**
@@ -820,19 +764,11 @@ function adjustStockInline(partId, action) {
 }
 
 function showAddPartModal() {
-    const modal = document.getElementById('addPartModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    document.getElementById('addPartModal').style.display = 'block';
 }
 
 function hideAddPartModal() {
-    const modal = document.getElementById('addPartModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('addPartModal').style.display = 'none';
     document.getElementById('newPartName').value = '';
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
@@ -870,18 +806,7 @@ function showEditPartModal(partId) {
             typeSuggestion.textContent = '';
         }
     }
-    const modal = document.getElementById('editPartModal');
-    // Only lock body scroll if modal is not already open
-    const isAlreadyOpen = modal.style.display === 'block';
-    if (!isAlreadyOpen) {
-        lockBodyScroll();
-        modal.style.display = 'block';
-        positionModalOnMobile(modal);
-        enableModalScrollLock(modal);
-        console.log('📝 Debug: Edit Part modal opened for first time');
-    } else {
-        console.log('📝 Debug: Edit Part modal refreshed (already open)');
-    }
+    document.getElementById('editPartModal').style.display = 'block';
 
     // --- In showEditPartModal(partId), render a project list styled like inventory items ---
     const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
@@ -922,12 +847,8 @@ function showEditPartModal(partId) {
 }
 
 function hideEditPartModal() {
-    const modal = document.getElementById('editPartModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
+    document.getElementById('editPartModal').style.display = 'none';
     editingPartId = null;
-    disableModalScrollLock(modal);
 }
 
 function saveEditPart() {
@@ -1011,20 +932,12 @@ function showDeletePartModal(partId) {
     const part = inventory[partId];
     document.getElementById('deletePartMessage').textContent = 
         `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-    const modal = document.getElementById('deletePartModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    document.getElementById('deletePartModal').style.display = 'block';
 }
 
 function hideDeletePartModal() {
-    const modal = document.getElementById('deletePartModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
+    document.getElementById('deletePartModal').style.display = 'none';
     deletingPartId = null;
-    disableModalScrollLock(modal);
 }
 
 function confirmDeletePart() {
@@ -1100,141 +1013,6 @@ function handlePurchaseClick(partId) {
 // =============================================================================
 // USER INTERFACE UTILITIES
 // =============================================================================
-
-/**
- * Track how many modals are currently open
- * Used to prevent unlocking body scroll when nested modals are open
- */
-let openModalCount = 0;
-
-/**
- * Lock body scroll and store current scroll position
- * Prevents background scrolling when modals are open
- */
-function lockBodyScroll() {
-    openModalCount++;
-    // Get stack trace to see who called this (Safari-safe)
-    try {
-        const stack = new Error().stack;
-        const caller = stack ? stack.split('\n')[2]?.trim() : 'unknown';
-        console.log('🔒 Debug: Modal count increased to:', openModalCount, 'called by:', caller);
-    } catch (e) {
-        console.log('🔒 Debug: Modal count increased to:', openModalCount);
-    }
-    
-    // Only lock if this is the first modal
-    if (openModalCount === 1) {
-        const currentScrollY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${currentScrollY}px`;
-        document.body.style.width = '100%';
-        document.body.style.overflow = 'hidden';
-        document.body.setAttribute('data-scroll-y', currentScrollY);
-        console.log('🔒 Debug: Body scroll locked at position:', currentScrollY);
-    } else {
-        console.log('🔒 Debug: Body scroll already locked, just tracking modal count');
-    }
-}
-
-/**
- * Unlock body scroll and restore scroll position
- * Restores normal scrolling when modals are closed
- */
-function unlockBodyScroll() {
-    openModalCount = Math.max(0, openModalCount - 1);
-    // Get stack trace to see who called this (Safari-safe)
-    try {
-        const stack = new Error().stack;
-        const caller = stack ? stack.split('\n')[2]?.trim() : 'unknown';
-        console.log('🔓 Debug: Modal count decreased to:', openModalCount, 'called by:', caller);
-    } catch (e) {
-        console.log('🔓 Debug: Modal count decreased to:', openModalCount);
-    }
-    
-    // Only unlock if no modals are open
-    if (openModalCount === 0) {
-        const scrollY = document.body.getAttribute('data-scroll-y');
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.removeAttribute('data-scroll-y');
-        
-        if (scrollY) {
-            // Use requestAnimationFrame to ensure smooth scroll restoration
-            requestAnimationFrame(() => {
-                window.scrollTo(0, parseInt(scrollY));
-                console.log('🔓 Debug: Body scroll unlocked, restored to position:', scrollY);
-            });
-        }
-    } else {
-        console.log('🔓 Debug: Other modals still open, keeping body scroll locked');
-    }
-}
-
-/**
- * Position modal at viewport top on mobile devices
- * Ensures modal is visible when body scroll is locked
- */
-function positionModalOnMobile(modal) {
-    if (window.innerWidth <= 1024) {
-        requestAnimationFrame(() => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                // Ensure modal content is properly positioned
-                modalContent.style.position = 'relative';
-                modalContent.style.margin = '20px auto';
-                // Remove the forced scroll to top
-                // modalContent.scrollTop = 0;
-            }
-        });
-    }
-}
-
-/**
- * Clean up mobile-specific modal positioning
- * Removes custom positioning styles applied for mobile
- */
-function cleanupMobileModalStyles(modal) {
-    if (!modal) return;
-    
-    // Reset any inline styles
-    modal.style.display = '';
-    modal.style.position = '';
-    modal.style.top = '';
-    modal.style.left = '';
-    modal.style.width = '';
-    modal.style.height = '';
-    modal.style.overflow = '';
-    
-    // Reset modal content styles
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.style.position = '';
-        modalContent.style.top = '';
-        modalContent.style.left = '';
-        modalContent.style.transform = '';
-        modalContent.style.margin = '';
-    }
-}
-
-/**
- * Reset modal counter and force unlock body scroll
- * Emergency function to fix body scroll if modals get out of sync
- */
-function resetBodyScrollLock() {
-    console.log('🔄 Debug: Resetting body scroll lock, was:', openModalCount);
-    openModalCount = 0;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    document.body.removeAttribute('data-scroll-y');
-    console.log('🔄 Debug: Body scroll lock reset');
-}
-
-// Add emergency reset function to window for debugging
-window.resetBodyScrollLock = resetBodyScrollLock;
 
 /**
  * Display a notification message to the user
@@ -1432,24 +1210,22 @@ function showProjectDetails(projectId) {
         }
     }
     
-    // Add summary to the projectStatus element with styled cards
+    // Add summary to the projectStatus element
     const statusContainer = document.getElementById('projectStatus');
     const sufficientParts = totalParts - missingParts - lowStockParts;
     statusContainer.innerHTML = `
-        <div class="requirements-summary">
-            <div class="summary-stats">
-                <div class="stat-item missing">
-                    <span class="stat-number">${missingParts}</span>
-                    <span class="stat-label">Missing</span>
-                </div>
-                <div class="stat-item low">
-                    <span class="stat-number">${lowStockParts}</span>
-                    <span class="stat-label">Low Stock</span>
-                </div>
-                <div class="stat-item sufficient">
-                    <span class="stat-number">${sufficientParts}</span>
-                    <span class="stat-label">Sufficient</span>
-                </div>
+        <div class="project-header">
+            <div class="stat-item missing">
+                <span class="stat-number">${missingParts}</span>
+                <span class="stat-label">Missing</span>
+            </div>
+            <div class="stat-item low">
+                <span class="stat-number">${lowStockParts}</span>
+                <span class="stat-label">Low Stock</span>
+            </div>
+            <div class="stat-item sufficient">
+                <span class="stat-number">${sufficientParts}</span>
+                <span class="stat-label">Sufficient</span>
             </div>
         </div>
     `;
@@ -1462,19 +1238,11 @@ function showProjectDetails(projectId) {
     
     // Show the modal
     console.log('Showing project details modal');
-    const modal = document.getElementById('projectDetailsModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    document.getElementById('projectDetailsModal').style.display = 'block';
 }
 
 function hideProjectDetailsModal() {
-    const modal = document.getElementById('projectDetailsModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('projectDetailsModal').style.display = 'none';
 }
 
 function removeProjectTag(partId, projectId) {
@@ -1500,22 +1268,17 @@ function removeProjectTag(partId, projectId) {
 
 function showProjectNameModal() {
     const modal = document.getElementById('projectNameModal');
-    lockBodyScroll();
     modal.classList.add('show');
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
     document.getElementById('projectNameInput').value = '';
     document.getElementById('projectNameInput').focus();
 }
 
 function hideProjectNameModal() {
     const modal = document.getElementById('projectNameModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
     modal.classList.remove('show');
     pendingBomData = null;
+    // Also clear the input for safety
     document.getElementById('projectNameInput').value = '';
-    disableModalScrollLock(modal);
 }
 
 function confirmProjectName() {
@@ -1709,32 +1472,16 @@ function createProjectFromBom(projectName, projectId, bom) {
     }
 
     const resultsContainer = document.getElementById("bomResults");
-    const sufficientParts = totalParts - missingParts - lowStockParts;
     resultsContainer.innerHTML = `
-        <div class="requirements-summary">
-            <div class="summary-stats">
-                <div class="stat-item missing">
-                    <span class="stat-number">${missingParts}</span>
-                    <span class="stat-label">Missing</span>
-                </div>
-                <div class="stat-item low">
-                    <span class="stat-number">${lowStockParts}</span>
-                    <span class="stat-label">Low Stock</span>
-                </div>
-                <div class="stat-item sufficient">
-                    <span class="stat-number">${sufficientParts}</span>
-                    <span class="stat-label">Sufficient</span>
-                </div>
-            </div>
+        <div class="project-header">
+            <div>Total Parts: ${totalParts}</div>
+            <div>Missing: ${missingParts}</div>
+            <div>Low Stock: ${lowStockParts}</div>
         </div>
         <ul class="project-info">${results.join("")}</ul>
     `;
-    console.log('📋 Debug: About to call showBOMModal() with delay');
-    // Small delay to ensure hideProjectNameModal() completes first
-    setTimeout(() => {
-        showBOMModal();
-        console.log('📋 Debug: showBOMModal() called successfully with delay');
-    }, 10);
+    document.getElementById("bomModal").style.display = "block";
+    showBOMModal();
 }
 
 function compareBOM(event) {
@@ -1858,37 +1605,55 @@ function addMissingParts() {
 }
 
 function showBOMModal() {
-    const modal = document.getElementById('bomModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    document.getElementById('bomModal').style.display = 'block';
 }
 
 function hideBOMModal() {
-    const modal = document.getElementById('bomModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
+    document.getElementById('bomModal').style.display = 'none';
     window.currentBom = null;
-    disableModalScrollLock(modal);
 }
 
 // Add these new functions for project management
 function showProjectManagementModal() {
-    const modal = document.getElementById('projectManagementModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    const projectList = document.getElementById('projectList');
+    projectList.innerHTML = '';
+    
+    for (const projectId in projects) {
+        const project = projects[projectId];
+        const projectElement = document.createElement('div');
+        projectElement.className = 'project-list-item';
+        
+        // Count parts tagged with this project
+        let taggedParts = 0;
+        for (const id in inventory) {
+            if (inventory[id].projects && inventory[id].projects[projectId]) {
+                taggedParts++;
+            }
+        }
+        
+        projectElement.innerHTML = `
+            <div>
+                <strong>${project.name}</strong>
+                <div class="project-info">
+                    ${taggedParts} parts tagged
+                </div>
+            </div>
+            <div>
+                <button onclick="showDeleteProjectModal('${projectId}')" class="project-delete-btn">Delete</button>
+            </div>
+        `;
+        
+        projectList.appendChild(projectElement);
+    }
+    
+    document.getElementById('projectManagementModal').style.display = 'block';
 }
 
 function hideProjectManagementModal() {
     const modal = document.getElementById('projectManagementModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function showDeleteProjectModal(projectId) {
@@ -1896,22 +1661,17 @@ function showDeleteProjectModal(projectId) {
     const project = projects[projectId];
     const modal = document.getElementById('deleteProjectModal');
     const message = document.getElementById('deleteProjectMessage');
+    
     if (modal && message) {
         message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
-        lockBodyScroll();
         modal.style.display = 'block';
-        positionModalOnMobile(modal);
-        enableModalScrollLock(modal);
     }
 }
 
 function hideDeleteProjectModal() {
     const modal = document.getElementById('deleteProjectModal');
     if (modal) {
-        cleanupMobileModalStyles(modal);
-        unlockBodyScroll();
         modal.style.display = 'none';
-        disableModalScrollLock(modal);
     }
     deletingProjectId = null;
 }
@@ -1943,9 +1703,17 @@ function confirmDeleteProject() {
     updateProjectFilter();
     displayInventory();
     
-    // Hide modals properly (using the hide functions to manage body scroll)
-    hideDeleteProjectModal();
-    hideProjectManagementModal();
+    // Hide modals
+    const deleteModal = document.getElementById('deleteProjectModal');
+    const manageModal = document.getElementById('projectManagementModal');
+    
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
+    }
+    
+    if (manageModal) {
+        manageModal.style.display = 'none';
+    }
     
     // Reset state
     deletingProjectId = null;
@@ -1955,43 +1723,245 @@ function confirmDeleteProject() {
 }
 
 function showAllProjectRequirements() {
-    const modal = document.getElementById('allProjectRequirementsModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    // First repair any malformed BOM data
+    repairBOMData();
+    
+    const partTotals = {};
+    // Processing all project requirements
+
+    for (const projectId in projects) {
+        const bom = projects[projectId].bom;
+        // Processing project BOM
+
+        for (const partId in bom) {
+            const normId = normalizeValue(partId);
+            const bomPart = bom[partId];
+            
+            // Get name and quantity from the BOM part
+            const name = bomPart.name || partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const quantity = typeof bomPart.quantity === 'number' ? bomPart.quantity : 
+                           (typeof bomPart.quantity === 'string' ? parseInt(bomPart.quantity) || 0 : 0);
+
+            if (!partTotals[normId]) {
+                partTotals[normId] = {
+                    name: name,
+                    total: 0,
+                    projects: [],
+                    inventoryQty: 0,
+                    status: 'missing'
+                };
+            } else {
+                // Always update the name to the inventory name if found
+                for (const id in inventory) {
+                    if (normalizeValue(id) === normId) {
+                        partTotals[normId].name = inventory[id].name;
+                        break;
+                    }
+                }
+            }
+            
+            console.log(`Part ${partId} quantity:`, quantity, 'from BOM:', bomPart);
+            partTotals[normId].total += quantity;
+            partTotals[normId].projects.push({
+                project: projects[projectId].name,
+                quantity: quantity
+            });
+        }
+    }
+
+    console.log('Part totals:', partTotals);
+
+    // Add inventory quantities and determine status
+    console.log('\n=== STARTING INVENTORY MATCHING ===');
+    console.log('partTotals keys:', Object.keys(partTotals));
+    console.log('inventory keys:', Object.keys(inventory));
+    
+    for (const normId in partTotals) {
+        const part = partTotals[normId];
+        let foundInInventory = false;
+        
+        console.log(`\nLooking for part with normId: "${normId}"`);
+        console.log('Part object before matching:', JSON.stringify(part, null, 2));
+        
+        // Try to find the part in inventory
+        for (const id in inventory) {
+            const invNormId = normalizeValue(id);
+            console.log(`  Checking inventory id: "${id}" -> normalized: "${invNormId}"`);
+            if (invNormId === normId) {
+                part.inventoryQty = inventory[id].quantity || 0;
+                foundInInventory = true;
+                console.log(`  ✓ MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
+                break;
+            }
+        }
+        
+        // Also try matching by name if normId didn't work
+        if (!foundInInventory) {
+            console.log(`  No normId match, trying by name: "${part.name}"`);
+            for (const id in inventory) {
+                const invPart = inventory[id];
+                if (normalizeValue(invPart.name) === normalizeValue(part.name)) {
+                    part.inventoryQty = invPart.quantity || 0;
+                    foundInInventory = true;
+                    console.log(`  ✓ NAME MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
+                    break;
+                }
+            }
+        }
+        
+        // If not found in inventory, it's completely missing
+        if (!foundInInventory) {
+            part.inventoryQty = 0;
+            console.log(`  ✗ NOT FOUND in inventory`);
+        }
+        
+        // Determine status based on actual quantities
+        if (part.inventoryQty === 0) {
+            part.status = 'missing';
+        } else if (part.inventoryQty < part.total) {
+            part.status = 'low';
+        } else {
+            part.status = 'sufficient';
+        }
+        
+        console.log(`Final: ${part.name} - Have: ${part.inventoryQty}, Need: ${part.total}, Status: ${part.status}`);
+    }
+
+    console.log('\n=== FINAL PART TOTALS ===');
+    console.log('Final partTotals:', JSON.stringify(partTotals, null, 2));
+
+    // Sort parts by status priority (missing first, then low stock, then sufficient)
+    const sortedParts = Object.entries(partTotals).sort(([, a], [, b]) => {
+        const statusOrder = { missing: 0, low: 1, sufficient: 2 };
+        if (statusOrder[a.status] !== statusOrder[b.status]) {
+            return statusOrder[a.status] - statusOrder[b.status];
+        }
+        return a.name.localeCompare(b.name);
+    });
+
+    // Group parts by status
+    const groupedParts = {
+        missing: sortedParts.filter(([, part]) => part.status === 'missing'),
+        low: sortedParts.filter(([, part]) => part.status === 'low'),
+        sufficient: sortedParts.filter(([, part]) => part.status === 'sufficient')
+    };
+
+    // Build HTML with organized sections
+    let html = `
+        <div class="requirements-summary">
+            <div class="summary-stats">
+                <div class="stat-item missing">
+                    <span class="stat-number">${groupedParts.missing.length}</span>
+                    <span class="stat-label">Missing</span>
+                </div>
+                <div class="stat-item low">
+                    <span class="stat-number">${groupedParts.low.length}</span>
+                    <span class="stat-label">Low Stock</span>
+                </div>
+                <div class="stat-item sufficient">
+                    <span class="stat-number">${groupedParts.sufficient.length}</span>
+                    <span class="stat-label">Sufficient</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Function to create section HTML
+    function createSection(title, parts, className) {
+        if (parts.length === 0) return '';
+        
+        let sectionHtml = `
+            <div class="requirements-section ${className}">
+                <h3 class="section-title">${title} (${parts.length})</h3>
+                <div class="parts-grid">
+        `;
+        
+        parts.forEach(([normId, part]) => {
+            const statusIcon = {
+                missing: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                low: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+                sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
+            };
+            
+            sectionHtml += `
+                <div class="part-card ${part.status}" data-status="${part.status}">
+                    <div class="part-header">
+                        <span class="status-icon status-${part.status}">${statusIcon[part.status]}</span>
+                        <span class="part-name">${part.name}</span>
+                    </div>
+                    <div class="part-quantities">
+                        <div class="quantity-row">
+                            <span class="qty-label">Have:</span>
+                            <span class="qty-value qty-${part.status}">${part.inventoryQty}</span>
+                        </div>
+                        <div class="quantity-row">
+                            <span class="qty-label">Need:</span>
+                            <span class="qty-value">${part.total}</span>
+                        </div>
+                        ${part.status !== 'sufficient' ? `
+                        <div class="quantity-row shortage">
+                            <span class="qty-label">Short:</span>
+                            <span class="qty-value shortage">${Math.max(0, part.total - part.inventoryQty)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="project-breakdown">
+                        <span class="breakdown-label">Used in:</span>
+                        <div class="project-list">
+                            ${part.projects.map(p => `
+                                <span class="project-usage">${p.project} (${p.quantity})</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        sectionHtml += '</div></div>';
+        return sectionHtml;
+    }
+
+    // Add sections in priority order
+    if (groupedParts.missing.length > 0) {
+        html += createSection('⚠️ Missing Parts', groupedParts.missing, 'missing');
+    }
+    
+    if (groupedParts.low.length > 0) {
+        html += createSection('📉 Low Stock', groupedParts.low, 'low');
+    }
+    
+    if (groupedParts.sufficient.length > 0) {
+        html += createSection('✅ Sufficient Stock', groupedParts.sufficient, 'sufficient');
+    }
+
+    // Update the modal title
+    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
+        'All Project Requirements';
+    
+    document.getElementById('allProjectRequirements').innerHTML = html;
+    document.getElementById('allProjectRequirementsModal').style.display = 'block';
 }
 
 function hideAllProjectRequirementsModal() {
-    const modal = document.getElementById('allProjectRequirementsModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('allProjectRequirementsModal').style.display = 'none';
 }
 
 function showExportBOMModal() {
     const select = document.getElementById('exportBOMProject');
     select.innerHTML = '<option value="">Select a project...</option>';
+    
     for (const projectId in projects) {
         const option = document.createElement('option');
         option.value = projectId;
         option.textContent = projects[projectId].name;
         select.appendChild(option);
     }
-    const modal = document.getElementById('exportBOMModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
+    
+    document.getElementById('exportBOMModal').style.display = 'block';
 }
 
 function hideExportBOMModal() {
-    const modal = document.getElementById('exportBOMModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('exportBOMModal').style.display = 'none';
 }
 
 function exportProjectBOM(format) {
@@ -2070,21 +2040,12 @@ function createSyncButtons() {
             </svg>
             Add New Part
         </button>
-        <button class="sync-btn import-btn full-width" onclick="showBOMAssistantModal()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <polygon points="13.9 2.6 16.4 9.3 23.1 11.8 16.4 14.3 13.9 21 11.4 14.3 4.7 11.8 11.4 9.3 13.9 2.6"/>
-                <polygon points="7.1 14.9 7.9 17.3 10.4 18.2 7.9 19.1 7.1 21.6 6.2 19.1 3.7 18.2 6.2 17.3 7.1 14.9"/>
-                <polygon points="4.2 2.1 5.1 4.5 7.5 5.4 5.1 6.3 4.2 8.8 3.3 6.3 0.8 5.4 3.3 4.5 4.2 2.1"/>
-            </svg>
-            BOM Assistant
-        </button>
         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
             Compare BOM
         </button>
-
         <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
@@ -2174,38 +2135,47 @@ function levenshtein(a, b) {
 }
 
 function showAllProjectTagsModal(partId) {
+    const part = inventory[partId];
+    if (!part || !part.projects) return;
+
     const modal = document.getElementById('allProjectTagsModal');
-    lockBodyScroll();
+    const tagsList = document.getElementById('allProjectTagsList');
+    tagsList.innerHTML = '';
+
+    // Only show projects this part is actually assigned to (qty > 0)
+    const assignedProjects = Object.entries(part.projects).filter(([_, qty]) => qty > 0);
+    console.log('showAllProjectTagsModal:', partId, assignedProjects);
+    assignedProjects.forEach(([projectId, qty]) => {
+        const project = projects[projectId];
+        if (project) {
+            const tag = document.createElement('span');
+            tag.className = 'project-tag';
+            tag.setAttribute('data-project-id', projectId);
+            tag.setAttribute('title', `${project.name} (${qty} needed)`);
+            tag.textContent = `${project.name} (${qty})`;
+            tag.onclick = (e) => {
+                e.stopPropagation();
+                showProjectDetails(projectId);
+                hideAllProjectTagsModal();
+            };
+            tagsList.appendChild(tag);
+        }
+    });
+
     modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
 }
 
 function hideAllProjectTagsModal() {
     const modal = document.getElementById('allProjectTagsModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
     modal.style.display = 'none';
-    disableModalScrollLock(modal);
 }
 
 function showAboutModal() {
-    const modal = document.getElementById('aboutModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
-    
-    // Force a reflow to ensure proper touch handling
-    modal.offsetHeight; // Force reflow
+    document.getElementById('aboutModal').style.display = 'block';
 }
 
 function hideAboutModal() {
-    const modal = document.getElementById('aboutModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
+    document.getElementById('aboutModal').style.display = 'none';
 }
 
 // Update tag display responsively on window resize
@@ -2477,372 +2447,7 @@ function repairBOMData() {
     console.log('\nBOM data repair complete');
 }
 
-// =============================================================================
-// BOM ASSISTANT FUNCTIONALITY
-// =============================================================================
-
-/**
- * Show the BOM Assistant modal with LLM prompt templates
- */
-function showBOMAssistantModal() {
-    const modal = document.getElementById('bomAssistantModal');
-    lockBodyScroll();
-    modal.style.display = 'block';
-    positionModalOnMobile(modal);
-    enableModalScrollLock(modal);
-}
-
-/**
- * Hide the BOM Assistant modal
- */
-function hideBOMAssistantModal() {
-    const modal = document.getElementById('bomAssistantModal');
-    cleanupMobileModalStyles(modal);
-    unlockBodyScroll();
-    modal.style.display = 'none';
-    disableModalScrollLock(modal);
-    // Clear the text input
-    const textInput = document.getElementById('bomTextInput');
-    if (textInput) textInput.value = '';
-}
-
-/**
- * Copy the prompt template to clipboard
- */
-function copyPromptTemplate() {
-    const promptText = document.getElementById('promptTemplate').textContent;
-    
-    if (navigator.clipboard && window.isSecureContext) {
-        // Use modern clipboard API if available
-        navigator.clipboard.writeText(promptText).then(() => {
-            showNotification('Prompt copied to clipboard!');
-        }).catch(() => {
-            fallbackCopyToClipboard(promptText);
-        });
-    } else {
-        // Fallback for older browsers or non-HTTPS
-        fallbackCopyToClipboard(promptText);
-    }
-}
-
-/**
- * Fallback copy method for older browsers
- */
-function fallbackCopyToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    textArea.style.top = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        showNotification('Prompt copied to clipboard!');
-    } catch (err) {
-        showNotification('Unable to copy to clipboard. Please copy manually.', 'error');
-    }
-    
-    document.body.removeChild(textArea);
-}
-
-/**
- * Process BOM data pasted directly from AI tools
- * Handles various formats including CSV, tables, and unstructured text
- */
-function processPastedBOM() {
-    const textInput = document.getElementById('bomTextInput');
-    const bomText = textInput.value.trim();
-    
-    if (!bomText) {
-        showNotification('Please paste BOM data first', 'error');
-        return;
-    }
-    
-    try {
-        let bom = {};
-        let processedCount = 0;
-        
-        // First, try to detect if it's CSV format
-        if (bomText.includes(',') && bomText.includes('\n')) {
-            console.log('Detected CSV format, using PapaParse');
-            const parsed = Papa.parse(bomText, { header: true, skipEmptyLines: true });
-            
-            if (parsed.errors.length > 0) {
-                console.warn('CSV parse errors:', parsed.errors);
-                // Continue with fallback parsing if CSV parsing fails
-            } else if (parsed.data.length > 0) {
-                // Successfully parsed as CSV
-                parsed.data.forEach((row, index) => {
-                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || 
-                                row['Component'] || row['component'] || row['Description'] || row['description'] || '';
-                    const quantity = parseInt(row['Quantity'] || row['quantity'] || row['Qty'] || row['qty'] || '0') || 0;
-                    
-                    if (name && quantity > 0) {
-                        const id = findOrCreatePartId(name);
-                        bom[id] = { name: name, quantity: quantity };
-                        processedCount++;
-                    }
-                });
-                
-                if (processedCount > 0) {
-                    console.log('Successfully parsed as CSV');
-                    processBOMData(bom, processedCount);
-                    return;
-                }
-            }
-        }
-        
-        // Fallback: Try to parse as unstructured text
-        console.log('Trying unstructured text parsing');
-        
-        // Split into lines and process each line
-        const lines = bomText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        
-        for (const line of lines) {
-            // Skip header lines
-            if (line.toLowerCase().includes('name') && line.toLowerCase().includes('quantity')) {
-                continue;
-            }
-            
-            // Try various patterns to extract component and quantity
-            let name = '';
-            let quantity = 0;
-            
-            // Pattern 1: "ComponentName, Quantity" or "ComponentName - Quantity"
-            let match = line.match(/^(.+?)[,\-\s]+(\d+)\s*$/);
-            if (match) {
-                name = match[1].trim();
-                quantity = parseInt(match[2]);
-            }
-            
-            // Pattern 2: "Quantity x ComponentName" or "Quantity ComponentName"
-            if (!match) {
-                match = line.match(/^(\d+)\s*[x×]\s*(.+)$/i);
-                if (match) {
-                    quantity = parseInt(match[1]);
-                    name = match[2].trim();
-                }
-            }
-            
-            // Pattern 3: "ComponentName (Quantity)" or "ComponentName [Quantity]"
-            if (!match) {
-                match = line.match(/^(.+?)\s*[\(\[]\s*(\d+)\s*[\)\]]$/);
-                if (match) {
-                    name = match[1].trim();
-                    quantity = parseInt(match[2]);
-                }
-            }
-            
-            // Pattern 4: Tab or multiple spaces separation
-            if (!match) {
-                const parts = line.split(/\s{2,}|\t/);
-                if (parts.length >= 2) {
-                    // Try to find which part is the quantity
-                    for (let i = 0; i < parts.length; i++) {
-                        const num = parseInt(parts[i]);
-                        if (!isNaN(num) && num > 0 && num < 1000) {
-                            quantity = num;
-                            name = parts.filter((_, idx) => idx !== i).join(' ').trim();
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Pattern 5: Simple format with quantity at the end
-            if (!match && !name) {
-                match = line.match(/^(.+?)\s+(\d+)\s*$/);
-                if (match) {
-                    name = match[1].trim();
-                    quantity = parseInt(match[2]);
-                }
-            }
-            
-            // Clean up the name
-            if (name) {
-                // Remove common prefixes/suffixes
-                name = name.replace(/^[\-\*\•]\s*/, ''); // Remove bullet points
-                name = name.replace(/[,\.]$/, ''); // Remove trailing commas/periods
-                name = name.trim();
-                
-                // Skip if it looks like a header or section title
-                if (name.toLowerCase().includes('bom') || 
-                    name.toLowerCase().includes('bill of materials') ||
-                    name.toLowerCase().includes('component') ||
-                    name.toLowerCase().includes('part') ||
-                    name.length < 3) {
-                    continue;
-                }
-            }
-            
-            if (name && quantity > 0) {
-                const id = findOrCreatePartId(name);
-                
-                // If this component already exists, add quantities
-                if (bom[id]) {
-                    bom[id].quantity += quantity;
-                } else {
-                    bom[id] = { name: name, quantity: quantity };
-                }
-                processedCount++;
-                console.log(`Extracted: "${name}" (qty: ${quantity})`);
-            } else {
-                console.log(`Could not parse line: "${line}"`);
-            }
-        }
-        
-        if (processedCount === 0) {
-            showNotification('No valid components found. Please check the format or try the CSV format.', 'error');
-            return;
-        }
-        
-        processBOMData(bom, processedCount);
-        
-    } catch (error) {
-        console.error('Error processing pasted BOM:', error);
-        showNotification('Error processing BOM data: ' + error.message, 'error');
-    }
-}
-
-/**
- * Helper function to find existing part ID or create a new one
- */
-function findOrCreatePartId(name) {
-    // Try to find exact match by name first
-    for (const [invId, invPart] of Object.entries(inventory)) {
-        if (invPart.name.toLowerCase() === name.toLowerCase()) {
-            return invId;
-        }
-    }
-    
-    // If no exact match, try normalized matching
-    const normalizedName = normalizeValue(name);
-    for (const [invId, invPart] of Object.entries(inventory)) {
-        if (normalizeValue(invPart.name) === normalizedName) {
-            return invId;
-        }
-    }
-    
-    // Use normalized name as ID if no match found
-    return normalizeValue(name);
-}
-
-/**
- * Helper function to process the final BOM data
- */
-function processBOMData(bom, processedCount) {
-    console.log('Final processed BOM:', bom);
-    console.log(`Successfully processed ${processedCount} components`);
-    
-    // Store the BOM data and show project name modal
-    pendingBomData = bom;
-    hideBOMAssistantModal();
-    showProjectNameModal();
-    
-    showNotification(`Successfully processed ${processedCount} components from pasted BOM`);
-}
-
-// Utility: Prevent overlay scroll stealing on mobile (for all modals)
-function enableModalScrollLock(modal) {
-    if (!modal) return;
-    
-    // Force a reflow to ensure proper touch handling
-    modal.style.display = 'none';
-    modal.offsetHeight; // Force reflow
-    modal.style.display = 'block';
-    
-    // Add touch event listeners with passive option for better performance
-    modal.addEventListener('touchstart', handleTouchStart, { passive: true });
-    modal.addEventListener('touchmove', handleTouchMove, { passive: false });
-    
-    // Add touch event listeners to modal content for better scrolling
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-        
-        modalContent.addEventListener('touchmove', (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-    }
-    
-    // Lock body scroll
-    lockBodyScroll();
-}
-
-function handleTouchMove(e) {
-    const modalContent = e.currentTarget.querySelector('.modal-content');
-    if (!modalContent) return;
-    
-    const touch = e.touches[0];
-    const modalRect = modalContent.getBoundingClientRect();
-    
-    // If touch is outside modal content, prevent default
-    if (touch.clientY < modalRect.top || touch.clientY > modalRect.bottom) {
-        e.preventDefault();
-    }
-}
-
-function handleTouchStart(e) {
-    const modalContent = e.currentTarget.querySelector('.modal-content');
-    if (!modalContent) return;
-    
-    const touch = e.touches[0];
-    const modalRect = modalContent.getBoundingClientRect();
-    
-    // If touch is outside modal content, prevent default
-    if (touch.clientY < modalRect.top || touch.clientY > modalRect.bottom) {
-        e.preventDefault();
-    }
-}
-
-function disableModalScrollLock(modal) {
-    if (!modal) return;
-    
-    // Remove touch event listeners
-    modal.removeEventListener('touchstart', handleTouchStart);
-    modal.removeEventListener('touchmove', handleTouchMove);
-    
-    // Remove touch event listeners from modal content
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        modalContent.removeEventListener('touchstart', (e) => e.stopPropagation());
-        modalContent.removeEventListener('touchmove', (e) => e.stopPropagation());
-    }
-    
-    // Unlock body scroll
-    unlockBodyScroll();
-}
-
-function lockBodyScroll() {
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
-    
-    // Store scroll position for restoration
-    document.body.dataset.scrollY = scrollY;
-}
-
-function unlockBodyScroll() {
-    const scrollY = document.body.dataset.scrollY;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    
-    // Restore scroll position using requestAnimationFrame for smoother experience
-    requestAnimationFrame(() => {
-        window.scrollTo(0, parseInt(scrollY || '0'));
-    });
-}
-
-// Mobile Navigation
+// Restore mobile navigation logic
 function initializeMobileNav() {
     const navItems = document.querySelectorAll('.mobile-nav-item');
     const menus = document.querySelectorAll('.mobile-menu');
@@ -2875,8 +2480,15 @@ function initializeMobileNav() {
     });
 }
 
-// Initialize mobile navigation when the app starts
 document.addEventListener('DOMContentLoaded', () => {
     initializeMobileNav();
 });
 
+// ... existing code ...
+function showBOMAssistantModal() {
+    document.getElementById('bomAssistantModal').style.display = 'block';
+}
+
+function hideBOMAssistantModal() {
+    document.getElementById('bomAssistantModal').style.display = 'none';
+}

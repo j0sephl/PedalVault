@@ -702,8 +702,7 @@
               max-width: 100vw;
               overflow-x: hidden;
           }
-          .container,
-          .content,
+          
           .main-content,
           .inventory-list {
               max-width: 100vw;
@@ -720,10 +719,6 @@
               border-radius: 0;
           }
   
-          .content {
-              padding: 20px 15px;
-          }
-  
           .main-content {
               flex-direction: column;
               gap: 0px;
@@ -734,7 +729,7 @@
           }
   
           .inventory-list {
-              max-height: 400px;
+              max-height: 465px;
           }
   
           .header {
@@ -758,7 +753,7 @@
           }
   
           .header p {
-              font-size: 14px;
+              font-size: 10px;
               opacity: 0.8;
               margin-bottom: 8px;
               text-align: center;
@@ -2028,7 +2023,7 @@
       }
       @media (max-width: 1024px) {
           .wordmark-svg {
-              max-width: 250px;
+              max-width: 150px;
           }
       }
   
@@ -2860,23 +2855,16 @@
         display: none;
     }
 
-    .container {
-        padding-bottom: 60px;
-    }
-
     .footer {
-        padding-bottom: 60px;
+        display: none;
     }
 
-    .footer-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 8px;
+    .content {
+        padding: 5px 0px;
     }
 
-    .footer-links {
-        justify-content: center;
+    .inventory-list {
+        max-height: 420px;
     }
 }
   

@@ -2886,6 +2886,36 @@
         border-radius: 0;
     }
 
+    /* PWA specific styles */
+    @media (display-mode: standalone) {
+        html, body {
+            height: 100dvh; /* Dynamic viewport height for PWA */
+        }
+
+        .container {
+            height: 100%;
+        }
+
+        .inventory-list {
+            padding-bottom: 80px; /* Space for bottom nav in PWA */
+        }
+    }
+
+    /* Mobile browser specific styles */
+    @media (display-mode: browser) {
+        html, body {
+            height: 100%;
+        }
+
+        .container {
+            height: 80%;
+        }
+
+        .inventory-list {
+            padding-bottom: 0; /* No need for extra padding in browser mode */
+        }
+    }
+
     .content {
         flex: 1;
         overflow: hidden;

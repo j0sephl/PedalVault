@@ -1142,7 +1142,18 @@
       width: 90%;
       margin: 20px auto;
   }
-  
+  #projectStatus .project-header .stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #D8DEE9;
+    font-weight: 500;
+}
+.stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 15px;
+}
       @media (max-width: 1280px) {
           .inventory-list .project-tag:nth-child(n+2):not(.more-tags) {
               display: none;
@@ -1154,10 +1165,7 @@
   
       #projectStatus {
           background: #2E3440;
-          padding: 15px;
           margin-bottom: 20px;
-          border: 1px solid #4C566A;
-          border-radius: 0;
           color: #E5E9F0;
       }
       
@@ -1168,22 +1176,9 @@
       }
       
       #projectStatus .project-header {
-          display: flex;
-          gap: 20px;
-          justify-content: center;
+        justify-content: space-between;
           margin-bottom: 15px;
           /* Remove old color/font-size, use stat-item styles for children */
-      }
-      #projectStatus .project-header .stat-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 12px 20px;
-          min-width: 80px;
-      }
-      #projectStatus .project-header .stat-item.missing {
-          background: rgba(191, 97, 106, 0.15);
-          border: 1px solid #BF616A;
       }
       #projectStatus .project-header .stat-item.low {
           background: rgba(235, 203, 139, 0.15);
@@ -1194,9 +1189,8 @@
           border: 1px solid #A3BE8C;
       }
       #projectStatus .project-header .stat-number {
-          font-size: 24px;
+          font-size: 15px;
           font-weight: 700;
-          line-height: 1;
           margin-bottom: 4px;
       }
       #projectStatus .project-header .stat-item.missing .stat-number {
@@ -1647,10 +1641,9 @@
 
       .stat-item {
           display: flex;
-          flex-direction: column;
           align-items: center;
           padding: 12px 20px;
-          min-width: 80px;
+          min-width: 250px;
       }
 
       .stat-item.missing {
@@ -2050,7 +2043,6 @@
   
           #projectStatus .project-header {
               flex-direction: column;
-              gap: 8px;
               font-size: 14px;
           }
       }

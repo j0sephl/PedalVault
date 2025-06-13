@@ -175,6 +175,11 @@ function initializeApp() {
 
     // Initialize the application data and display
     initializeInventory();
+
+    // ... existing code ...
+    const bomAssistantBtn = DOM.get('bomAssistantBtn');
+    if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
+    // ... existing code ...
 }
 
 // =============================================================================
@@ -2039,6 +2044,14 @@ function createSyncButtons() {
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
             Add New Part
+        </button>
+        <button class="add-part-btn" onclick="showBOMAssistantModal()">
+            <svg class="sync-icon" viewBox="0 0 192 192">
+                <polygon points="111.44 20.77 131.36 74.6 185.2 94.52 131.36 114.45 111.44 168.28 91.52 114.45 37.68 94.52 91.52 74.6 111.44 20.77"/>
+                <polygon points="56.47 119.23 63.71 138.78 83.26 146.01 63.71 153.24 56.47 172.79 49.24 153.24 29.69 146.01 49.24 138.78 56.47 119.23"/>
+                <polygon points="33.59 16.76 40.82 36.31 60.37 43.55 40.82 50.78 33.59 70.33 26.35 50.78 6.8 43.55 26.35 36.31 33.59 16.76"/>
+            </svg>
+            BOM Assistant
         </button>
         <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
             <svg class="sync-icon" viewBox="0 0 24 24">

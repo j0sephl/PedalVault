@@ -121,7 +121,7 @@
           padding: 15px 0px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+
       }
   
       .main-content {
@@ -2771,7 +2771,7 @@
     flex: 1;
     background: none;
     border: none;
-    color: var(--nord4);
+    color: var(--nord13);
     padding: 8px 0;
     font-size: 12px;
     cursor: pointer;
@@ -2815,7 +2815,7 @@
     background: var(--nord1);
     border: 1px solid var(--nord3);
     border-radius: 8px;
-    color: var(--nord4);
+    color: var(--nord9);
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s;
@@ -2859,9 +2859,6 @@
         display: none;
     }
 
-    .content {
-        padding: 5px 0px;
-    }
 
     .inventory-list {
         max-height: 420px;
@@ -2917,9 +2914,7 @@
     }
 
     .content {
-        flex: 1;
         overflow: hidden;
-        padding: 5px 0px;
     }
 
     .main-content {

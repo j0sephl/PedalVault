@@ -2842,3 +2842,41 @@ function unlockBodyScroll() {
     });
 }
 
+// Mobile Navigation
+function initializeMobileNav() {
+    const navItems = document.querySelectorAll('.mobile-nav-item');
+    const menus = document.querySelectorAll('.mobile-menu');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all items
+            navItems.forEach(navItem => navItem.classList.remove('active'));
+            // Hide all menus
+            menus.forEach(menu => menu.classList.remove('show'));
+            
+            // Add active class to clicked item
+            item.classList.add('active');
+            
+            // Show corresponding menu
+            const menuId = item.dataset.tab + 'Menu';
+            const menu = document.getElementById(menuId);
+            if (menu) {
+                menu.classList.add('show');
+            }
+        });
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.mobile-nav') && !e.target.closest('.mobile-menu')) {
+            menus.forEach(menu => menu.classList.remove('show'));
+            navItems.forEach(item => item.classList.remove('active'));
+        }
+    });
+}
+
+// Initialize mobile navigation when the app starts
+document.addEventListener('DOMContentLoaded', () => {
+    initializeMobileNav();
+});
+

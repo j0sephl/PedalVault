@@ -2755,3 +2755,128 @@
     }
 }
   
+/* Mobile Navigation */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--nord0);
+    border-top: 1px solid var(--nord3);
+    padding: 8px 0;
+    z-index: 1000;
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--nord4);
+    padding: 8px 0;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.mobile-nav-item.active {
+    color: var(--nord8);
+}
+
+.mobile-nav-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    margin-bottom: 4px;
+}
+
+.mobile-menu {
+    display: none;
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: var(--nord0);
+    border-top: 1px solid var(--nord3);
+    padding: 16px;
+    z-index: 999;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu.show {
+    display: block;
+}
+
+.mobile-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--nord1);
+    border: 1px solid var(--nord3);
+    border-radius: 8px;
+    color: var(--nord4);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mobile-menu-item:last-child {
+    margin-bottom: 0;
+}
+
+.mobile-menu-item:hover {
+    background: var(--nord2);
+    color: var(--nord8);
+}
+
+.mobile-menu-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    margin-right: 12px;
+}
+
+@media (max-width: 1024px) {
+    .mobile-nav {
+        display: flex;
+    }
+
+    .sync-buttons {
+        display: none;
+    }
+
+    .manage-projects-btn,
+    #compareAllProjectsBtn {
+        display: none;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .container {
+        padding-bottom: 60px;
+    }
+
+    .footer {
+        padding-bottom: 60px;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .footer-links {
+        justify-content: center;
+    }
+}
+  

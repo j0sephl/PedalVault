@@ -231,8 +231,8 @@
             <div class="footer-content">
                 <span class="data-note">Your data is stored in your browser. <b>Save regularly</b> to avoid loss.</span>
                 <div class="footer-links">
-                    <a href="#" onclick="showAboutModal()" class="about-link" title="About PedalVault">About</a>
-                    <span class="version">v1.4.0</span>
+                    <a href="#" onclick="showAboutModal()" class="about-link desktop-only" title="About PedalVault">About</a>
+                    <span class="version desktop-only">v1.4.0</span>
                 </div>
             </div>
         </footer>
@@ -599,5 +599,109 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
     </div>
 
     <script src="script.js"></script>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <button class="mobile-nav-item" data-tab="action">
+            <svg class="mobile-nav-icon" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            <span>Action</span>
+        </button>
+        <button class="mobile-nav-item" data-tab="bom">
+            <svg class="mobile-nav-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            <span>BOM</span>
+        </button>
+        <button class="mobile-nav-item" data-tab="data">
+            <svg class="mobile-nav-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            <span>Data</span>
+        </button>
+        <button class="mobile-nav-item" data-tab="projects">
+            <svg class="mobile-nav-icon" viewBox="0 0 24 24">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            <span>Projects</span>
+        </button>
+    </nav>
+
+    <!-- Mobile Action Menu -->
+    <div class="mobile-menu" id="actionMenu">
+        <button class="mobile-menu-item" onclick="showAddPartModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add New Part
+        </button>
+        <button class="mobile-menu-item" onclick="mergeDuplicateInventoryEntries()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
+            </svg>
+            Merge Duplicates
+        </button>
+    </div>
+
+    <!-- Mobile BOM Menu -->
+    <div class="mobile-menu" id="bomMenu">
+        <button class="mobile-menu-item" onclick="showBOMAssistantModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            BOM Assistant
+        </button>
+        <button class="mobile-menu-item" onclick="document.getElementById('importBOM').click()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Compare BOM
+        </button>
+    </div>
+
+    <!-- Mobile Data Menu -->
+    <div class="mobile-menu" id="dataMenu">
+        <button class="mobile-menu-item" onclick="document.getElementById('importFile').click()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Load Data
+        </button>
+        <button class="mobile-menu-item" onclick="showExportModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
+            </svg>
+            Save Data
+        </button>
+    </div>
+
+    <!-- Mobile Projects Menu -->
+    <div class="mobile-menu" id="projectsMenu">
+        <button class="mobile-menu-item" onclick="showExportBOMModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Export Project
+        </button>
+        <button class="mobile-menu-item" onclick="showProjectManagementModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            Manage Projects
+        </button>
+        <button class="mobile-menu-item" onclick="showAllProjectRequirements()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            Compare All
+        </button>
+        <button class="mobile-menu-item" onclick="showAboutModal()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            About
+        </button>
+    </div>
 </body>
 </html>

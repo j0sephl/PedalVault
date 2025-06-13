@@ -2868,3 +2868,241 @@
     }
 }
   
+@media (max-width: 1024px) {
+    /* Base layout fixes */
+    html, body {
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+    }
+
+    .container {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-width: 100%;
+        border-radius: 0;
+    }
+
+    .content {
+        flex: 1;
+        overflow: hidden;
+        padding: 5px 0px;
+    }
+
+    .main-content {
+        height: 100%;
+        overflow: hidden;
+        flex-direction: column;
+        gap: 0px;
+    }
+
+    /* Header adjustments */
+    .header {
+        flex-direction: column;
+        align-items: center;
+        padding: 30px 15px 0px;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .header-content {
+        align-items: center;
+        margin-left: 0;
+    }
+
+    .header h1 {
+        font-size: 35px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        text-align: center;
+    }
+
+    .header p {
+        font-size: 10px;
+        opacity: 0.8;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .logo {
+        display: none;
+    }
+
+    .wordmark-svg {
+        max-width: 150px;
+    }
+
+    /* Panel and inventory adjustments */
+    .left-panel, .right-panel {
+        width: 100%;
+    }
+
+    .right-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .inventory-list {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: none;
+    }
+
+    .inventory-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .inventory-controls select,
+    .inventory-controls button {
+        width: 100%;
+    }
+
+    /* Item styling */
+    .item-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .item-name {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+    }
+
+    .item-name .part-name-text {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #F8F8F2;
+        margin-bottom: 2px;
+    }
+
+    .type-pill {
+        display: block;
+        margin: 2px 0 0 0;
+        max-width: 100%;
+        font-size: 10px;
+        white-space: normal;
+        overflow-wrap: break-word;
+        text-overflow: initial;
+    }
+
+    .item-quantity,
+    .item-quantity.low {
+        width: 110px;
+        min-width: 0;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    .quantity-number {
+        width: 100%;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .quantity-controls {
+        gap: 8px;
+    }
+
+    .quantity-btn {
+        padding: 4px 8px;
+    }
+
+    .project-tag {
+        font-size: 10px;
+        padding: 1px 4px;
+        max-width: 100px;
+    }
+
+    .inventory-item {
+        padding: 12px 8px;
+    }
+
+    /* Navigation and buttons */
+    .mobile-nav {
+        display: flex;
+    }
+
+    .sync-buttons {
+        display: none;
+    }
+
+    .manage-projects-btn,
+    #compareAllProjectsBtn {
+        display: none;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .footer {
+        display: none;
+    }
+
+    /* BOM Assistant adjustments */
+    .bom-assistant-content {
+        max-height: 60vh;
+        padding-right: 5px;
+        position: relative;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    .import-methods {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .template-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .copy-prompt-btn {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    #promptTemplate {
+        font-size: 11px;
+        padding: 12px;
+    }
+
+    .popular-ais .ai-links {
+        grid-template-columns: 1fr;
+    }
+
+    .step-list li, .tips-list li {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    /* Purchase link adjustments */
+    .part-card.has-purchase-url:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .purchase-link-icon {
+        font-size: 11px;
+        top: 6px;
+        right: 6px;
+    }
+}
+  

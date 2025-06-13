@@ -3094,6 +3094,7 @@
     /* Navigation and buttons */
     .mobile-nav {
         display: flex;
+        padding-bottom: 30px;
     }
 
     .sync-buttons {

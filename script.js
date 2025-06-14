@@ -329,6 +329,7 @@ function initializeInventory() {
  */
 function showExportModal() {
     document.getElementById('exportModal').style.display = 'block';
+    hideMobileNav();
 }
 
 /**
@@ -336,6 +337,7 @@ function showExportModal() {
  */
 function hideExportModal() {
     document.getElementById('exportModal').style.display = 'none';
+    showMobileNav();
 }
 
 /**
@@ -770,6 +772,7 @@ function adjustStockInline(partId, action) {
 
 function showAddPartModal() {
     document.getElementById('addPartModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideAddPartModal() {
@@ -778,6 +781,7 @@ function hideAddPartModal() {
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
     document.getElementById('newPartId').value = '';
+    showMobileNav();
 }
 
 function showEditPartModal(partId) {
@@ -812,48 +816,13 @@ function showEditPartModal(partId) {
         }
     }
     document.getElementById('editPartModal').style.display = 'block';
-
-    // --- In showEditPartModal(partId), render a project list styled like inventory items ---
-    const projectsDropdownSection = document.getElementById('editPartProjectsDropdownSection');
-    projectsDropdownSection.innerHTML = '';
-    if (Object.keys(projects).length === 0) {
-        projectsDropdownSection.innerHTML = '<div style="color:#888;font-size:13px;">No projects yet. Create one in Project Management.</div>';
-    } else {
-        let html = '<div class="nord-project-inv-list">';
-        for (const projectId in projects) {
-            const qty = part.projects && part.projects[projectId] ? part.projects[projectId] : 0;
-            html += `
-                <div class="nord-project-inv-row" data-project-id="${projectId}">
-                    <span class="nord-project-inv-name">${projects[projectId].name}</span>
-                    <div class="modal-item-quantity" style="margin-left:auto;">
-                        <button type="button" class="quantity-btn" data-action="decrement">-</button>
-                        <input type="number" min="0" class="quantity-input-inline edit-project-qty" data-project-qty="${projectId}" value="${qty}" />
-                        <button type="button" class="quantity-btn" data-action="increment">+</button>
-                    </div>
-                </div>
-            `;
-        }
-        html += '</div>';
-        projectsDropdownSection.innerHTML = html;
-        // Add event listeners for + and - buttons
-        projectsDropdownSection.querySelectorAll('.nord-project-inv-row').forEach(row => {
-            const projectId = row.dataset.projectId;
-            const qtyInput = row.querySelector('.edit-project-qty');
-            row.querySelector('[data-action="decrement"]').addEventListener('click', () => {
-                let val = parseInt(qtyInput.value) || 0;
-                if (val > 0) qtyInput.value = val - 1;
-            });
-            row.querySelector('[data-action="increment"]').addEventListener('click', () => {
-                let val = parseInt(qtyInput.value) || 0;
-                qtyInput.value = val + 1;
-            });
-        });
-    }
+    hideMobileNav();
 }
 
 function hideEditPartModal() {
     document.getElementById('editPartModal').style.display = 'none';
     editingPartId = null;
+    showMobileNav();
 }
 
 function saveEditPart() {
@@ -938,11 +907,13 @@ function showDeletePartModal(partId) {
     document.getElementById('deletePartMessage').textContent = 
         `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
     document.getElementById('deletePartModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideDeletePartModal() {
     document.getElementById('deletePartModal').style.display = 'none';
     deletingPartId = null;
+    showMobileNav();
 }
 
 function confirmDeletePart() {
@@ -1244,10 +1215,12 @@ function showProjectDetails(projectId) {
     // Show the modal
     console.log('Showing project details modal');
     document.getElementById('projectDetailsModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideProjectDetailsModal() {
     document.getElementById('projectDetailsModal').style.display = 'none';
+    showMobileNav();
 }
 
 function removeProjectTag(partId, projectId) {
@@ -1622,11 +1595,13 @@ function addMissingParts() {
 
 function showBOMModal() {
     document.getElementById('bomModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideBOMModal() {
     document.getElementById('bomModal').style.display = 'none';
     window.currentBom = null;
+    showMobileNav();
 }
 
 // Add these new functions for project management
@@ -1663,6 +1638,7 @@ function showProjectManagementModal() {
     }
     
     document.getElementById('projectManagementModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideProjectManagementModal() {
@@ -1670,6 +1646,7 @@ function hideProjectManagementModal() {
     if (modal) {
         modal.style.display = 'none';
     }
+    showMobileNav();
 }
 
 function showDeleteProjectModal(projectId) {
@@ -1682,6 +1659,7 @@ function showDeleteProjectModal(projectId) {
         message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
         modal.style.display = 'block';
     }
+    hideMobileNav();
 }
 
 function hideDeleteProjectModal() {
@@ -1690,6 +1668,7 @@ function hideDeleteProjectModal() {
         modal.style.display = 'none';
     }
     deletingProjectId = null;
+    showMobileNav();
 }
 
 function confirmDeleteProject() {
@@ -1956,10 +1935,12 @@ function showAllProjectRequirements() {
     
     document.getElementById('allProjectRequirements').innerHTML = html;
     document.getElementById('allProjectRequirementsModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideAllProjectRequirementsModal() {
     document.getElementById('allProjectRequirementsModal').style.display = 'none';
+    showMobileNav();
 }
 
 function showExportBOMModal() {
@@ -1974,10 +1955,12 @@ function showExportBOMModal() {
     }
     
     document.getElementById('exportBOMModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideExportBOMModal() {
     document.getElementById('exportBOMModal').style.display = 'none';
+    showMobileNav();
 }
 
 function exportProjectBOM(format) {
@@ -2187,11 +2170,13 @@ function showAllProjectTagsModal(partId) {
     });
 
     modal.style.display = 'block';
+    hideMobileNav();
 }
 
 function hideAllProjectTagsModal() {
     const modal = document.getElementById('allProjectTagsModal');
     modal.style.display = 'none';
+    showMobileNav();
 }
 
 function showAboutModal() {
@@ -2201,10 +2186,12 @@ function showAboutModal() {
         bomAssistantModal.style.display = 'none';
     }
     document.getElementById('aboutModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideAboutModal() {
     document.getElementById('aboutModal').style.display = 'none';
+    showMobileNav();
 }
 
 // Update tag display responsively on window resize
@@ -2531,8 +2518,20 @@ function showBOMAssistantModal() {
         aboutModal.style.display = 'none';
     }
     document.getElementById('bomAssistantModal').style.display = 'block';
+    hideMobileNav();
 }
 
 function hideBOMAssistantModal() {
     document.getElementById('bomAssistantModal').style.display = 'none';
+    showMobileNav();
+}
+
+// ... existing code ...
+function hideMobileNav() {
+    const mobileNav = document.querySelector('.mobile-nav');
+    if (mobileNav) mobileNav.style.display = 'none';
+}
+function showMobileNav() {
+    const mobileNav = document.querySelector('.mobile-nav');
+    if (mobileNav) mobileNav.style.display = '';
 }

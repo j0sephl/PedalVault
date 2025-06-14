@@ -1084,6 +1084,7 @@ function filterByProject() {
 }
 
 function showProjectDetails(projectId) {
+    hideMobileNav(); // Always hide nav bar when opening project details
     console.log('showProjectDetails called with projectId:', projectId);
     console.log('Available projects:', Object.keys(projects));
     const project = projects[projectId];
@@ -2162,8 +2163,8 @@ function showAllProjectTagsModal(partId) {
             tag.textContent = `${project.name} (${qty})`;
             tag.onclick = (e) => {
                 e.stopPropagation();
+                hideAllProjectTagsModal(true); // Pass true to indicate another modal is opening
                 showProjectDetails(projectId);
-                hideAllProjectTagsModal();
             };
             tagsList.appendChild(tag);
         }
@@ -2173,10 +2174,12 @@ function showAllProjectTagsModal(partId) {
     hideMobileNav();
 }
 
-function hideAllProjectTagsModal() {
+function hideAllProjectTagsModal(openingAnotherModal) {
     const modal = document.getElementById('allProjectTagsModal');
     modal.style.display = 'none';
-    showMobileNav();
+    if (!openingAnotherModal) {
+        showMobileNav();
+    }
 }
 
 function showAboutModal() {

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pedalvault-v1.4';
-const STATIC_CACHE = 'pedalvault-static-v1.4';
+const CACHE_NAME = 'pedalvault-v1.6';
+const STATIC_CACHE = 'pedalvault-static-v1.6';
 
 // Only cache your own app files - no external CDNs
 const STATIC_ASSETS = [
@@ -61,7 +61,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Fetch event - Vercel-compatible caching strategy
+// Fetch event - Optimized caching strategy
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     
@@ -88,12 +88,12 @@ self.addEventListener('fetch', event => {
             .then(response => {
                 // Return cached version if available
                 if (response) {
-                    console.log('Serving from cache:', event.request.url);
+                    // Log less frequently to reduce console spam
+                    if (Math.random() < 0.1) console.log('Serving from cache:', event.request.url);
                     return response;
                 }
                 
                 // Otherwise fetch from network
-                console.log('Fetching from network:', event.request.url);
                 return fetch(event.request)
                     .then(networkResponse => {
                         // Only cache successful responses from your domain
@@ -101,6 +101,7 @@ self.addEventListener('fetch', event => {
                             // Clone the response before caching
                             const responseToCache = networkResponse.clone();
                             
+                            // Use a separate promise chain for caching to avoid blocking the response
                             caches.open(STATIC_CACHE)
                                 .then(cache => {
                                     cache.put(event.request, responseToCache);

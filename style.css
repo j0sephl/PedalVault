@@ -65,7 +65,7 @@
           width: 100%;
           margin: 0 auto;
           background: #3B4252;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          box-shadow: 0 8px 16px rgba(0,0,0,0.07);
           overflow: hidden;
           display: flex;
           flex-direction: column;
@@ -183,6 +183,7 @@
           max-height: 600px;
           overflow-y: auto;
           position: relative;
+          contain: layout paint;
       }
   
       .inventory-header {
@@ -418,6 +419,7 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
+          will-change: transform, box-shadow;
       }
   
       .quantity-btn:hover {
@@ -449,6 +451,7 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
+          will-change: transform, box-shadow;
       }
   
       .action-icon svg {
@@ -619,7 +622,7 @@
           width: 100%;
           max-width: 500px;
           margin: 20px auto;
-          box-shadow: 0 8px 32px 0 #2E3440cc;
+          box-shadow: 0 4px 16px 0 #2E3440cc;
           border: 2px solid #4C566A;
           touch-action: pan-y; /* Allow vertical scrolling within modal content */
           -webkit-overflow-scrolling: touch;
@@ -1631,7 +1634,7 @@
           padding: 15px;
           background: #3B4252;
           border: 1px solid #4C566A;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
       }
 
       .summary-stats {
@@ -1751,12 +1754,6 @@
           background: #3B4252;
           border: 1px solid #4C566A;
           padding: 15px;
-          transition: all 0.2s ease;
-      }
-
-      .part-card:hover {
-          background: #434C5E;
-          border-color: #5E81AC;
       }
 
       .part-card.missing {
@@ -2731,7 +2728,7 @@
 
 .part-card.has-purchase-url:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10);
     border-left: 3px solid var(--nord8);
 }
 

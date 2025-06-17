@@ -1159,9 +1159,7 @@ function showProjectDetails(projectId) {
                 <li>
                     <span class="bom-part-label">
                         <span class="status-icon status-error">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
                         </span>
                         <strong>${escapeHtml(bom[id].name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))}</strong>
                     </span>
@@ -1175,13 +1173,24 @@ function showProjectDetails(projectId) {
                 <li>
                     <span class="bom-part-label">
                         <span class="status-icon status-warning">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><polygon points="12,2 22,21 2,21" fill="currentColor" opacity="0.15"/><rect x="11" y="10" width="2" height="5" fill="currentColor"/><rect x="11" y="17" width="2" height="2" fill="currentColor"/></svg>
                         </span>
                         <strong>${escapeHtml(bom[id].name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))}</strong>
                     </span>
                     <span class="bom-part-status">: Have ${partQuantity}, need ${bomQuantity}</span>
+                </li>
+            `);
+        } else {
+            // Sufficient stock
+            results.push(`
+                <li>
+                    <span class="bom-part-label">
+                        <span class="status-icon status-success">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><polyline points="8 12.5 11 16 16 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                        </span>
+                        <strong>${escapeHtml(bom[id].name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))}</strong>
+                    </span>
+                    <span class="bom-part-status">: In stock (have ${partQuantity}, need ${bomQuantity})</span>
                 </li>
             `);
         }
@@ -1406,9 +1415,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                 <li>
                     <span class="bom-part-label">
                         <span class="status-icon status-error">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
                         </span>
                         <strong>${bom[id].name}</strong>
                     </span>
@@ -1423,9 +1430,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                 <li>
                     <span class="bom-part-label">
                         <span class="status-icon status-warning">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><polygon points="12,2 22,21 2,21" fill="currentColor" opacity="0.15"/><rect x="11" y="10" width="2" height="5" fill="currentColor"/><rect x="11" y="17" width="2" height="2" fill="currentColor"/></svg>
                         </span>
                         <strong>${bom[id].name}</strong>
                     </span>
@@ -1438,9 +1443,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                 <li>
                     <span class="bom-part-label">
                         <span class="status-icon status-success">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><polyline points="8 12.5 11 16 16 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                         </span>
                         <strong>${bom[id].name}</strong>
                     </span>
@@ -1721,23 +1724,14 @@ function confirmDeleteProject() {
 function showAllProjectRequirements() {
     // First repair any malformed BOM data
     repairBOMData();
-    
     const partTotals = {};
-    // Processing all project requirements
-
     for (const projectId in projects) {
         const bom = projects[projectId].bom;
-        // Processing project BOM
-
         for (const partId in bom) {
             const normId = normalizeValue(partId);
             const bomPart = bom[partId];
-            
-            // Get name and quantity from the BOM part
             const name = bomPart.name || partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            const quantity = typeof bomPart.quantity === 'number' ? bomPart.quantity : 
-                           (typeof bomPart.quantity === 'string' ? parseInt(bomPart.quantity) || 0 : 0);
-
+            const quantity = typeof bomPart.quantity === 'number' ? bomPart.quantity : (typeof bomPart.quantity === 'string' ? parseInt(bomPart.quantity) || 0 : 0);
             if (!partTotals[normId]) {
                 partTotals[normId] = {
                     name: name,
@@ -1747,7 +1741,6 @@ function showAllProjectRequirements() {
                     status: 'missing'
                 };
             } else {
-                // Always update the name to the inventory name if found
                 for (const id in inventory) {
                     if (normalizeValue(id) === normId) {
                         partTotals[normId].name = inventory[id].name;
@@ -1755,8 +1748,6 @@ function showAllProjectRequirements() {
                     }
                 }
             }
-            
-            console.log(`Part ${partId} quantity:`, quantity, 'from BOM:', bomPart);
             partTotals[normId].total += quantity;
             partTotals[normId].projects.push({
                 project: projects[projectId].name,
@@ -1764,54 +1755,30 @@ function showAllProjectRequirements() {
             });
         }
     }
-
-    console.log('Part totals:', partTotals);
-
-    // Add inventory quantities and determine status
-    console.log('\n=== STARTING INVENTORY MATCHING ===');
-    console.log('partTotals keys:', Object.keys(partTotals));
-    console.log('inventory keys:', Object.keys(inventory));
-    
     for (const normId in partTotals) {
         const part = partTotals[normId];
         let foundInInventory = false;
-        
-        console.log(`\nLooking for part with normId: "${normId}"`);
-        console.log('Part object before matching:', JSON.stringify(part, null, 2));
-        
-        // Try to find the part in inventory
         for (const id in inventory) {
             const invNormId = normalizeValue(id);
-            console.log(`  Checking inventory id: "${id}" -> normalized: "${invNormId}"`);
             if (invNormId === normId) {
                 part.inventoryQty = inventory[id].quantity || 0;
                 foundInInventory = true;
-                console.log(`  ✓ MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
                 break;
             }
         }
-        
-        // Also try matching by name if normId didn't work
         if (!foundInInventory) {
-            console.log(`  No normId match, trying by name: "${part.name}"`);
             for (const id in inventory) {
                 const invPart = inventory[id];
                 if (normalizeValue(invPart.name) === normalizeValue(part.name)) {
                     part.inventoryQty = invPart.quantity || 0;
                     foundInInventory = true;
-                    console.log(`  ✓ NAME MATCH FOUND! Inventory quantity: ${part.inventoryQty}`);
                     break;
                 }
             }
         }
-        
-        // If not found in inventory, it's completely missing
         if (!foundInInventory) {
             part.inventoryQty = 0;
-            console.log(`  ✗ NOT FOUND in inventory`);
         }
-        
-        // Determine status based on actual quantities
         if (part.inventoryQty === 0) {
             part.status = 'missing';
         } else if (part.inventoryQty < part.total) {
@@ -1819,14 +1786,7 @@ function showAllProjectRequirements() {
         } else {
             part.status = 'sufficient';
         }
-        
-        console.log(`Final: ${part.name} - Have: ${part.inventoryQty}, Need: ${part.total}, Status: ${part.status}`);
     }
-
-    console.log('\n=== FINAL PART TOTALS ===');
-    console.log('Final partTotals:', JSON.stringify(partTotals, null, 2));
-
-    // Sort parts by status priority (missing first, then low stock, then sufficient)
     const sortedParts = Object.entries(partTotals).sort(([, a], [, b]) => {
         const statusOrder = { missing: 0, low: 1, sufficient: 2 };
         if (statusOrder[a.status] !== statusOrder[b.status]) {
@@ -1834,14 +1794,11 @@ function showAllProjectRequirements() {
         }
         return a.name.localeCompare(b.name);
     });
-
-    // Group parts by status
     const groupedParts = {
         missing: sortedParts.filter(([, part]) => part.status === 'missing'),
         low: sortedParts.filter(([, part]) => part.status === 'low'),
         sufficient: sortedParts.filter(([, part]) => part.status === 'sufficient')
     };
-
     // Build HTML with organized sections
     let html = `
         <div class="requirements-summary">
@@ -1861,79 +1818,54 @@ function showAllProjectRequirements() {
             </div>
         </div>
     `;
-
-    // Function to create section HTML
-    function createSection(title, parts, className) {
+    function createSimpleListSection(title, parts, className) {
         if (parts.length === 0) return '';
-        
         let sectionHtml = `
             <div class="requirements-section ${className}">
                 <h3 class="section-title">${title} (${parts.length})</h3>
-                <div class="parts-grid">
+                <ul class="requirements-simple-list">
         `;
-        
         parts.forEach(([normId, part]) => {
-            const statusIcon = {
-                missing: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-                low: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
-                sufficient: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
-            };
-            
+            let statusIcon = '';
+            if (part.status === 'missing') {
+                statusIcon = `<span class="status-icon status-error" title="Missing">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
+                </span>`;
+            } else if (part.status === 'low') {
+                statusIcon = `<span class="status-icon status-warning" title="Low Stock">
+                    <svg viewBox="0 0 24 24"><polygon points="12,2 22,21 2,21" fill="currentColor" opacity="0.15"/><rect x="11" y="10" width="2" height="5" fill="currentColor"/><rect x="11" y="17" width="2" height="2" fill="currentColor"/></svg>
+                </span>`;
+            } else {
+                statusIcon = `<span class="status-icon status-success" title="Sufficient">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><polyline points="8 12.5 11 16 16 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>`;
+            }
+            let usage = part.projects.map(p => `${p.project} (${p.quantity})`).join(', ');
             sectionHtml += `
-                <div class="part-card ${part.status}" data-status="${part.status}">
-                    <div class="part-header">
-                        <span class="status-icon status-${part.status}">${statusIcon[part.status]}</span>
-                        <span class="part-name">${part.name}</span>
-                    </div>
-                    <div class="part-quantities">
-                        <div class="quantity-row">
-                            <span class="qty-label">Have:</span>
-                            <span class="qty-value qty-${part.status}">${part.inventoryQty}</span>
-                        </div>
-                        <div class="quantity-row">
-                            <span class="qty-label">Need:</span>
-                            <span class="qty-value">${part.total}</span>
-                        </div>
-                        ${part.status !== 'sufficient' ? `
-                        <div class="quantity-row shortage">
-                            <span class="qty-label">Short:</span>
-                            <span class="qty-value shortage">${Math.max(0, part.total - part.inventoryQty)}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="project-breakdown">
-                        <span class="breakdown-label">Used in:</span>
-                        <div class="project-list">
-                            ${part.projects.map(p => `
-                                <span class="project-usage">${p.project} (${p.quantity})</span>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
+                <li class="requirements-list-item ${part.status}">
+                    ${statusIcon}
+                    <span class="part-name">${part.name}</span>
+                    <span class="part-qty-info">
+                        Have: <b>${part.inventoryQty}</b> / Need: <b>${part.total}</b>
+                        ${part.status !== 'sufficient' ? ` / Short: <b>${Math.max(0, part.total - part.inventoryQty)}</b>` : ''}
+                    </span>
+                    <span class="part-usage">[${usage}]</span>
+                </li>
             `;
         });
-        
-        sectionHtml += '</div></div>';
+        sectionHtml += '</ul></div>';
         return sectionHtml;
     }
-
-    // Add sections in priority order
     if (groupedParts.missing.length > 0) {
-        html += createSection('⚠️ Missing Parts', groupedParts.missing, 'missing');
+        html += createSimpleListSection('Missing Parts', groupedParts.missing, 'missing');
     }
-    
     if (groupedParts.low.length > 0) {
-        html += createSection('📉 Low Stock', groupedParts.low, 'low');
+        html += createSimpleListSection('Low Stock', groupedParts.low, 'low');
     }
-    
     if (groupedParts.sufficient.length > 0) {
-        html += createSection('✅ Sufficient Stock', groupedParts.sufficient, 'sufficient');
+        html += createSimpleListSection('Sufficient Stock', groupedParts.sufficient, 'sufficient');
     }
-
-    // Update the modal title
-    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 
-        'All Project Requirements';
-    
+    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 'All Project Requirements';
     document.getElementById('allProjectRequirements').innerHTML = html;
     document.getElementById('allProjectRequirementsModal').style.display = 'block';
     hideMobileNav();

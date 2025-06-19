@@ -1644,7 +1644,7 @@
           max-height: 85vh;
           display: flex;
           flex-direction: column;
-          padding-right: 25px;
+          padding: 15px;
       }
 
       #allProjectRequirementsModal h2 {

@@ -118,7 +118,7 @@
       }
   
       .content {
-          padding: 15px 0px;
+          padding: 15px 0px 0px;
           display: flex;
           flex-direction: column;
 
@@ -715,6 +715,13 @@
           z-index: 1001;
           max-width: 90vw;
           word-break: break-word;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 14px;
+          font-weight: 500;
+          will-change: transform;
+          backface-visibility: hidden;
       }
   
       .notification.show {
@@ -1637,6 +1644,7 @@
           max-height: 85vh;
           display: flex;
           flex-direction: column;
+          padding-right: 25px;
       }
 
       #allProjectRequirementsModal h2 {
@@ -1648,6 +1656,7 @@
       #allProjectRequirements {
           overflow-y: auto;
           flex: 1;
+          padding-right: 10px;
       }
 
       /* Requirements Summary Section */
@@ -3423,12 +3432,24 @@
 
 /* Enable hardware acceleration for animations */
 .inventory-item,
-.modal,
-.notification,
+.modal {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Mobile nav gets special hardware acceleration that doesn't conflict with translateY */
 .mobile-nav,
 .mobile-menu {
     will-change: transform;
-    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Notification gets special hardware acceleration that doesn't conflict with translateX */
+.notification {
+    will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
@@ -3437,6 +3458,16 @@
 .low-battery-mode * {
     animation-duration: 0s !important;
     transition-duration: 0s !important;
+}
+
+/* Exceptions: Keep essential transitions even in low battery mode */
+.low-battery-mode .notification {
+    transition-duration: var(--notification-duration) !important;
+}
+
+.low-battery-mode .mobile-nav,
+.low-battery-mode .mobile-menu {
+    transition-duration: 0.3s !important;
 }
 
 .slow-device .inventory-item:hover {
@@ -3476,11 +3507,6 @@
 
 /* Optimize transform and opacity animations */
 @media (prefers-reduced-motion: no-preference) {
-    .notification {
-        transition: transform var(--notification-duration) var(--notification-easing),
-                   opacity var(--notification-duration) var(--notification-easing);
-    }
-    
     .modal {
         transition: opacity 0.3s ease,
                    visibility 0.3s ease;
@@ -3489,6 +3515,11 @@
     .modal-content {
         transition: transform 0.3s ease;
     }
+}
+
+/* Notification always has transitions (even if user prefers reduced motion) */
+.notification {
+    transition: transform var(--notification-duration) var(--notification-easing) !important;
 }
 
 /* Performance-aware hover states */

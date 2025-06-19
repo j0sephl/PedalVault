@@ -98,6 +98,9 @@ document.addEventListener('DOMContentLoaded', function() {
  * This function connects all UI elements to their corresponding functionality
  */
 function initializeApp() {
+    // Clear any stuck notifications from previous sessions
+    clearStuckNotifications();
+    
     // =============================================================================
     // BUTTON REFERENCES - Main action buttons
     // =============================================================================
@@ -180,6 +183,18 @@ function initializeApp() {
     
     // Initialize the application data and display
     initializeInventory();
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            clearStuckNotifications();
+        }
+        // Test notification with Ctrl+Shift+N (or Cmd+Shift+N on Mac)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+            e.preventDefault();
+            testNotification();
+        }
+    });
 
     // ... existing code ...
     const bomAssistantBtn = DOM.get('bomAssistantBtn');
@@ -1057,14 +1072,86 @@ function handlePurchaseClick(partId) {
  */
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-    notification.classList.add('show');
     
-    // Auto-hide notification after 5 seconds
+    // Clear any existing timeout to prevent conflicts
+    if (notification.hideTimeout) {
+        clearTimeout(notification.hideTimeout);
+        notification.hideTimeout = null;
+    }
+    
+    // Force reset the notification completely
+    notification.className = 'notification';
+    notification.classList.remove('show', 'error');
+    notification.style.cssText = ''; // Clear any inline styles
+    notification.textContent = '';
+    
+    // Force reflow to ensure reset is applied
+    notification.offsetHeight;
+    
+    // Small delay to ensure the reset is complete before showing
     setTimeout(() => {
-        notification.classList.remove('show');
-    }, 5000);
+        notification.textContent = message;
+        notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+        
+        // Force another reflow before adding show class
+        notification.offsetHeight;
+        
+        notification.classList.add('show');
+        
+        // Auto-hide notification after 5 seconds
+        notification.hideTimeout = setTimeout(() => {
+            notification.classList.remove('show');
+            notification.hideTimeout = null;
+        }, 5000);
+    }, 100);
+}
+
+function clearStuckNotifications() {
+    const notification = document.getElementById('notification');
+    if (notification) {
+        // Clear any timeouts
+        if (notification.hideTimeout) {
+            clearTimeout(notification.hideTimeout);
+            notification.hideTimeout = null;
+        }
+        
+        // Force reset everything about the notification
+        notification.className = 'notification';
+        notification.classList.remove('show', 'error');
+        notification.textContent = '';
+        notification.style.cssText = ''; // Clear any inline styles
+        
+        // Force reflow to ensure styles are applied
+        notification.offsetHeight;
+        
+        console.log('Cleared stuck notification');
+    }
+}
+
+// Test function to debug notifications
+function testNotification() {
+    console.log('🔔 Testing notification system...');
+    const notification = document.getElementById('notification');
+    console.log('📍 Notification element:', notification);
+    console.log('🎨 Current classes:', notification.className);
+    console.log('🔧 Current styles:', notification.style.cssText);
+    console.log('📱 Body classes:', document.body.className);
+    
+    // Check computed styles
+    const computedStyle = window.getComputedStyle(notification);
+    console.log('💫 Computed transform:', computedStyle.transform);
+    console.log('⏱️ Computed transition:', computedStyle.transition);
+    console.log('🎯 Computed position:', computedStyle.position);
+    
+    // Check if low battery mode is active
+    const hasLowBattery = document.body.classList.contains('low-battery-mode');
+    console.log('🔋 Low battery mode active:', hasLowBattery);
+    
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    console.log('🎭 Prefers reduced motion:', prefersReducedMotion);
+    
+    showNotification('✅ Test notification - this should slide in smoothly!', 'success');
 }
 
 /**
@@ -2183,8 +2270,20 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
     const normalizedToCanonical = {};
     const duplicates = [];
     
+    // Safety check: ensure inventory exists and is valid
+    if (!inventory || typeof inventory !== 'object') {
+        console.warn('Invalid inventory object in mergeDuplicateInventoryEntries');
+        return;
+    }
+    
     // First pass: identify duplicates and choose canonical entries
     for (const [id, part] of Object.entries(inventory)) {
+        // Skip null or invalid parts
+        if (!part || !part.name) {
+            console.warn(`Skipping invalid part with id: ${id}`, part);
+            continue;
+        }
+        
         const normalizedId = normalizeValue(part.name);
         
         if (!normalizedToCanonical[normalizedId]) {
@@ -2214,6 +2313,12 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
     for (const { canonical, duplicate } of duplicates) {
         const canonicalPart = inventory[canonical];
         const duplicatePart = inventory[duplicate];
+        
+        // Safety check: ensure both parts still exist
+        if (!canonicalPart || !duplicatePart) {
+            console.warn(`Skipping merge - missing parts: canonical=${!!canonicalPart}, duplicate=${!!duplicatePart}`);
+            continue;
+        }
         
         // Merge quantities
         canonicalPart.quantity = (canonicalPart.quantity || 0) + (duplicatePart.quantity || 0);
@@ -2254,10 +2359,20 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
         if (project.bom) {
             const updatedBom = {};
             for (const [id, quantity] of Object.entries(project.bom)) {
-                const normalizedId = normalizeValue(inventory[id]?.name || '');
-                const canonicalId = normalizedToCanonical[normalizedId];
-                if (canonicalId) {
-                    updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
+                // Check if the inventory item still exists
+                if (inventory[id]) {
+                    const normalizedId = normalizeValue(inventory[id].name || '');
+                    const canonicalId = normalizedToCanonical[normalizedId];
+                    if (canonicalId && inventory[canonicalId]) {
+                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
+                    }
+                } else {
+                    // If the original part doesn't exist, try to find a canonical match by ID
+                    const normalizedId = normalizeValue(id);
+                    const canonicalId = normalizedToCanonical[normalizedId];
+                    if (canonicalId && inventory[canonicalId]) {
+                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
+                    }
                 }
             }
             project.bom = updatedBom;

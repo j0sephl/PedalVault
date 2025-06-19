@@ -1,86 +1,139 @@
-# PedalVault: Guitar Pedal Parts Inventory
-A modern, offline-friendly, mobile-first inventory and project management app for guitar pedal builders.
-Easily track your parts, manage projects, compare BOMs, and sync data across devices.
+# PedalVault Guitar Pedal Parts Inventory System
 
-# Features
-## Inventory Management:
-- Add, edit, delete, and reorder parts with quantities, purchase links, and optional NFC Tag IDs.
-![addPart](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnc3cW9hNXI4dWs2OG9wMHFvNzJ2eWFkdzFyYjBrbmk1NzlzZndnNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8Yl6UMh0uu993TPEnx/giphy.gif)
-## BOM Comparison:
-- Import a BOM (CSV/JSON), compare it to your inventory, and see what’s missing or low.
-![compare](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzI1cjN4Ynl3N2JvYzR0cDBkamtsYjAyODF6M3cxcjNyZm1uc2JzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/OqFfsPZsESJdZwPhAL/giphy.gif)
-## Export/Import:
-- Export your full inventory and projects as a CSV or JSON file for backup or transfer. Import on any device.
-## PWA (Progressive Web App):
-- Install on your phone or desktop for offline use and a native app feel.
-## Search & Sort:
-- Instantly search and sort your parts by name, quantity, or stock status.
-## Responsive Design:
-- Works beautifully on mobile, tablet, and desktop.
-## Customizable:
-- Add purchase URLs, NFC tag IDs, and more.
-## Dark Nord Theme:
-- Clean, modern, and easy on the eyes.
-## NFC Tag Integration:
-- Store an NFC Tag ID with any part for reference and searching.
-- Quick inventory adjustment: Program an NFC tag (using an app like NFC Tools) to open a URL like
-```
-https://your-app-url/?part=part_id&remove=1
-```
-(replace part_id with your actual part’s ID, e.g., resistor_10k).
+**The Ultimate Component Management System for DIY Guitar Pedal Builders**
 
-Scanning the tag with your phone will automatically subtract 1 from that part’s inventory—perfect for quick bin or bag management.
+[![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://web.dev/progressive-web-apps/)
+[![Mobile Optimized](https://img.shields.io/badge/Mobile-Optimized-blue.svg)](https://developers.google.com/web/fundamentals/design-and-ux/responsive/)
 
-Works on both iPhone and Android using the phone’s built-in NFC scanning and browser.
-# How to Use
-### 1.Add Parts
-- Click Add New Part.
-- Enter the part name, quantity, and (optionally) a purchase URL or NFC tag ID.
-### 2. Manage Inventory
-- Use the + and – buttons to adjust stock.
-- Click the pencil icon to edit, or the trash icon to delete a part.
-### 3. Projects & BOMs
-- Click Manage Projects to delete projects.
-- Import a BOM (CSV/JSON) to create a new project and compare it to your inventory.
-- View project details to see which parts are missing or low.
+> Transform your chaotic component drawer into an organized, efficient workshop. Track inventory, manage projects, and never run out of that crucial resistor mid-build again.
 
-### 4. Export/Import Data
-- Use the Export Data button to save your inventory and projects as a JSON file.
-- Use Import Data to restore or transfer your data to another device.
+## Why Guitar Pedal Inventory?
 
-### 5. Search & Sort
-- Use the search bar to filter parts by name.
-- Sort by name, quantity, or stock status using the dropdowns.
+DIY building guitar pedals is an fun, but managing components can be hard. PedalVault eliminates the frustration of:
 
-### 6. Offline & PWA
-- Install the app to your home screen for offline use.
-- All data is stored locally in your browser—no cloud required.
+- **Lost Components** - Never lose track of your resistors, capacitors, and ICs again
+- **Project Delays** - Know exactly what you have before starting a build
+- **Duplicate Purchases** - Stop buying components you already own
+- **BOM Confusion** - Automatically match your inventory against project requirements
 
-## Technical Details
-- Frontend: HTML, CSS (Nord theme), JavaScript
-- PWA: Manifest, service worker, offline support
-- Data Storage: localStorage (all data stays on your device)
-- Font: JetBrains Mono (self-hosted for offline/PWA support), Goldman for header
-- Icons: SVG and favicon included
-## Data Safety
-- Backup: Regularly export your data for backup.
-- Privacy: All data is stored locally and never sent to a server.
-## Import/Export Format
-- Exported JSON includes both inventory and projects:
-```
-{
-    "inventory": { ... },
-    "projects": { ... }
-  }
-```
+## Features That Matter
+
+### Smart Inventory Management
+- **Visual Stock Levels** - Color-coded indicators for low stock items
+- **Quick Adjustments** - Tap +/- buttons to update quantities instantly
+- **Auto-Detection** - Intelligent duplicate detection and merging
+- **Search & Filter** - Find components instantly with smart search
+- **NFC Functionality** - Use NFC to remove components from your inventory.
+
+### Project-Centric Workflow
+- **BOM Integration** - Import bills of materials from AI assistants or text
+- **Real-Time Status** - See what's missing, low stock, or ready to build
+- **Multi-Project Support** - Track components across multiple builds simultaneously
+
+### AI-Powered Assistance
+- **BOM Assistant** - Built-in prompts for ChatGPT, Claude, and other AI tools
+- **Smart Capacitor Suggestions** - Auto-categorize capacitor types
+- **Fuzzy Matching** - Automatically link similar component names across projects
+
+### Mobile-First Design
+- **PWA Technology** - Install as a native app on any device
+- **Offline Capable** - Works without internet connection
+- **Touch Optimized** - Designed for mobile and tablet use
+- **Responsive Layout** - Perfect on desktop, tablet, or phone
+
+## Perfect For
+
+- **DIY Pedal Builders** - From beginners to experts
+- **Electronics Hobbyists** - Managing any electronic component inventory
+- **Workshop Managers** - Small team component tracking
+- **Students & Educators** - Learning electronics and project management
+
+
+## Getting Started (60 seconds)
+
+1. **Open** [PedalVault](https://www.pedalvault.app) in your browser
+2. **Add** your first component with the "+ Add Part" button
+3. **Create** a project and import a BOM
+4. **Track** your build progress in real-time
+
+No signups or subscriptions.
+
+## Screenshots
+
+### Inventory Management
+![Inventory View](screenshots/inventory-view.png)
+*Clean, organized component listing with instant search and filtering*
+
+### Project Tracking  
+![Project Dashboard](screenshots/project-view.png)
+*Visual project status with missing components highlighted*
+
+### Mobile Experience
+![Mobile Interface](screenshots/mobile-view.png)
+*Touch-optimized interface perfect for workshop use*
+
+## Completely Free to Use
+
+PedalVault is completely free for everyone - personal, educational, and commercial use. No ads, no subscriptions, no data collection.
+
+**Code viewing and learning** is encouraged, but redistribution or derivative works require permission.
+
+**Support Development**: If PedalVault saves you time and frustration, consider [buying me a coffee](https://buymeacoffee.com/yourhandle)
+
+## For Developers
+
+Built with vanilla JavaScript and modern web standards:
+
+- **Progressive Web App** - Installable and offline-capable
+- **Responsive Design** - Mobile-first CSS Grid and Flexbox
+- **Performance Optimized** - Virtual scrolling, lazy loading, efficient rendering
+- **Accessible** - Screen reader friendly and keyboard navigable
+
 ## Contributing
-Pull requests and suggestions are welcome.
 
-If you find a bug or have a feature request, please open an issue or contact the maintainer.
-## Feedback
-Questions, feedback, or want to say thanks?
+We welcome contributions! Whether it's:
+- Bug reports
+- Feature suggestions  
+- Code improvements
+- Documentation updates
 
-Open an issue or reach out via Buy Me a Coffee.
+See our [Contributing Guide](CONTRIBUTING.md) to get started.
+
 ## License
 
-### Enjoy building pedals and keeping your parts organized!
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+
+**You are free to:**
+- **Share** - Copy and redistribute the material in any medium or format
+- **Adapt** - Remix, transform, and build upon the material
+
+**Under the following terms:**
+- **Attribution** - You must give appropriate credit and indicate if changes were made
+- **NonCommercial** - You may not use the material for commercial purposes
+- **ShareAlike** - If you remix or transform the material, you must distribute under the same license
+
+For commercial licensing, please contact [your-email].
+
+---
+
+## Ready to Organize Your Workshop?
+
+**[Try Guitar Pedal Inventory Now →](https://www.pedalvault.app)**
+
+*No installation required. Works in any modern browser.*
+
+## License
+
+**Creative Commons Attribution-ShareAlike 4.0 International License**
+
+- **Free to Use**: Personal, educational, and commercial use of PedalVault is completely free
+- **Modify & Share**: You can adapt, remix, and build upon the code
+- **Open Source**: Fork, contribute, and create derivative works
+- **Attribution Required**: Must credit the original creator
+- **ShareAlike**: Derivative works must use the same license
+- **Commercial Derivatives**: If you create a competing commercial product, please consider compensating the original developer
+
+**Fair Play**: While legally you can create commercial derivatives under this license, the community appreciates when successful commercial projects give back to original creators.
+
+[Full License Text](https://creativecommons.org/licenses/by-sa/4.0/)

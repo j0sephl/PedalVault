@@ -52,7 +52,7 @@ DIY building guitar pedals is an fun, but managing components can be hard. Pedal
 3. **Create** a project and import a BOM
 4. **Track** your build progress in real-time
 
-# **No signups or subscriptions.**
+### **No signups or subscriptions.**
 
 ## Screenshots
 

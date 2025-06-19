@@ -1,3 +1,5 @@
+![PedalVault](https://github.com/j0sephl/PedalVault/blob/main/icons/pedalvault.svg)
+
 # PedalVault Guitar Pedal Parts Inventory System
 
 **The Ultimate Component Management System for DIY Guitar Pedal Builders**

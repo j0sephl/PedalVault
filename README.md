@@ -92,13 +92,11 @@ Built with vanilla JavaScript and modern web standards:
 
 ## Contributing
 
-We welcome contributions! Whether it's:
+Welcome contributions!
 - Bug reports
 - Feature suggestions  
 - Code improvements
 - Documentation updates
-
-See our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ## License
 

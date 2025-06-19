@@ -79,7 +79,7 @@ PedalVault is completely free for everyone - personal, educational, and commerci
 
 **Code viewing and learning** is encouraged, but redistribution or derivative works require permission.
 
-**Support Development**: If PedalVault saves you time and frustration, consider [buying me a coffee](coff.ee/j0sephl)
+**Support Development**: If PedalVault saves you time and frustration, consider [buying me a coffee or more pedal parts](https://buymeacoffee.com/j0sephl)
 
 ## For Developers
 

@@ -22,35 +22,28 @@ DIY building guitar pedals is an fun, but managing components can be hard. Pedal
 ## Features That Matter
 
 ### Smart Inventory Management
-- **Visual Stock Levels** - Color-coded indicators for low stock items
-- **Quick Adjustments** - Tap +/- buttons to update quantities instantly
-- **Auto-Detection** - Intelligent duplicate detection and merging
-- **Search & Filter** - Find components instantly with smart search
+- **Visual Stock Levels** - Color-coded indicators for low stock items.
+- **Quick Adjustments** - Tap +/- buttons to update quantities instantly.
+- **Auto-Detection** - Intelligent duplicate detection and merging.
+- **Search & Filter** - Find components instantly with smart search.
+- **Website links** - Set links to reorder parts.
 - **NFC Functionality** - Use NFC to remove components from your inventory.
 
 ### Project-Centric Workflow
-- **BOM Integration** - Import bills of materials from AI assistants or text
-- **Real-Time Status** - See what's missing, low stock, or ready to build
-- **Multi-Project Support** - Track components across multiple builds simultaneously
+- **BOM Integration** - Import bills of materials from AI assistants or text.
+- **Real-Time Status** - See what's missing, low stock, or ready to build.
+- **Multi-Project Support** - Track components across multiple builds simultaneously.
 
 ### AI-Powered Assistance
-- **BOM Assistant** - Built-in prompts for ChatGPT, Claude, and other AI tools
-- **Smart Capacitor Suggestions** - Auto-categorize capacitor types
-- **Fuzzy Matching** - Automatically link similar component names across projects
+- **BOM Assistant** - Built-in prompts for ChatGPT, Claude, and other AI tools.
+- **Smart Capacitor Suggestions** - Auto-categorize capacitor types.
+- **Fuzzy Matching** - Automatically link similar component names across projects.
 
 ### Mobile-First Design
-- **PWA Technology** - Install as a native app on any device
-- **Offline Capable** - Works without internet connection
-- **Touch Optimized** - Designed for mobile and tablet use
-- **Responsive Layout** - Perfect on desktop, tablet, or phone
-
-## Perfect For
-
-- **DIY Pedal Builders** - From beginners to experts
-- **Electronics Hobbyists** - Managing any electronic component inventory
-- **Workshop Managers** - Small team component tracking
-- **Students & Educators** - Learning electronics and project management
-
+- **PWA Technology** - Install as a native app on any device.
+- **Offline Capable** - Works without internet connection.
+- **Touch Optimized** - Designed for mobile and tablet use.
+- **Responsive Layout** - Perfect on desktop, tablet, or phone.
 
 ## Getting Started (60 seconds)
 
@@ -59,7 +52,7 @@ DIY building guitar pedals is an fun, but managing components can be hard. Pedal
 3. **Create** a project and import a BOM
 4. **Track** your build progress in real-time
 
-No signups or subscriptions.
+# **No signups or subscriptions.**
 
 ## Screenshots
 

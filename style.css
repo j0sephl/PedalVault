@@ -184,6 +184,8 @@
           overflow-y: auto;
           position: relative;
           contain: layout paint;
+          content-visibility: auto;
+          contain-intrinsic-size: 1px 5000px;
       }
   
       .inventory-header {
@@ -319,6 +321,7 @@
           transition: background-color 0.2s ease;
           font-size: 8px;
           gap: 10px;
+          contain: layout style paint;
       }
   
       .inventory-item:hover {
@@ -612,6 +615,12 @@
           padding: 20px;
           -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
           touch-action: none; /* Prevent browser handling of touch events */
+          opacity: 0;
+          transition: opacity 0.3s ease;
+      }
+      
+      .modal.show {
+          opacity: 1;
       }
   
       .modal-content {
@@ -627,7 +636,23 @@
           touch-action: pan-y; /* Allow vertical scrolling within modal content */
           -webkit-overflow-scrolling: touch;
           overflow-y: auto;
-
+          transform: translateY(-30px);
+          transition: transform 0.3s ease;
+      }
+      
+      .modal.show .modal-content {
+          transform: translateY(0);
+      }
+      
+      /* Respect user motion preferences */
+      @media (prefers-reduced-motion: reduce) {
+          .modal, .modal-content {
+              transition: none !important;
+          }
+          
+          .modal-content {
+              transform: none !important;
+          }
       }
   
       .modal-content-wide {
@@ -2792,6 +2817,19 @@
     border-top: 1px solid var(--nord3);
     padding: 8px 0;
     z-index: 1100;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.33, 0.00, 0.00, 1.00);
+}
+
+.mobile-nav.show {
+    transform: translateY(0);
+}
+
+/* Respect user motion preferences for mobile nav */
+@media (prefers-reduced-motion: reduce) {
+    .mobile-nav {
+        transition: none !important;
+    }
 }
 
 .mobile-nav-item {
@@ -3257,7 +3295,7 @@
   white-space: nowrap;
 }
 .part-usage {
-  color: #4C566A;
+  color: var(--nord8); /* Bright blue instead of gray */
   font-size: 12px;
   margin-left: auto;
   flex: 0 0 180px;
@@ -3265,8 +3303,59 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: relative;
+  cursor: help;
 }
-@media (max-width: 600px) {
+
+/* Add tooltip on hover for truncated part-usage */
+.part-usage:hover::after {
+  content: attr(title);
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: var(--nord1);
+  color: var(--nord6);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--nord3);
+  z-index: 1000;
+  white-space: normal;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 11px;
+  line-height: 1.3;
+  word-break: break-word;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.part-usage:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Alternative: Smart truncation with fade effect */
+.part-usage.fade-truncate {
+  background: linear-gradient(to left, transparent 0%, var(--nord1) 20px);
+  -webkit-background-clip: text;
+  background-clip: text;
+  position: relative;
+}
+
+.part-usage.fade-truncate::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to right, transparent, var(--nord1));
+  pointer-events: none;
+}
+
+@media (max-width: 1024px) {
   .requirements-simple-list {
     max-width: 100vw;
     overflow-x: hidden;
@@ -3281,7 +3370,7 @@
     overflow-x: hidden;
     flex-wrap: wrap;
   }
-  .part-name, .part-usage, .part-qty-info {
+  .part-name, .part-qty-info {
     max-width: 100vw;
     min-width: 0;
     white-space: normal !important;
@@ -3289,14 +3378,164 @@
     overflow-wrap: break-word;
     text-align: left;
   }
+  .requirements-list-item .part-usage {
+    margin-left: 0 !important;
+    font-size: 11px !important;
+    /* Show more text on tablet/mobile by allowing wrapping */
+    white-space: normal !important;
+    text-overflow: initial !important;
+    overflow: visible !important;
+    flex: 1 1 100% !important;
+    margin-top: 4px !important;
+    padding: 4px 8px !important;
+    background: rgba(136, 192, 208, 0.15) !important;
+    border-radius: 4px !important;
+    border-left: 2px solid var(--nord8) !important;
+    text-align: left !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Hide tooltip on tablet/mobile since text is already visible */
+  .part-usage:hover::after {
+    display: none;
+  }
+}
+
+/* Desktop-only: Keep truncation with tooltip for very wide screens */
+@media (min-width: 1025px) {
   .part-usage {
-    margin-left: 0;
-    font-size: 11px;
+    /* Only truncate on desktop where there's plenty of space for tooltips */
+    max-width: 200px; /* Slightly wider than before */
   }
 }
 
 #allProjectRequirementsModal .modal-content {
   max-width: 100vw;
   overflow-x: hidden;
+}
+  
+/* =============================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
+/* Enable hardware acceleration for animations */
+.inventory-item,
+.modal,
+.notification,
+.mobile-nav,
+.mobile-menu {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Low battery mode optimizations */
+.low-battery-mode * {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+}
+
+.slow-device .inventory-item:hover {
+    transform: none !important;
+}
+
+.slow-device .part-card.has-purchase-url:hover {
+    transform: none !important;
+}
+
+/* Optimize expensive operations */
+.inventory-list {
+    contain: layout paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 5000px;
+}
+
+.inventory-item {
+    contain: layout style paint;
+}
+
+/* Efficient scrollbar styling with reduced repaints */
+::-webkit-scrollbar {
+    width: 12px;
+    background: var(--nord1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--nord4);
+    border-radius: 0;
+    border: 2px solid var(--nord1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--nord10);
+}
+
+/* Optimize transform and opacity animations */
+@media (prefers-reduced-motion: no-preference) {
+    .notification {
+        transition: transform var(--notification-duration) var(--notification-easing),
+                   opacity var(--notification-duration) var(--notification-easing);
+    }
+    
+    .modal {
+        transition: opacity 0.3s ease,
+                   visibility 0.3s ease;
+    }
+    
+    .modal-content {
+        transition: transform 0.3s ease;
+    }
+}
+
+/* Performance-aware hover states */
+@media (hover: hover) and (pointer: fine) {
+    .inventory-item:hover {
+        background-color: var(--nord3);
+    }
+    
+    .btn:hover,
+    .action-icon:hover,
+    .quantity-btn:hover {
+        transform: translateY(-1px);
+    }
+}
+
+/* Reduce layout thrashing */
+.project-tag,
+.type-pill {
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* Optimize grid layouts */
+.parts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 15px;
+    contain: layout;
+}
+
+/* Efficient mobile optimizations */
+@media (max-width: 1024px) {
+    .inventory-item {
+        contain: layout style;
+    }
+    
+    /* Reduce expensive transforms on mobile */
+    .btn:hover,
+    .action-icon:hover,
+    .quantity-btn:hover {
+        transform: none;
+    }
+    
+    /* Simplify animations */
+    .mobile-nav,
+    .mobile-menu {
+        transition: transform 0.3s cubic-bezier(0.33, 0.00, 0.00, 1.00);
+    }
 }
   

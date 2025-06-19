@@ -173,6 +173,11 @@ function initializeApp() {
     if (projectFilter) projectFilter.addEventListener('change', filterByProject);
     if (sortDropdown) sortDropdown.addEventListener('change', changeSortOrder);
 
+    // Initialize performance optimizations
+    initializeIntersectionObserver();
+    detectDevicePerformance();
+    checkBatteryOptimizations();
+    
     // Initialize the application data and display
     initializeInventory();
 
@@ -257,7 +262,7 @@ function normalizeValue(str) {
  * Persists project information including BOMs between browser sessions
  */
 function saveProjects() {
-    localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
+    debouncedSaveProjects();
 }
 
 /**
@@ -265,7 +270,7 @@ function saveProjects() {
  * Persists component inventory between browser sessions
  */
 function saveInventory() {
-    localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+    debouncedSaveInventory();
 }
 
 // =============================================================================
@@ -285,7 +290,12 @@ function initializeInventory() {
     // Try to load existing inventory data from browser storage
     const savedInventory = localStorage.getItem('guitarPedalInventory');
     if (savedInventory) {
-        inventory = JSON.parse(savedInventory);
+        try {
+            inventory = decompressData(savedInventory);
+        } catch (error) {
+            console.warn('Failed to decompress inventory data, trying fallback:', error);
+            inventory = JSON.parse(savedInventory);
+        }
         // Auto-merge any duplicate entries that may have been created (silently)
         mergeDuplicateInventoryEntries(false);
     } else {
@@ -328,7 +338,7 @@ function initializeInventory() {
  * Show the export options modal dialog
  */
 function showExportModal() {
-    document.getElementById('exportModal').style.display = 'block';
+    showModal('exportModal');
     hideMobileNav();
 }
 
@@ -336,7 +346,7 @@ function showExportModal() {
  * Hide the export options modal dialog
  */
 function hideExportModal() {
-    document.getElementById('exportModal').style.display = 'none';
+    hideModal('exportModal');
     showMobileNav();
 }
 
@@ -584,107 +594,138 @@ function changeSortOrder() {
 // INVENTORY DISPLAY AND RENDERING
 // =============================================================================
 
-/**
- * Render the main inventory display
- * Creates responsive HTML for each inventory item with:
- * - Component name, quantity, and type
- * - Project tags showing which projects need this component
- * - Quantity adjustment buttons
- * - Edit, delete, and purchase link buttons
- * - Responsive layout for mobile and desktop
- */
+// Add virtual scrolling configuration
+const VIRTUAL_SCROLLING = {
+    enabled: false, // Will be enabled automatically for large inventories
+    itemHeight: 80, // Approximate height of each inventory item
+    visibleBuffer: 10 // Extra items to render outside viewport
+};
+
 function displayInventory() {
     const inventoryItems = document.getElementById('inventoryItems');
+    const isMobile = window.innerWidth <= 1024;
+    
     inventoryItems.innerHTML = '';
-
-    // Responsive design: adjust project tag display based on screen size
-    let maxTags = 3;  // Default number of project tags to show
-    if (window.innerWidth <= 1280) maxTags = 1;  // Fewer tags on smaller screens
-    const isMobile = window.innerWidth <= 1024;  // Mobile layout threshold
-
+    
+    // Get filtered and sorted entries (filtering is already done in getSortedInventoryEntries)
     const sortedEntries = getSortedInventoryEntries();
-    sortedEntries.forEach(([id, part]) => {
-        const item = document.createElement('div');
-        item.className = 'inventory-item';
-        item.setAttribute('data-part-id', id);
 
-        const projectEntries = part.projects ? Object.entries(part.projects) : [];
-        let projectTagsHtml = '';
-        if (projectEntries.length > 0) {
-            if (isMobile) {
-                // On mobile, always show a clickable tag for projects
-                projectTagsHtml = `
-                    <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">
-                        +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
-                    </span>
-                `;
-            } else {
-                projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
-                    const project = projects[projectId];
-                    return project ? `
-                        <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
-                            ${project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name} (${qty})
-                        </span>
-                    ` : '';
-                }).join('');
-                
-                if (projectEntries.length > maxTags) {
-                    const moreCount = projectEntries.length - maxTags;
-                    projectTagsHtml += `
-                        <span class="project-tag more-tags" title="Show all projects">+${moreCount} more</span>
-                    `;
-                }
-            }
+    // Enable virtual scrolling for large inventories (desktop only)
+    const shouldUseVirtualScrolling = sortedEntries.length > 200;
+    
+    if (shouldUseVirtualScrolling && !isMobile) {
+        renderVirtualizedInventory(sortedEntries, inventoryItems);
+    } else {
+        renderFullInventory(sortedEntries, inventoryItems);
+    }
+}
+
+function renderVirtualizedInventory(entries, container) {
+    const containerHeight = container.offsetHeight || 600;
+    const visibleItems = Math.ceil(containerHeight / VIRTUAL_SCROLLING.itemHeight) + VIRTUAL_SCROLLING.visibleBuffer;
+    
+    let startIndex = 0;
+    let endIndex = Math.min(visibleItems, entries.length);
+    
+    function renderVisibleItems() {
+        const fragment = document.createDocumentFragment();
+        
+        for (let i = startIndex; i < endIndex; i++) {
+            const [id, part] = entries[i];
+            const item = createInventoryItemElement(id, part);
+            fragment.appendChild(item);
         }
-
-        // --- Type pill logic ---
-        let typePillHtml = '';
-        const isCap = /\b(capacitor|cap)\b/i.test(part.name);
-        if (isCap && part.type) {
-            const typeClass = part.type.toLowerCase().replace(/\s/g, '');
-            typePillHtml = `<span class="type-pill ${typeClass}">${part.type}</span>`;
-        } else if (isCap && !part.type) {
-            typePillHtml = `<span class="set-type-pill" data-set-type="${id}" title="Set capacitor type">Set Type</span>`;
+        
+        container.innerHTML = '';
+        container.appendChild(fragment);
+    }
+    
+    // Initial render
+    renderVisibleItems();
+    
+    // Add scroll listener for virtual scrolling
+    container.addEventListener('scroll', debounce(() => {
+        const scrollTop = container.scrollTop;
+        const newStartIndex = Math.floor(scrollTop / VIRTUAL_SCROLLING.itemHeight);
+        const newEndIndex = Math.min(newStartIndex + visibleItems, entries.length);
+        
+        if (newStartIndex !== startIndex || newEndIndex !== endIndex) {
+            startIndex = newStartIndex;
+            endIndex = newEndIndex;
+            renderVisibleItems();
         }
+    }, 16)); // 60fps
+}
 
-        // Responsive: type pill below name on mobile, inline on desktop
+function renderFullInventory(entries, container) {
+    const fragment = document.createDocumentFragment();
+    
+    entries.forEach(([id, part]) => {
+        const item = createInventoryItemElement(id, part);
+        fragment.appendChild(item);
+    });
+    
+    container.appendChild(fragment);
+}
+
+function createInventoryItemElement(id, part) {
+    const isMobile = window.innerWidth <= 1024;
+    const maxTags = isMobile ? 0 : (window.innerWidth > 1280 ? 3 : 1);
+    
+    const item = document.createElement('div');
+    item.className = 'inventory-item';
+    item.setAttribute('data-part-id', id);
+
+    const projectEntries = part.projects ? Object.entries(part.projects) : [];
+    let projectTagsHtml = '';
+    if (projectEntries.length > 0) {
         if (isMobile) {
-            item.innerHTML = `
-                <div class="item-left">
-                    <div class="item-name" title="${escapeHtml(part.name)}">
-                        <span class="part-name-text">${escapeHtml(part.name)}</span>
-                        ${typePillHtml}
-                    </div>
-                    <div class="project-tags">${projectTagsHtml}</div>
-                </div>
-                <div class="item-controls">
-                    <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
-                        <button class="quantity-btn" data-action="decrease">-</button>
-                        <span class="quantity-number">${part.quantity}</span>
-                        <button class="quantity-btn" data-action="increase">+</button>
-                    </div>
-                    <div class="item-actions">
-                        <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
-                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                        </button>
-                        <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
-                            <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                        </button>
-                        <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
-                            <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
-                        </button>
-                    </div>
-                </div>
+            // On mobile, always show a clickable tag for projects
+            projectTagsHtml = `
+                <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">
+                    +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
+                </span>
             `;
         } else {
-            item.innerHTML = `
-                <div class="item-info">
-                    <div class="item-name" title="${escapeHtml(part.name)}">
-                        <span class="part-name-text">${escapeHtml(part.name)}</span>
-                        ${typePillHtml}
-                    </div>
-                    <div class="project-tags">${projectTagsHtml}</div>
+            projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
+                const project = projects[projectId];
+                return project ? `
+                    <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
+                        ${project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name} (${qty})
+                    </span>
+                ` : '';
+            }).join('');
+            
+            if (projectEntries.length > maxTags) {
+                const moreCount = projectEntries.length - maxTags;
+                projectTagsHtml += `
+                    <span class="project-tag more-tags" title="Show all projects">+${moreCount} more</span>
+                `;
+            }
+        }
+    }
+
+    // --- Type pill logic ---
+    let typePillHtml = '';
+    const isCap = /\b(capacitor|cap)\b/i.test(part.name);
+    if (isCap && part.type) {
+        const typeClass = part.type.toLowerCase().replace(/\s/g, '');
+        typePillHtml = `<span class="type-pill ${typeClass}">${part.type}</span>`;
+    } else if (isCap && !part.type) {
+        typePillHtml = `<span class="set-type-pill" data-set-type="${id}" title="Set capacitor type">Set Type</span>`;
+    }
+
+    // Responsive: type pill below name on mobile, inline on desktop
+    if (isMobile) {
+        item.innerHTML = `
+            <div class="item-left">
+                <div class="item-name" title="${escapeHtml(part.name)}">
+                    <span class="part-name-text">${escapeHtml(part.name)}</span>
+                    ${typePillHtml}
                 </div>
+                <div class="project-tags">${projectTagsHtml}</div>
+            </div>
+            <div class="item-controls">
                 <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
                     <button class="quantity-btn" data-action="decrease">-</button>
                     <span class="quantity-number">${part.quantity}</span>
@@ -701,52 +742,69 @@ function displayInventory() {
                         <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
                     </button>
                 </div>
-            `;
-        }
+            </div>
+        `;
+    } else {
+        item.innerHTML = `
+            <div class="item-info">
+                <div class="item-name" title="${escapeHtml(part.name)}">
+                    <span class="part-name-text">${escapeHtml(part.name)}</span>
+                    ${typePillHtml}
+                </div>
+                <div class="project-tags">${projectTagsHtml}</div>
+            </div>
+            <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                <button class="quantity-btn" data-action="decrease">-</button>
+                <span class="quantity-number">${part.quantity}</span>
+                <button class="quantity-btn" data-action="increase">+</button>
+            </div>
+            <div class="item-actions">
+                <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+                <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+                <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                    <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+                </button>
+            </div>
+        `;
+    }
 
-        // Add click handlers for all project tags
-        item.querySelectorAll('.project-tag').forEach(tag => {
-            tag.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Project tag clicked
-                
-                if (tag.classList.contains('more-tags')) {
-                    // Always show all project tags modal for "more-tags" button
-                    showAllProjectTagsModal(id);
-                } else {
-                    // For individual project tags
-                    const projectId = tag.getAttribute('data-project-id');
-                    // Individual tag clicked
-                    if (projectId) {
-                        if (isMobile) {
-                            // On mobile, show all project tags modal instead of project details
-                            showAllProjectTagsModal(id);
-                        } else {
-                            // On desktop, show project details
-                            showProjectDetails(projectId);
-                        }
-                    }
-                }
-            });
+    // Add event listeners
+    const decreaseBtn = item.querySelector('[data-action="decrease"]');
+    const increaseBtn = item.querySelector('[data-action="increase"]');
+    
+    if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
+    if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
+
+    // Add project tag click handlers
+    const projectTags = item.querySelectorAll('.project-tag');
+    projectTags.forEach(tag => {
+        tag.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const projectId = tag.getAttribute('data-project-id');
+            const partId = tag.getAttribute('data-part-id');
+            
+            if (projectId) {
+                showProjectDetails(projectId);
+            } else if (partId) {
+                showAllProjectTagsModal(partId);
+            }
         });
-
-        // Restore quantity button event listeners
-        const decreaseBtn = item.querySelector('[data-action="decrease"]');
-        const increaseBtn = item.querySelector('[data-action="increase"]');
-        if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
-        if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
-
-        // Add click handler for Set Type pill
-        const setTypePill = item.querySelector('.set-type-pill');
-        if (setTypePill) {
-            setTypePill.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showEditPartModal(id);
-            });
-        }
-
-        inventoryItems.appendChild(item);
     });
+
+    // Set type pill handler
+    const setTypePill = item.querySelector('.set-type-pill');
+    if (setTypePill) {
+        setTypePill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showEditPartModal(id);
+        });
+    }
+
+    return item;
 }
 
 function adjustStockInline(partId, action) {
@@ -771,12 +829,12 @@ function adjustStockInline(partId, action) {
 }
 
 function showAddPartModal() {
-    document.getElementById('addPartModal').style.display = 'block';
+    showModal('addPartModal');
     hideMobileNav();
 }
 
 function hideAddPartModal() {
-    document.getElementById('addPartModal').style.display = 'none';
+    hideModal('addPartModal');
     document.getElementById('newPartName').value = '';
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
@@ -815,12 +873,12 @@ function showEditPartModal(partId) {
             typeSuggestion.textContent = '';
         }
     }
-    document.getElementById('editPartModal').style.display = 'block';
+    showModal('editPartModal');
     hideMobileNav();
 }
 
 function hideEditPartModal() {
-    document.getElementById('editPartModal').style.display = 'none';
+    hideModal('editPartModal');
     editingPartId = null;
     showMobileNav();
 }
@@ -906,12 +964,12 @@ function showDeletePartModal(partId) {
     const part = inventory[partId];
     document.getElementById('deletePartMessage').textContent = 
         `Are you sure you want to delete "${part.name}"? This action cannot be undone.`;
-    document.getElementById('deletePartModal').style.display = 'block';
+    showModal('deletePartModal');
     hideMobileNav();
 }
 
 function hideDeletePartModal() {
-    document.getElementById('deletePartModal').style.display = 'none';
+    hideModal('deletePartModal');
     deletingPartId = null;
     showMobileNav();
 }
@@ -1039,7 +1097,12 @@ function checkUrlForPart() {
 function initializeProjects() {
     const savedProjects = localStorage.getItem('guitarPedalProjects');
     if (savedProjects) {
-        projects = JSON.parse(savedProjects);
+        try {
+            projects = decompressData(savedProjects);
+        } catch (error) {
+            console.warn('Failed to decompress projects data, trying fallback:', error);
+            projects = JSON.parse(savedProjects);
+        }
         updateProjectFilter();
     }
 }
@@ -1224,12 +1287,12 @@ function showProjectDetails(projectId) {
     
     // Show the modal
     console.log('Showing project details modal');
-    document.getElementById('projectDetailsModal').style.display = 'block';
+    showModal('projectDetailsModal');
     hideMobileNav();
 }
 
 function hideProjectDetailsModal() {
-    document.getElementById('projectDetailsModal').style.display = 'none';
+    hideModal('projectDetailsModal');
     showMobileNav();
 }
 
@@ -1255,15 +1318,13 @@ function removeProjectTag(partId, projectId) {
 }
 
 function showProjectNameModal() {
-    const modal = document.getElementById('projectNameModal');
-    modal.classList.add('show');
+    showModal('projectNameModal');
     document.getElementById('projectNameInput').value = '';
     document.getElementById('projectNameInput').focus();
 }
 
 function hideProjectNameModal() {
-    const modal = document.getElementById('projectNameModal');
-    modal.classList.remove('show');
+    hideModal('projectNameModal');
     pendingBomData = null;
     // Also clear the input for safety
     document.getElementById('projectNameInput').value = '';
@@ -1294,11 +1355,11 @@ function confirmProjectName() {
         displayInventory();
         showNotification(`Created project: ${projectName}`);
         // If Edit Part modal is open, refresh it to show the new project
-        if (document.getElementById('editPartModal').style.display === 'block' && editingPartId) {
+        if (document.getElementById('editPartModal').classList.contains('show') && editingPartId) {
             showEditPartModal(editingPartId);
         }
         // If Project Management modal is open, refresh it to show the new project
-        if (document.getElementById('projectManagementModal').style.display === 'block') {
+        if (document.getElementById('projectManagementModal').classList.contains('show')) {
             showProjectManagementModal();
         }
     }
@@ -1462,7 +1523,6 @@ function createProjectFromBom(projectName, projectId, bom) {
         </div>
         <ul class="project-info">${results.join("")}</ul>
     `;
-    document.getElementById("bomModal").style.display = "block";
     showBOMModal();
 }
 
@@ -1598,12 +1658,12 @@ function addMissingParts() {
 }
 
 function showBOMModal() {
-    document.getElementById('bomModal').style.display = 'block';
+    showModal('bomModal');
     hideMobileNav();
 }
 
 function hideBOMModal() {
-    document.getElementById('bomModal').style.display = 'none';
+    hideModal('bomModal');
     window.currentBom = null;
     showMobileNav();
 }
@@ -1641,15 +1701,12 @@ function showProjectManagementModal() {
         projectList.appendChild(projectElement);
     }
     
-    document.getElementById('projectManagementModal').style.display = 'block';
+    showModal('projectManagementModal');
     hideMobileNav();
 }
 
 function hideProjectManagementModal() {
-    const modal = document.getElementById('projectManagementModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    hideModal('projectManagementModal');
     showMobileNav();
 }
 
@@ -1661,16 +1718,13 @@ function showDeleteProjectModal(projectId) {
     
     if (modal && message) {
         message.textContent = `Are you sure you want to delete "${project.name}"? This action cannot be undone.`;
-        modal.style.display = 'block';
+        showModal('deleteProjectModal');
     }
     hideMobileNav();
 }
 
 function hideDeleteProjectModal() {
-    const modal = document.getElementById('deleteProjectModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    hideModal('deleteProjectModal');
     deletingProjectId = null;
     showMobileNav();
 }
@@ -1703,16 +1757,8 @@ function confirmDeleteProject() {
     displayInventory();
     
     // Hide modals
-    const deleteModal = document.getElementById('deleteProjectModal');
-    const manageModal = document.getElementById('projectManagementModal');
-    
-    if (deleteModal) {
-        deleteModal.style.display = 'none';
-    }
-    
-    if (manageModal) {
-        manageModal.style.display = 'none';
-    }
+    hideModal('deleteProjectModal');
+    hideModal('projectManagementModal');
     
     // Reset state
     deletingProjectId = null;
@@ -1840,7 +1886,9 @@ function showAllProjectRequirements() {
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><polyline points="8 12.5 11 16 16 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                 </span>`;
             }
-            let usage = part.projects.map(p => `${p.project} (${p.quantity})`).join(', ');
+            let fullUsage = part.projects.map(p => `${p.project} (${p.quantity})`).join(', ');
+            let truncatedUsage = smartTruncateUsage(part.projects, 35);
+            let fullUsageText = `Used in: ${fullUsage}`;
             sectionHtml += `
                 <li class="requirements-list-item ${part.status}">
                     ${statusIcon}
@@ -1849,7 +1897,7 @@ function showAllProjectRequirements() {
                         Have: <b>${part.inventoryQty}</b> / Need: <b>${part.total}</b>
                         ${part.status !== 'sufficient' ? ` / Short: <b>${Math.max(0, part.total - part.inventoryQty)}</b>` : ''}
                     </span>
-                    <span class="part-usage">[${usage}]</span>
+                    <span class="part-usage" title="${escapeHtml(fullUsageText)}">[${truncatedUsage}]</span>
                 </li>
             `;
         });
@@ -1867,12 +1915,12 @@ function showAllProjectRequirements() {
     }
     document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 'All Project Requirements';
     document.getElementById('allProjectRequirements').innerHTML = html;
-    document.getElementById('allProjectRequirementsModal').style.display = 'block';
+    showModal('allProjectRequirementsModal');
     hideMobileNav();
 }
 
 function hideAllProjectRequirementsModal() {
-    document.getElementById('allProjectRequirementsModal').style.display = 'none';
+    hideModal('allProjectRequirementsModal');
     showMobileNav();
 }
 
@@ -1887,12 +1935,12 @@ function showExportBOMModal() {
         select.appendChild(option);
     }
     
-    document.getElementById('exportBOMModal').style.display = 'block';
+    showModal('exportBOMModal');
     hideMobileNav();
 }
 
 function hideExportBOMModal() {
-    document.getElementById('exportBOMModal').style.display = 'none';
+    hideModal('exportBOMModal');
     showMobileNav();
 }
 
@@ -2006,7 +2054,7 @@ function createSyncButtons() {
         </button>
         <button class="sync-btn import-btn full-width" onclick="mergeDuplicateInventoryEntries()">
             <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
             </svg>
             Merge Duplicates
         </button>
@@ -2102,13 +2150,12 @@ function showAllProjectTagsModal(partId) {
         }
     });
 
-    modal.style.display = 'block';
+    showModal('allProjectTagsModal');
     hideMobileNav();
 }
 
 function hideAllProjectTagsModal(openingAnotherModal) {
-    const modal = document.getElementById('allProjectTagsModal');
-    modal.style.display = 'none';
+    hideModal('allProjectTagsModal');
     if (!openingAnotherModal) {
         showMobileNav();
     }
@@ -2117,15 +2164,15 @@ function hideAllProjectTagsModal(openingAnotherModal) {
 function showAboutModal() {
     // Auto-close BOM Assistant modal if open
     const bomAssistantModal = document.getElementById('bomAssistantModal');
-    if (bomAssistantModal && bomAssistantModal.style.display === 'block') {
-        bomAssistantModal.style.display = 'none';
+    if (bomAssistantModal && bomAssistantModal.classList.contains('show')) {
+        hideModal('bomAssistantModal');
     }
-    document.getElementById('aboutModal').style.display = 'block';
+    showModal('aboutModal');
     hideMobileNav();
 }
 
 function hideAboutModal() {
-    document.getElementById('aboutModal').style.display = 'none';
+    hideModal('aboutModal');
     showMobileNav();
 }
 
@@ -2443,30 +2490,374 @@ function initializeMobileNav() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeMobileNav();
+    // Show mobile nav on mobile devices with animation
+    if (window.innerWidth <= 1024) {
+        showMobileNav();
+    }
 });
+
+// Handle window resize for mobile nav visibility
+window.addEventListener('resize', debounce(() => {
+    const mobileNav = document.querySelector('.mobile-nav');
+    if (window.innerWidth <= 1024) {
+        if (mobileNav && !mobileNav.classList.contains('show')) {
+            showMobileNav();
+        }
+    } else {
+        // Force hide mobile nav when switching to desktop
+        if (mobileNav && (mobileNav.classList.contains('show') || mobileNav.style.display === 'flex')) {
+            mobileNav.classList.remove('show');
+            mobileNav.style.display = 'none';
+        }
+    }
+}, 200));
 
 // ... existing code ...
 function showBOMAssistantModal() {
     // Auto-close About modal if open
     const aboutModal = document.getElementById('aboutModal');
-    if (aboutModal && aboutModal.style.display === 'block') {
-        aboutModal.style.display = 'none';
+    if (aboutModal && aboutModal.classList.contains('show')) {
+        hideModal('aboutModal');
     }
-    document.getElementById('bomAssistantModal').style.display = 'block';
+    showModal('bomAssistantModal');
     hideMobileNav();
 }
 
 function hideBOMAssistantModal() {
-    document.getElementById('bomAssistantModal').style.display = 'none';
+    hideModal('bomAssistantModal');
     showMobileNav();
 }
 
 // ... existing code ...
 function hideMobileNav() {
+    // Only hide on mobile devices
+    if (window.innerWidth > 1024) return;
+    
     const mobileNav = document.querySelector('.mobile-nav');
-    if (mobileNav) mobileNav.style.display = 'none';
+    if (mobileNav) {
+        mobileNav.classList.remove('show');
+        // Hide after animation completes
+        setTimeout(() => {
+            if (!mobileNav.classList.contains('show')) {
+                mobileNav.style.display = 'none';
+            }
+        }, 300); // Match CSS transition duration
+    }
 }
 function showMobileNav() {
+    // Only show on mobile devices
+    if (window.innerWidth > 1024) return;
+    
     const mobileNav = document.querySelector('.mobile-nav');
-    if (mobileNav) mobileNav.style.display = '';
+    if (mobileNav) {
+        mobileNav.style.display = 'flex';
+        // Force reflow to ensure display:flex is applied before animation
+        mobileNav.offsetHeight;
+        mobileNav.classList.add('show');
+    }
+}
+
+/**
+ * Smart truncation for project usage lists
+ * Prioritizes showing project names over quantities when space is limited
+ */
+function smartTruncateUsage(projects, maxLength = 40) {
+    if (!projects || projects.length === 0) return '';
+    
+    // First try: full format with quantities
+    let fullUsage = projects.map(p => `${p.project} (${p.quantity})`).join(', ');
+    if (fullUsage.length <= maxLength) {
+        return fullUsage;
+    }
+    
+    // Second try: project names only
+    let namesOnly = projects.map(p => p.project).join(', ');
+    if (namesOnly.length <= maxLength) {
+        return namesOnly;
+    }
+    
+    // Third try: show first few projects + count
+    let result = '';
+    let count = 0;
+    for (let i = 0; i < projects.length; i++) {
+        let addition = (i === 0) ? projects[i].project : `, ${projects[i].project}`;
+        if ((result + addition).length > maxLength - 10) { // Reserve space for " +X more"
+            let remaining = projects.length - i;
+            if (remaining > 0) {
+                result += ` +${remaining} more`;
+            }
+            break;
+        }
+        result += addition;
+        count++;
+    }
+    
+    return result || projects[0].project; // Fallback to at least first project
+}
+
+/**
+ * Show modal with slide-in animation
+ */
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.style.display = 'block';
+    // Force reflow to ensure display:block is applied before animation
+    modal.offsetHeight;
+    modal.classList.add('show');
+}
+
+/**
+ * Hide modal with slide-out animation
+ */
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.classList.remove('show');
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        if (!modal.classList.contains('show')) {
+            modal.style.display = 'none';
+        }
+    }, 300); // Match CSS transition duration
+}
+
+// =============================================================================
+// MEMORY MANAGEMENT AND EVENT CLEANUP
+// =============================================================================
+
+// Store event listeners for cleanup
+let activeEventListeners = new Map();
+
+function addManagedEventListener(element, event, handler, options = false) {
+    if (!element) return;
+    
+    element.addEventListener(event, handler, options);
+    
+    // Store for cleanup
+    const key = `${element.id || element.className}_${event}`;
+    if (!activeEventListeners.has(key)) {
+        activeEventListeners.set(key, []);
+    }
+    activeEventListeners.get(key).push({ element, event, handler, options });
+}
+
+function cleanupEventListeners() {
+    activeEventListeners.forEach((listeners, key) => {
+        listeners.forEach(({ element, event, handler, options }) => {
+            if (element && element.removeEventListener) {
+                element.removeEventListener(event, handler, options);
+            }
+        });
+    });
+    activeEventListeners.clear();
+}
+
+// =============================================================================
+// PERFORMANCE OPTIMIZATIONS
+// =============================================================================
+
+// Intersection Observer for lazy loading
+let intersectionObserver = null;
+
+function initializeIntersectionObserver() {
+    if ('IntersectionObserver' in window) {
+        intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const item = entry.target;
+                    // Lazy load heavy computations here if needed
+                    item.classList.add('visible');
+                }
+            });
+        }, {
+            rootMargin: '50px',
+            threshold: 0.1
+        });
+    }
+}
+
+// Memory-efficient search with caching
+let searchCache = new Map();
+let searchCacheTimeout = null;
+
+function getCachedSearchResults(query) {
+    const cached = searchCache.get(query);
+    if (cached && Date.now() - cached.timestamp < 30000) { // 30 second cache
+        return cached.results;
+    }
+    return null;
+}
+
+function setCachedSearchResults(query, results) {
+    // Limit cache size
+    if (searchCache.size > 50) {
+        const firstKey = searchCache.keys().next().value;
+        searchCache.delete(firstKey);
+    }
+    
+    searchCache.set(query, {
+        results: results,
+        timestamp: Date.now()
+    });
+    
+    // Clear cache periodically
+    if (searchCacheTimeout) clearTimeout(searchCacheTimeout);
+    searchCacheTimeout = setTimeout(() => {
+        searchCache.clear();
+    }, 300000); // 5 minutes
+}
+
+// Optimized search function
+function optimizedSearch(query, entries) {
+    if (!query) return entries;
+    
+    const cached = getCachedSearchResults(query);
+    if (cached) return cached;
+    
+    const lowerQuery = query.toLowerCase();
+    const results = entries.filter(([id, part]) => {
+        return part.name.toLowerCase().includes(lowerQuery) ||
+               id.toLowerCase().includes(lowerQuery);
+    });
+    
+    setCachedSearchResults(query, results);
+    return results;
+}
+
+// =============================================================================
+// BATTERY AND PERFORMANCE AWARENESS
+// =============================================================================
+
+// Reduce animations and effects on low battery
+function checkBatteryOptimizations() {
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(battery => {
+            if (battery.level < 0.2 || !battery.charging) {
+                document.body.classList.add('low-battery-mode');
+                // Disable non-essential animations
+                document.documentElement.style.setProperty('--animation-duration', '0s');
+            }
+        });
+    }
+}
+
+// Detect slow devices and adjust accordingly
+function detectDevicePerformance() {
+    const start = performance.now();
+    
+    // Simple CPU benchmark
+    for (let i = 0; i < 100000; i++) {
+        Math.random();
+    }
+    
+    const time = performance.now() - start;
+    
+    if (time > 50) { // Slow device detected
+        document.body.classList.add('slow-device');
+        // Reduce virtual scrolling threshold
+        VIRTUAL_SCROLLING.enabled = false;
+        return 'slow';
+    } else if (time > 20) {
+        return 'medium';
+    }
+    return 'fast';
+}
+
+// =============================================================================
+// LOCALSTORAGE PERFORMANCE OPTIMIZATIONS
+// =============================================================================
+
+// Debounced save functions to prevent excessive localStorage writes
+const debouncedSaveInventory = debounce(() => {
+    try {
+        const compressed = compressData(inventory);
+        localStorage.setItem('guitarPedalInventory', compressed);
+    } catch (error) {
+        console.warn('Failed to save inventory:', error);
+        // Fallback to uncompressed if compression fails
+        localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
+    }
+}, 1000);
+
+const debouncedSaveProjects = debounce(() => {
+    try {
+        const compressed = compressData(projects);
+        localStorage.setItem('guitarPedalProjects', compressed);
+    } catch (error) {
+        console.warn('Failed to save projects:', error);
+        // Fallback to uncompressed if compression fails
+        localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
+    }
+}, 1000);
+
+// Simple compression for localStorage
+function compressData(data) {
+    const jsonString = JSON.stringify(data);
+    
+    // Only compress if data is large enough to benefit
+    if (jsonString.length < 1000) {
+        return jsonString;
+    }
+    
+    // Simple RLE compression for repetitive JSON data
+    let compressed = jsonString.replace(/("quantity":|"name":|"projects":)/g, match => {
+        switch(match) {
+            case '"quantity":': return 'q:';
+            case '"name":': return 'n:';
+            case '"projects":': return 'p:';
+            default: return match;
+        }
+    });
+    
+    // Mark as compressed
+    return `COMPRESSED:${compressed}`;
+}
+
+function decompressData(data) {
+    if (!data.startsWith('COMPRESSED:')) {
+        return JSON.parse(data);
+    }
+    
+    let decompressed = data.slice(11); // Remove 'COMPRESSED:' prefix
+    
+    // Reverse the compression
+    decompressed = decompressed.replace(/(q:|n:|p:)/g, match => {
+        switch(match) {
+            case 'q:': return '"quantity":';
+            case 'n:': return '"name":';
+            case 'p:': return '"projects":';
+            default: return match;
+        }
+    });
+    
+    return JSON.parse(decompressed);
+}
+
+// Batch localStorage operations
+let pendingOperations = [];
+let flushTimeout = null;
+
+function queueStorageOperation(key, data) {
+    pendingOperations.push({ key, data });
+    
+    if (flushTimeout) clearTimeout(flushTimeout);
+    flushTimeout = setTimeout(flushPendingOperations, 100);
+}
+
+function flushPendingOperations() {
+    const operations = [...pendingOperations];
+    pendingOperations = [];
+    
+    requestIdleCallback(() => {
+        operations.forEach(({ key, data }) => {
+            try {
+                localStorage.setItem(key, compressData(data));
+            } catch (error) {
+                console.warn(`Failed to save ${key}:`, error);
+            }
+        });
+    }, { timeout: 1000 });
 }

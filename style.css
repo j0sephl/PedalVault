@@ -15,6 +15,44 @@
     font-display: swap;
   }
 
+/* =============================================================================
+   SCROLLBAR STYLING - CROSS-BROWSER COMPATIBILITY
+   =============================================================================
+   
+   FIREFOX/ARC LIMITATIONS:
+   - scrollbar-width: Only accepts 'auto', 'thin', 'none' (NOT pixel values)
+   - scrollbar-color: Works (thumb background)
+   - NO support for custom shapes, borders, or squared corners
+   - Firefox scrollbars are always rounded by the OS
+   
+   WEBKIT BROWSERS (Chrome, Safari, Edge):
+   - Full customization with ::-webkit-scrollbar pseudo-elements
+   - Custom widths, colors, shapes, borders supported
+   - Can force squared corners with border-radius: 0
+   
+   RESULT: Colors work everywhere, but thick squared scrollbars only in WebKit
+   ============================================================================= */
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: var(--nord2); 
+  }
+   
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: var(--nord4); 
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--nord13); 
+  }
+
 :root {
   --bg-dark: #2E3440;
   --bg-light: #3B4252;
@@ -59,6 +97,19 @@
           min-height: 100vh;
           padding: 20px;
       }
+      
+             /* Mobile body override */
+       @media (max-width: 1024px) {
+           body {
+               padding: 0;
+               margin: 0;
+               background: #2E3440;
+               /* Prevent bounce scrolling on iOS */
+               overscroll-behavior: none;
+               /* Prevent zoom on input focus */
+               touch-action: manipulation;
+           }
+       }
   
       .container {
           max-width: 1920px;
@@ -422,7 +473,6 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
-          will-change: transform, box-shadow;
       }
   
       .quantity-btn:hover {
@@ -454,7 +504,6 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
-          will-change: transform, box-shadow;
       }
   
       .action-icon svg {
@@ -720,7 +769,6 @@
           font-family: 'JetBrains Mono', monospace;
           font-size: 14px;
           font-weight: 500;
-          will-change: transform;
           backface-visibility: hidden;
       }
   
@@ -1172,6 +1220,17 @@
           background-color: var(--nord3) !important;
           color: var(--nord6) !important;
       }
+
+      .all-project-tags-list .no-projects {
+          color: var(--nord4);
+          font-style: italic;
+          text-align: center;
+          margin: 0;
+          padding: 20px;
+          background: var(--nord1);
+          border: 1px dashed var(--nord3);
+          border-radius: 4px;
+      }
   
         #allProjectTagsModal .modal-content {
       max-width: 500px;
@@ -1615,23 +1674,7 @@
           }
       }
   
-      /* Nord Scrollbar Styling - Square Corners */
-      ::-webkit-scrollbar {
-          width: 12px;
-          background: #2E3440;
-      }
-      ::-webkit-scrollbar-thumb {
-          background: #4C566A;
-          border-radius: 0;
-          border: 2px solid #2E3440;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-          background: #5E81AC;
-      }
-      * {
-          scrollbar-width: thin;
-          scrollbar-color: #4C566A #2E3440;
-      }
+      /* All scrollbar styling is now handled by the universal selector at the top */
   
             /* All Projects Modal Styling */
       #allProjectRequirementsModal .modal-content {
@@ -2417,7 +2460,6 @@
     padding: 10px 15px;
     background: var(--nord1);
     border: 1px solid var(--nord2);
-    border-radius: 4px;
     transition: all 0.2s;
 }
 
@@ -2824,10 +2866,12 @@
     right: 0;
     background: var(--nord1);
     border-top: 1px solid var(--nord3);
-    padding: 8px 0;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 1100;
     transform: translateY(100%);
     transition: transform 0.3s cubic-bezier(0.33, 0.00, 0.00, 1.00);
+    /* Ensure it's above device UI */
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-nav.show {
@@ -2870,7 +2914,7 @@
 .mobile-menu {
     display: block;
     position: fixed;
-    bottom: 95px;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
     left: 0;
     right: 0;
     background: var(--nord1);
@@ -2943,76 +2987,68 @@
 
 
     .inventory-list {
-        max-height: 420px;
+        /* Remove max-height constraint to allow flex to work properly */
+        max-height: none;
     }
 }
   
 @media (max-width: 1024px) {
     /* Base layout fixes */
     html, body {
-        height: 100%;
-        overflow: hidden;
-        position: fixed;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden; /* Prevent page-level scrolling on mobile */
+        position: relative;
         width: 100%;
+        padding: 0;
+        margin: 0;
     }
 
     .container {
-        height: 90%;
-        overflow: hidden;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden; /* Prevent container-level scrolling on mobile */
         display: flex;
         flex-direction: column;
         max-width: 100%;
         border-radius: 0;
+        padding: 0;
+        margin: 0;
     }
 
-    /* PWA specific styles */
-    @media (display-mode: standalone) {
-        html, body {
-            height: 100dvh;
-        }
-
-        .container {
-            height: 100%;
-        }
-
-        .inventory-list {
-            padding-bottom: 80px;
-        }
-    }
-
-    /* Mobile browser specific styles */
-    @media (display-mode: browser) {
-        html, body {
-            height: 100%;
-        }
-
-        .container {
-            height: 90%;
-        }
-
-        .inventory-list {
-            padding-bottom: 0;
-        }
+    /* Simplified mobile nav padding - works for both PWA and browser */
+    .inventory-list {
+        /* Mobile nav height + safe padding - use margin so scrollbar stops before nav */
+        margin-bottom: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 0 !important;
     }
 
     .content {
-        overflow: hidden;
+        overflow: hidden; /* Prevent content-level scrolling on mobile */
+        flex: 1;
+        /* Ensure content doesn't get cut off by mobile nav */
+        padding: 0;
+        display: flex;
+        flex-direction: column;
     }
 
     .main-content {
-        height: 100%;
-        overflow: hidden;
+        flex: 1;
+        overflow: hidden; /* Prevent main-content-level scrolling on mobile */
         flex-direction: column;
-        gap: 0px;
+        gap: 0;
+        min-height: 0; /* Allow flex item to shrink */
+        display: flex;
     }
 
     /* Header adjustments */
     .header {
         flex-direction: column;
         align-items: center;
-        padding: 30px 15px 0px;
-        gap: 8px;
+        padding: 10px 15px 5px;
+        gap: 2px;
         text-align: center;
+        flex-shrink: 0; /* Prevent header from shrinking */
     }
 
     .header-content {
@@ -3021,17 +3057,17 @@
     }
 
     .header h1 {
-        font-size: 35px;
+        font-size: 28px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
         text-align: center;
     }
 
     .header p {
-        font-size: 10px;
+        font-size: 9px;
         opacity: 0.8;
-        margin-bottom: 8px;
+        margin-bottom: 0;
         text-align: center;
     }
 
@@ -3040,30 +3076,47 @@
     }
 
     .wordmark-svg {
-        max-width: 150px;
+        max-width: 120px;
+        height: auto;
     }
 
     /* Panel and inventory adjustments */
-    .left-panel, .right-panel {
-        width: 100%;
+    .left-panel {
+        display: none; /* Hide left panel on mobile */
     }
-
+    
     .right-panel {
+        width: 100%;
         height: 100%;
         display: flex;
         flex-direction: column;
+        flex: 1;
+        min-height: 0; /* Allow flex item to shrink below content size */
     }
 
     .inventory-list {
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        max-height: none;
+        min-height: 0; /* Allow flex item to shrink */
+        /* Constrain height so scrollbar stops before mobile nav */
+        max-height: calc(100vh - 200px - env(safe-area-inset-bottom, 0px));
+        /* Ensure scrolling works properly on mobile */
+        overscroll-behavior: contain;
+        /* Add momentum scrolling for iOS */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .inventory-header {
+        flex-shrink: 0; /* Prevent header from shrinking */
+        padding: 5px 10px;
     }
 
     .inventory-controls {
         flex-direction: column;
         width: 100%;
+        flex-shrink: 0; /* Prevent controls from shrinking */
+        padding: 0;
     }
 
     .inventory-controls select,
@@ -3139,7 +3192,6 @@
     /* Navigation and buttons */
     .mobile-nav {
         display: flex;
-        padding-bottom: 30px;
     }
 
     .sync-buttons {
@@ -3430,10 +3482,10 @@
    PERFORMANCE OPTIMIZATIONS
    ============================================================================= */
 
-/* Enable hardware acceleration for animations */
+/* Enable hardware acceleration for animations 
+   Note: will-change properties removed to prevent browser memory budget warnings */
 .inventory-item,
 .modal {
-    will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -3442,14 +3494,12 @@
 /* Mobile nav gets special hardware acceleration that doesn't conflict with translateY */
 .mobile-nav,
 .mobile-menu {
-    will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
 
 /* Notification gets special hardware acceleration that doesn't conflict with translateX */
 .notification {
-    will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
@@ -3489,21 +3539,7 @@
     contain: layout style paint;
 }
 
-/* Efficient scrollbar styling with reduced repaints */
-::-webkit-scrollbar {
-    width: 12px;
-    background: var(--nord1);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--nord4);
-    border-radius: 0;
-    border: 2px solid var(--nord1);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--nord10);
-}
+/* Mobile uses the same thick squared scrollbars as desktop */
 
 /* Optimize transform and opacity animations */
 @media (prefers-reduced-motion: no-preference) {

@@ -237,6 +237,47 @@ let pendingBomData = null;             // BOM data awaiting project name assignm
 // =============================================================================
 
 /**
+ * Clean up invalid inventory entries
+ * Removes parts with null data, missing names, or other corruption
+ */
+function cleanupInvalidInventoryEntries() {
+    let removedCount = 0;
+    const invalidIds = [];
+    
+    for (const [id, part] of Object.entries(inventory)) {
+        // Check for invalid parts
+        if (!part || !part.name || typeof part !== 'object') {
+            invalidIds.push(id);
+            removedCount++;
+            continue;
+        }
+        
+        // Check for invalid quantities
+        if (typeof part.quantity !== 'number' || part.quantity < 0) {
+            part.quantity = 0;
+        }
+        
+        // Ensure projects is an object
+        if (part.projects && !Array.isArray(part.projects) && typeof part.projects !== 'object') {
+            part.projects = {};
+        }
+    }
+    
+    // Remove invalid entries
+    invalidIds.forEach(id => {
+        console.warn(`Removing invalid inventory entry with ID: ${id}`);
+        delete inventory[id];
+    });
+    
+    if (removedCount > 0) {
+        console.log(`Cleaned up ${removedCount} invalid inventory entries`);
+        saveInventory();
+    }
+    
+    return removedCount;
+}
+
+/**
  * Normalize component names and values for consistent matching
  * This function standardizes electronic component names to help identify duplicates
  * and match components across different naming conventions
@@ -311,6 +352,8 @@ function initializeInventory() {
             console.warn('Failed to decompress inventory data, trying fallback:', error);
             inventory = JSON.parse(savedInventory);
         }
+        // Clean up any invalid entries first
+        cleanupInvalidInventoryEntries();
         // Auto-merge any duplicate entries that may have been created (silently)
         mergeDuplicateInventoryEntries(false);
     } else {
@@ -620,13 +663,23 @@ function displayInventory() {
     const inventoryItems = document.getElementById('inventoryItems');
     const isMobile = window.innerWidth <= 1024;
     
+    // Ensure search state is synchronized with the actual input value
+    const searchInput = DOM.get('searchInput');
+    if (searchInput) {
+        const actualSearchValue = searchInput.value.toLowerCase().trim();
+        if (actualSearchValue !== currentSearchQuery) {
+            currentSearchQuery = actualSearchValue;
+        }
+    }
+    
     inventoryItems.innerHTML = '';
     
     // Get filtered and sorted entries (filtering is already done in getSortedInventoryEntries)
     const sortedEntries = getSortedInventoryEntries();
 
-    // Enable virtual scrolling for large inventories (desktop only)
-    const shouldUseVirtualScrolling = sortedEntries.length > 200;
+    // Enable virtual scrolling for very large inventories (desktop only)
+    // Increased threshold to avoid limiting display for normal-sized inventories
+    const shouldUseVirtualScrolling = sortedEntries.length > 2000;
     
     if (shouldUseVirtualScrolling && !isMobile) {
         renderVirtualizedInventory(sortedEntries, inventoryItems);
@@ -714,7 +767,7 @@ function createInventoryItemElement(id, part) {
             if (projectEntries.length > maxTags) {
                 const moreCount = projectEntries.length - maxTags;
                 projectTagsHtml += `
-                    <span class="project-tag more-tags" title="Show all projects">+${moreCount} more</span>
+                    <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">+${moreCount} more</span>
                 `;
             }
         }
@@ -1251,17 +1304,36 @@ function showProjectDetails(projectId) {
     let missingParts = 0;
     let lowStockParts = 0;
     
+    console.log('Project BOM:', bom);
+    console.log('BOM keys:', bom ? Object.keys(bom) : 'No BOM');
+    
     document.getElementById('projectDetailsTitle').textContent = project.name;
     
     const partsContainer = document.getElementById('projectParts');
     partsContainer.innerHTML = '';
     
     const results = [];
-    for (const id in bom) {
-        // Skip if BOM entry is invalid
-        if (!bom[id] || typeof bom[id] !== 'object') {
-            continue;
-        }
+    
+    // Check if BOM exists and has entries
+    if (!bom || Object.keys(bom).length === 0) {
+        console.log('No BOM data found for project');
+        results.push(`
+            <li>
+                <span class="bom-part-label">
+                    <span class="status-icon status-warning">
+                        <svg viewBox="0 0 24 24"><polygon points="12,2 22,21 2,21" fill="currentColor" opacity="0.15"/><rect x="11" y="10" width="2" height="5" fill="currentColor"/><rect x="11" y="17" width="2" height="2" fill="currentColor"/></svg>
+                    </span>
+                    <strong>No components found</strong>
+                </span>
+                <span class="bom-part-status">: This project has no BOM data</span>
+            </li>
+        `);
+    } else {
+        for (const id in bom) {
+            // Skip if BOM entry is invalid
+            if (!bom[id] || typeof bom[id] !== 'object') {
+                continue;
+            }
         
         totalParts++;
         let part = inventory[id];
@@ -1344,6 +1416,7 @@ function showProjectDetails(projectId) {
                 </li>
             `);
         }
+    }
     }
     
     // Add summary to the projectStatus element
@@ -2217,25 +2290,30 @@ function showAllProjectTagsModal(partId) {
     const tagsList = document.getElementById('allProjectTagsList');
     tagsList.innerHTML = '';
 
-    // Only show projects this part is actually assigned to (qty > 0)
-    const assignedProjects = Object.entries(part.projects).filter(([_, qty]) => qty > 0);
+    // Show all projects this part is assigned to (including qty = 0)
+    const assignedProjects = Object.entries(part.projects);
     console.log('showAllProjectTagsModal:', partId, assignedProjects);
-    assignedProjects.forEach(([projectId, qty]) => {
-        const project = projects[projectId];
-        if (project) {
-            const tag = document.createElement('span');
-            tag.className = 'project-tag';
-            tag.setAttribute('data-project-id', projectId);
-            tag.setAttribute('title', `${project.name} (${qty} needed)`);
-            tag.textContent = `${project.name} (${qty})`;
-            tag.onclick = (e) => {
-                e.stopPropagation();
-                hideAllProjectTagsModal(true); // Pass true to indicate another modal is opening
-                showProjectDetails(projectId);
-            };
-            tagsList.appendChild(tag);
-        }
-    });
+    
+    if (assignedProjects.length === 0) {
+        tagsList.innerHTML = '<p class="no-projects">No projects assigned to this part.</p>';
+    } else {
+        assignedProjects.forEach(([projectId, qty]) => {
+            const project = projects[projectId];
+            if (project) {
+                const tag = document.createElement('span');
+                tag.className = 'project-tag';
+                tag.setAttribute('data-project-id', projectId);
+                tag.setAttribute('title', `${project.name} (${qty} needed)`);
+                tag.textContent = `${project.name} (${qty})`;
+                tag.onclick = (e) => {
+                    e.stopPropagation();
+                    hideAllProjectTagsModal(true); // Pass true to indicate another modal is opening
+                    showProjectDetails(projectId);
+                };
+                tagsList.appendChild(tag);
+            }
+        });
+    }
 
     showModal('allProjectTagsModal');
     hideMobileNav();

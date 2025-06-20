@@ -83,7 +83,6 @@ Built with vanilla JavaScript and modern web standards:
 - **Progressive Web App** - Installable and offline-capable
 - **Responsive Design** - Mobile-first CSS Grid and Flexbox
 - **Performance Optimized** - Virtual scrolling, lazy loading, efficient rendering
-- **Accessible** - Screen reader friendly and keyboard navigable
 
 ## Contributing
 

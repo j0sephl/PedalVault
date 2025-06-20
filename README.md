@@ -118,14 +118,4 @@ For commercial licensing, please contact [your-email].
 ## License
 
 **Creative Commons Attribution-ShareAlike 4.0 International License**
-
-- **Free to Use**: Personal, educational, and commercial use of PedalVault is completely free
-- **Modify & Share**: You can adapt, remix, and build upon the code
-- **Open Source**: Fork, contribute, and create derivative works
-- **Attribution Required**: Must credit the original creator
-- **ShareAlike**: Derivative works must use the same license
-- **Commercial Derivatives**: If you create a competing commercial product, please consider compensating the original developer
-
-**Fair Play**: While legally you can create commercial derivatives under this license, the community appreciates when successful commercial projects give back to original creators.
-
-[Full License Text](https://creativecommons.org/licenses/by-sa/4.0/)
+[Full License Text](https://creativecommons.org/licenses/by-nc/4.0/)

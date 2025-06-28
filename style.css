@@ -663,9 +663,9 @@
           z-index: 1000;
           padding: 20px;
           -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
-          touch-action: none; /* Prevent browser handling of touch events */
           opacity: 0;
           transition: opacity 0.3s ease;
+          cursor: default; /* Ensure stable cursor behavior */
       }
       
       .modal.show {
@@ -3484,8 +3484,7 @@
 
 /* Enable hardware acceleration for animations 
    Note: will-change properties removed to prevent browser memory budget warnings */
-.inventory-item,
-.modal {
+.inventory-item {
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;

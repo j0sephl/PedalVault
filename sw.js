@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pedalvault-v1.4';
-const STATIC_CACHE = 'pedalvault-static-v1.4';
+const CACHE_NAME = 'pedalvault-v1.5';
+const STATIC_CACHE = 'pedalvault-static-v1.5';
 
 // Only cache your own app files - no external CDNs
 const STATIC_ASSETS = [

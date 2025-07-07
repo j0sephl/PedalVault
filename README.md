@@ -94,7 +94,7 @@ Welcome contributions!
 
 ## License
 
-Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+Creative Commons Attribution-NonCommercial 4.0
 
 **You are free to:**
 - **Share** - Copy and redistribute the material in any medium or format
@@ -103,15 +103,12 @@ Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
 **Under the following terms:**
 - **Attribution** - You must give appropriate credit and indicate if changes were made
 - **NonCommercial** - You may not use the material for commercial purposes
-- **ShareAlike** - If you remix or transform the material, you must distribute under the same license
-
-For commercial licensing, please contact [your-email].
 
 ---
 
 ## Ready to Organize Your Workshop?
 
-**[Try Guitar Pedal Inventory Now →](https://www.pedalvault.app)**
+**[Try PedalVault Now →](https://www.pedalvault.app)**
 
 *No installation required. Works in any modern browser.*
 

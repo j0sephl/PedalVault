@@ -941,8 +941,82 @@ function showEditPartModal(partId) {
             typeSuggestion.textContent = '';
         }
     }
+    
+    // Populate project assignments section
+    populateEditPartProjectsSection(partId);
+    
     showModal('editPartModal');
     hideMobileNav();
+}
+
+function populateEditPartProjectsSection(partId) {
+    const part = inventory[partId];
+    const projectsSection = document.getElementById('editPartProjectsDropdownSection');
+    
+    if (!projectsSection) return;
+    
+    // If no projects exist, show a message
+    if (Object.keys(projects).length === 0) {
+        projectsSection.innerHTML = `
+            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 3px solid var(--nord13); color: var(--nord5);">
+                <p style="margin: 0; font-size: 13px;">No projects available. Create a project first to assign parts.</p>
+                <button class="btn btn-add" onclick="hideEditPartModal(); showProjectNameModal();" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">
+                    Create Project
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Create project assignment controls
+    let projectsHtml = `
+        <div style="margin: 15px 0;">
+            <h4 style="color: var(--nord8); font-size: 14px; margin-bottom: 10px;">Project Assignments</h4>
+            <div class="nord-project-inv-list">
+    `;
+    
+    for (const projectId in projects) {
+        const project = projects[projectId];
+        const currentQty = (part.projects && part.projects[projectId]) ? part.projects[projectId] : 0;
+        
+        projectsHtml += `
+            <div class="nord-project-inv-row">
+                <span class="nord-project-inv-name" title="${project.name}">${project.name}</span>
+                <div class="modal-item-quantity">
+                    <button type="button" class="quantity-btn" onclick="adjustProjectQty('${projectId}', -1)">-</button>
+                    <input type="number" 
+                           class="edit-project-qty" 
+                           data-project-qty="${projectId}" 
+                           value="${currentQty}" 
+                           min="0" 
+                           max="9999"
+                           style="width: 60px; text-align: center; background: var(--nord2); color: var(--nord6); border: 1px solid var(--nord4); padding: 4px;">
+                    <button type="button" class="quantity-btn" onclick="adjustProjectQty('${projectId}', 1)">+</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    projectsHtml += `
+            </div>
+            <div style="margin-top: 10px; padding: 8px; background: var(--nord1); border-radius: 4px;">
+                <p style="margin: 0; font-size: 11px; color: var(--nord4); line-height: 1.4;">
+                    Set quantities needed for each project. Use 0 to remove from project.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    projectsSection.innerHTML = projectsHtml;
+}
+
+function adjustProjectQty(projectId, delta) {
+    const input = document.querySelector(`[data-project-qty="${projectId}"]`);
+    if (input) {
+        const currentValue = parseInt(input.value) || 0;
+        const newValue = Math.max(0, Math.min(9999, currentValue + delta));
+        input.value = newValue;
+    }
 }
 
 function hideEditPartModal() {

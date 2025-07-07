@@ -96,6 +96,7 @@
           background: #2E3440;
           min-height: 100vh;
           padding: 20px;
+          cursor: default;
       }
       
              /* Mobile body override */
@@ -108,6 +109,7 @@
                overscroll-behavior: none;
                /* Prevent zoom on input focus */
                touch-action: manipulation;
+               cursor: default;
            }
        }
   
@@ -203,29 +205,36 @@
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
           text-align: left;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .btn-add {
           background: #4C566A;
           color: #E5E9F0;
+          cursor: pointer;
       }
   
       .btn-add:hover {
           background: #5E81AC;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       .btn-remove {
           background: #BF616A;
           color: #E5E9F0;
+          cursor: pointer;
       }
   
       .btn-remove:hover {
           background: #D08770;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       .inventory-list {
@@ -278,12 +287,16 @@
         -webkit-user-select: none;
         user-select: none;
         touch-action: manipulation;
+        /* Prevent cursor flickering */
+        position: relative;
+        z-index: 1;
     }
 
     .manage-projects-btn:hover,
     .manage-projects-btn:active {
         background: #5E81AC;
         color: #ECEFF4;
+        cursor: pointer;
     }
   
       .inventory-controls {
@@ -302,12 +315,14 @@
           min-width: 200px;
           font-family: 'JetBrains Mono', monospace;
           width: 100%;
+          cursor: text;
       }
   
       .search-input:focus {
           outline: none;
           border-color: #88C0D0;
           box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+          cursor: text;
       }
   
       .sort-dropdown {
@@ -328,12 +343,16 @@
           background-position: right 8px center;
           background-size: 16px;
           padding-right: 32px;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .sort-dropdown:focus {
           outline: none;
           border-color: #88C0D0;
           box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
+          cursor: pointer;
       }
   
       /* Safari-specific fixes */
@@ -341,6 +360,7 @@
           .sort-dropdown {
               background-color: #2E3440;
               border-radius: 0;
+              cursor: pointer;
           }
           
           .sort-dropdown option {
@@ -354,6 +374,7 @@
           .sort-dropdown {
               background-color: #2E3440;
               color: #E5E9F0;
+              cursor: pointer;
           }
           
           .sort-dropdown option {
@@ -373,10 +394,14 @@
           font-size: 8px;
           gap: 10px;
           contain: layout style paint;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .inventory-item:hover {
           background-color: #434C5E;
+          cursor: pointer;
       }
   
       .inventory-item:last-child {
@@ -473,16 +498,21 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 2;
       }
   
       .quantity-btn:hover {
           color: #ECEFF4;
           background: rgba(236, 239, 244, 0.1);
           border-radius: 4px;
+          cursor: pointer;
       }
   
       .quantity-btn:active {
           transform: scale(0.95);
+          cursor: pointer;
       }
   
       .item-actions {
@@ -504,6 +534,9 @@
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 2;
       }
   
       .action-icon svg {
@@ -514,26 +547,32 @@
   
       .edit-icon {
           color: #88C0D0;
+          cursor: pointer;
       }
   
       .edit-icon:hover {
           background: rgba(136, 192, 208, 0.1);
+          cursor: pointer;
       }
   
       .delete-icon {
           color: #BF616A;
+          cursor: pointer;
       }
   
       .delete-icon:hover {
           background: rgba(191, 97, 106, 0.1);
+          cursor: pointer;
       }
   
       .shop-icon {
           color: #A3BE8C;
+          cursor: pointer;
       }
   
       .shop-icon:hover {
           background: rgba(163, 190, 140, 0.1);
+          cursor: pointer;
       }
   
       /* Status Icons */
@@ -596,15 +635,19 @@
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           background: #4C566A;
           color: #E5E9F0;
           font-family: 'JetBrains Mono', monospace;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .sync-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       .add-part-btn {
@@ -619,33 +662,41 @@
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .add-part-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       .export-btn {
           background: #4C566A;
           color: #E5E9F0;
+          cursor: pointer;
       }
   
       .export-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       .import-btn {
           background: #4C566A;
           color: #E5E9F0;
+          cursor: pointer;
       }
   
       .import-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
+          cursor: pointer;
       }
   
       #importFile {
@@ -665,7 +716,7 @@
           -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
           opacity: 0;
           transition: opacity 0.3s ease;
-          cursor: default; /* Ensure stable cursor behavior */
+          /* Remove cursor: default to prevent flickering with buttons */
       }
       
       .modal.show {
@@ -724,6 +775,7 @@
           font-size: 14px;
           background: #2E3440;
           color: #D8DEE9;
+          cursor: text;
       }
   
       .modal input::placeholder {
@@ -733,6 +785,7 @@
       .modal input:focus {
           outline: none;
           border-color: #81A1C1;
+          cursor: text;
       }
   
       .modal p {
@@ -750,6 +803,14 @@
       .modal-buttons button {
           padding: 8px 12px;
           font-size: 13px;
+          cursor: pointer;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
+      }
+  
+      .modal-buttons button:hover {
+          cursor: pointer;
       }
   
       .notification {
@@ -1180,6 +1241,9 @@
           box-shadow: 0 1px 2px rgba(0,0,0,0.03);
           transition: all 0.2s ease;
           user-select: none;
+          /* Prevent cursor flickering */
+          position: relative;
+          z-index: 1;
       }
   
       .project-tag:hover {
@@ -2638,6 +2702,8 @@
     transition: all 0.15s ease;
     position: relative;
     overflow: hidden;
+    /* Prevent cursor flickering */
+    z-index: 2;
 }
 
 .copy-prompt-btn:hover {
@@ -3276,6 +3342,25 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
     box-sizing: border-box;
+    cursor: pointer;
+    /* Prevent cursor flickering on mobile */
+    position: relative;
+    z-index: 3;
+  }
+  
+  /* Ensure all interactive elements have consistent cursor behavior on mobile */
+  .btn, .sync-btn, .add-part-btn, .export-btn, .import-btn,
+  .manage-projects-btn, .action-icon, .modal-buttons button {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
+    touch-action: manipulation;
+  }
+  
+  /* Prevent cursor flickering on mobile inventory items */
+  .inventory-item {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: rgba(67, 76, 94, 0.2);
+    touch-action: manipulation;
   }
 }
   
@@ -3478,6 +3563,40 @@
   overflow-x: hidden;
 }
   
+/* =============================================================================
+   CURSOR FLICKERING PREVENTION
+   ============================================================================= */
+
+/* Ensure proper cursor behavior for all interactive elements */
+button, .btn, [role="button"], [onclick], [data-action] {
+    cursor: pointer !important;
+}
+
+/* Prevent cursor flickering on nested elements */
+button *, .btn *, [role="button"] *, [onclick] *, [data-action] * {
+    cursor: inherit !important;
+    pointer-events: none;
+}
+
+/* Special handling for text inputs */
+input[type="text"], input[type="search"], input[type="url"], input[type="email"], 
+input[type="number"], textarea, [contenteditable] {
+    cursor: text !important;
+}
+
+/* Ensure dropdowns show pointer cursor */
+select, option {
+    cursor: pointer !important;
+}
+
+/* Fix for Safari and other WebKit browsers */
+@supports (-webkit-touch-callout: none) {
+    button, .btn, [role="button"], [onclick], [data-action] {
+        cursor: pointer !important;
+        -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
+    }
+}
+
 /* =============================================================================
    PERFORMANCE OPTIMIZATIONS
    ============================================================================= */

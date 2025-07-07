@@ -1675,7 +1675,16 @@
     border: 1px solid var(--nord8);
     background: rgba(136, 192, 208, 0.1);
     transition: all 0.2s ease;
-    cursor: pointer;
+    cursor: pointer !important;
+    font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Prevent cursor flickering */
+    position: relative;
+    z-index: 1;
+    /* Remove default button styling */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    outline: none;
 }
 
 .about-link:hover {
@@ -1683,6 +1692,31 @@
     color: var(--nord1);
     transform: translateY(-1px);
     text-decoration: none;
+    cursor: pointer !important;
+}
+
+.about-link:focus {
+    outline: 2px solid var(--nord8);
+    outline-offset: 2px;
+    cursor: pointer !important;
+}
+
+.about-link:active {
+    transform: translateY(0);
+    cursor: pointer !important;
+}
+
+/* Prevent any cursor state conflicts on the About button */
+.about-link,
+.about-link * {
+    cursor: pointer !important;
+}
+
+/* Force cursor consistency on hover/focus states */
+.about-link:hover,
+.about-link:focus,
+.about-link:active {
+    cursor: pointer !important;
 }
 
 .version {
@@ -3570,12 +3604,26 @@
 /* Ensure proper cursor behavior for all interactive elements */
 button, .btn, [role="button"], [onclick], [data-action] {
     cursor: pointer !important;
+    /* Prevent cursor state conflicts */
+    position: relative;
+    z-index: 1;
 }
 
 /* Prevent cursor flickering on nested elements */
 button *, .btn *, [role="button"] *, [onclick] *, [data-action] * {
     cursor: inherit !important;
     pointer-events: none;
+}
+
+/* Special handling for modal triggers to prevent cursor lock-up */
+button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
+    cursor: pointer !important;
+    /* Force hardware acceleration to prevent cursor state conflicts */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Prevent rapid state changes */
+    transition: all 0.15s ease;
 }
 
 /* Special handling for text inputs */

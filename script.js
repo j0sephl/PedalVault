@@ -2400,7 +2400,13 @@ function hideAllProjectTagsModal(openingAnotherModal) {
     }
 }
 
-function showAboutModal() {
+function showAboutModal(event) {
+    // Prevent any default behavior and event propagation
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
     // Auto-close BOM Assistant modal if open
     const bomAssistantModal = document.getElementById('bomAssistantModal');
     if (bomAssistantModal && bomAssistantModal.classList.contains('show')) {

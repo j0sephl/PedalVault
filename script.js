@@ -189,11 +189,12 @@ function initializeApp() {
         if (e.key === 'Escape') {
             clearStuckNotifications();
         }
-        // Test notification with Ctrl+Shift+N (or Cmd+Shift+N on Mac)
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
-            e.preventDefault();
-            testNotification();
-        }
+        // Debug shortcut: Test notification with Ctrl+Shift+N (or Cmd+Shift+N on Mac)
+        // Uncomment for debugging: 
+        // if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+        //     e.preventDefault();
+        //     testNotification();
+        // }
     });
 
     // ... existing code ...
@@ -1250,34 +1251,11 @@ function clearStuckNotifications() {
         
         // Force reflow to ensure styles are applied
         notification.offsetHeight;
-        
-        console.log('Cleared stuck notification');
     }
 }
 
-// Test function to debug notifications
+// Test function to debug notifications (for development use)
 function testNotification() {
-    console.log('🔔 Testing notification system...');
-    const notification = document.getElementById('notification');
-    console.log('📍 Notification element:', notification);
-    console.log('🎨 Current classes:', notification.className);
-    console.log('🔧 Current styles:', notification.style.cssText);
-    console.log('📱 Body classes:', document.body.className);
-    
-    // Check computed styles
-    const computedStyle = window.getComputedStyle(notification);
-    console.log('💫 Computed transform:', computedStyle.transform);
-    console.log('⏱️ Computed transition:', computedStyle.transition);
-    console.log('🎯 Computed position:', computedStyle.position);
-    
-    // Check if low battery mode is active
-    const hasLowBattery = document.body.classList.contains('low-battery-mode');
-    console.log('🔋 Low battery mode active:', hasLowBattery);
-    
-    // Check if user prefers reduced motion
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    console.log('🎭 Prefers reduced motion:', prefersReducedMotion);
-    
     showNotification('✅ Test notification - this should slide in smoothly!', 'success');
 }
 
@@ -1362,10 +1340,7 @@ function filterByProject() {
 
 function showProjectDetails(projectId) {
     hideMobileNav(); // Always hide nav bar when opening project details
-    console.log('showProjectDetails called with projectId:', projectId);
-    console.log('Available projects:', Object.keys(projects));
     const project = projects[projectId];
-    console.log('Found project:', project);
     
     if (!project) {
         console.error('Project not found:', projectId);
@@ -1378,9 +1353,6 @@ function showProjectDetails(projectId) {
     let missingParts = 0;
     let lowStockParts = 0;
     
-    console.log('Project BOM:', bom);
-    console.log('BOM keys:', bom ? Object.keys(bom) : 'No BOM');
-    
     document.getElementById('projectDetailsTitle').textContent = project.name;
     
     const partsContainer = document.getElementById('projectParts');
@@ -1390,7 +1362,6 @@ function showProjectDetails(projectId) {
     
     // Check if BOM exists and has entries
     if (!bom || Object.keys(bom).length === 0) {
-        console.log('No BOM data found for project');
         results.push(`
             <li>
                 <span class="bom-part-label">
@@ -1520,7 +1491,6 @@ function showProjectDetails(projectId) {
     partsContainer.appendChild(partsList);
     
     // Show the modal
-    console.log('Showing project details modal');
     showModal('projectDetailsModal');
     hideMobileNav();
 }
@@ -1641,13 +1611,11 @@ function createProjectFromBom(projectName, projectId, bom) {
         }
         
         if (inventory[partId]) {
-            console.log(`✓ Found part in inventory: "${bom[id].name}" -> ${partId}`);
             if (!inventory[partId].projects) {
                 inventory[partId].projects = {};
             }
             inventory[partId].projects[projectId] = bom[id].quantity;
         } else {
-            console.log(`✗ Part not found in inventory, creating new: "${bom[id].name}" with ID: ${id}`);
             // Create the part if it doesn't exist
             inventory[id] = {
                 name: bom[id].name,
@@ -1774,21 +1742,15 @@ function compareBOM(event) {
             if (file.name.toLowerCase().endsWith('.csv')) {
                 // Use PapaParse to parse CSV
                 const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
-                console.log('CSV Parse Result:', parsed);
-                console.log('Parsed data length:', parsed.data.length);
-                console.log('First row:', parsed.data[0]);
                 if (parsed.errors.length) {
                     console.error('CSV parse errors:', parsed.errors);
                     throw new Error('CSV parse error: ' + parsed.errors[0].message);
                 }
                 parsed.data.forEach((row, index) => {
-                    console.log(`Processing row ${index}:`, row);
                     // Normalize headers
                     let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
                     const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
-                    console.log(`Row ${index}: name="${name}", original_id="${row['Part ID'] || row['part id'] || row['ID'] || row['id']}", quantity="${row['Quantity'] || row['quantity']}"`);
                     if (!name) {
-                        console.log(`Skipping row ${index}: no name found`);
                         return; // skip if no name
                     }
                     const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
@@ -1823,7 +1785,6 @@ function compareBOM(event) {
                         name: name,
                         quantity: quantity
                     };
-                    console.log(`Added to BOM: "${name}" (ID: ${id}, Qty: ${quantity})`);
                 });
             } else {
                 // Parse JSON
@@ -1848,8 +1809,7 @@ function compareBOM(event) {
             }
 
             // Debug: Log the processed BOM data
-            console.log('Processed BOM data:', bom);
-            console.log('Number of parts in BOM:', Object.keys(bom).length);
+
             
             // Store the BOM data and show the project name modal
             pendingBomData = bom;
@@ -2366,7 +2326,6 @@ function showAllProjectTagsModal(partId) {
 
     // Show all projects this part is assigned to (including qty = 0)
     const assignedProjects = Object.entries(part.projects);
-    console.log('showAllProjectTagsModal:', partId, assignedProjects);
     
     if (assignedProjects.length === 0) {
         tagsList.innerHTML = '<p class="no-projects">No projects assigned to this part.</p>';
@@ -2648,9 +2607,6 @@ function normalizeAllBOMReferences() {
         for (const partId in bom) {
             const norm = normalizeValue(partId);
             const canonicalId = normToCanonical[norm] || partId;
-            if (canonicalId !== partId) {
-                console.log(`Updating BOM in project ${projectId}: ${partId} -> ${canonicalId}`);
-            }
             if (newBOM[canonicalId]) {
                 newBOM[canonicalId].quantity += bom[partId].quantity;
             } else {
@@ -2664,12 +2620,9 @@ function normalizeAllBOMReferences() {
 // ... existing code ...
 
 function repairBOMData() {
-    console.log('Repairing BOM data...');
     for (const projectId in projects) {
         const bom = projects[projectId].bom;
         const newBom = {};
-        
-        console.log(`\nRepairing BOM for project: ${projects[projectId].name}`);
         
         for (const partId in bom) {
             const part = bom[partId];
@@ -2685,11 +2638,6 @@ function repairBOMData() {
                             name: inventory[invId].name,
                             quantity: quantity
                         };
-                        console.log(`Repaired ${partId}:`, {
-                            name: inventory[invId].name,
-                            quantity: quantity,
-                            'from inventory projects': inventory[invId].projects
-                        });
                         found = true;
                         break;
                     }
@@ -2700,12 +2648,10 @@ function repairBOMData() {
                         name: partId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
                         quantity: 0
                     };
-                    console.log(`Created new entry for ${partId}:`, newBom[partId]);
                 }
             } else {
                 // Keep valid entries as is
                 newBom[partId] = part;
-                console.log(`Kept existing entry for ${partId}:`, part);
             }
         }
         
@@ -2715,7 +2661,6 @@ function repairBOMData() {
     
     // Save the repaired data
     saveProjects();
-    console.log('\nBOM data repair complete');
 }
 
 // Restore mobile navigation logic

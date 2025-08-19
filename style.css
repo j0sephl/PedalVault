@@ -96,7 +96,7 @@
           background: #2E3440;
           min-height: 100vh;
           padding: 20px;
-          cursor: default;
+
       }
       
              /* Mobile body override */
@@ -109,7 +109,6 @@
                overscroll-behavior: none;
                /* Prevent zoom on input focus */
                touch-action: manipulation;
-               cursor: default;
            }
        }
   
@@ -204,7 +203,7 @@
           border: none;
           font-size: 14px;
           font-weight: 600;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
           text-align: left;
@@ -216,25 +215,69 @@
       .btn-add {
           background: #4C566A;
           color: #E5E9F0;
-          cursor: pointer;
+        
       }
   
       .btn-add:hover {
           background: #5E81AC;
           color: #ECEFF4;
-          cursor: pointer;
+        
       }
   
       .btn-remove {
           background: #BF616A;
           color: #E5E9F0;
-          cursor: pointer;
+        
       }
   
       .btn-remove:hover {
           background: #D08770;
           color: #ECEFF4;
-          cursor: pointer;
+        
+      }
+
+      .close-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+
+      .close-btn:hover {
+          background: #E5E9F0;
+          color: #4C566A;
+          transform: none !important;
+      }
+
+      .cancel-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+
+      .cancel-btn:hover {
+          background: #E5E9F0;
+          color: #4C566A;
+          transform: none !important;
+      }
+
+      .json-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+
+      .json-btn:hover {
+          background: #E5E9F0;
+          color: #4C566A;
+          transform: none !important;
+      }
+
+      .csv-btn {
+          background: #4C566A;
+          color: #E5E9F0;
+      }
+
+      .csv-btn:hover {
+          background: #E5E9F0;
+          color: #4C566A;
+          transform: none !important;
       }
   
       .inventory-list {
@@ -277,7 +320,7 @@
         border: none;
         padding: 8px 12px;
         font-size: 13px;
-        cursor: pointer;
+      
         transition: all 0.2s ease;
         font-family: 'JetBrains Mono', monospace;
         white-space: nowrap;
@@ -296,7 +339,7 @@
     .manage-projects-btn:active {
         background: #5E81AC;
         color: #ECEFF4;
-        cursor: pointer;
+      
     }
   
       .inventory-controls {
@@ -331,7 +374,7 @@
           font-size: 14px;
           background: #2E3440;
           color: #E5E9F0;
-          cursor: pointer;
+        
           min-width: 150px;
           font-family: 'JetBrains Mono', monospace;
           text-align: left;
@@ -352,7 +395,7 @@
           outline: none;
           border-color: #88C0D0;
           box-shadow: 0 0 0 2px rgba(136, 192, 208, 0.2);
-          cursor: pointer;
+        
       }
   
       /* Safari-specific fixes */
@@ -360,7 +403,7 @@
           .sort-dropdown {
               background-color: #2E3440;
               border-radius: 0;
-              cursor: pointer;
+            
           }
           
           .sort-dropdown option {
@@ -374,7 +417,7 @@
           .sort-dropdown {
               background-color: #2E3440;
               color: #E5E9F0;
-              cursor: pointer;
+            
           }
           
           .sort-dropdown option {
@@ -389,7 +432,7 @@
           align-items: center;
           padding: 8px 8px;
           border-bottom: 1px solid #4C566A;
-          cursor: pointer;
+        
           transition: background-color 0.2s ease;
           font-size: 8px;
           gap: 10px;
@@ -401,7 +444,7 @@
   
       .inventory-item:hover {
           background-color: #434C5E;
-          cursor: pointer;
+        
       }
   
       .inventory-item:last-child {
@@ -491,7 +534,7 @@
           background: none;
           border: none;
           color: #E5E9F0;
-          cursor: pointer;
+        
           padding: 2px 6px;
           font-size: 14px;
           display: flex;
@@ -507,12 +550,12 @@
           color: #ECEFF4;
           background: rgba(236, 239, 244, 0.1);
           border-radius: 4px;
-          cursor: pointer;
+        
       }
   
       .quantity-btn:active {
           transform: scale(0.95);
-          cursor: pointer;
+        
       }
   
       .item-actions {
@@ -525,7 +568,7 @@
       .action-icon {
           background: none;
           border: none;
-          cursor: pointer;
+        
           padding: 4px;
           border-radius: 50%;
           width: 24px;
@@ -547,32 +590,32 @@
   
       .edit-icon {
           color: #88C0D0;
-          cursor: pointer;
+        
       }
   
       .edit-icon:hover {
           background: rgba(136, 192, 208, 0.1);
-          cursor: pointer;
+        
       }
   
       .delete-icon {
           color: #BF616A;
-          cursor: pointer;
+        
       }
   
       .delete-icon:hover {
           background: rgba(191, 97, 106, 0.1);
-          cursor: pointer;
+        
       }
   
       .shop-icon {
           color: #A3BE8C;
-          cursor: pointer;
+        
       }
   
       .shop-icon:hover {
           background: rgba(163, 190, 140, 0.1);
-          cursor: pointer;
+        
       }
   
       /* Status Icons */
@@ -634,7 +677,7 @@
           border: none;
           font-size: 14px;
           font-weight: 600;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
           background: #4C566A;
           color: #E5E9F0;
@@ -647,7 +690,7 @@
       .sync-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
-          cursor: pointer;
+        
       }
   
       .add-part-btn {
@@ -661,7 +704,7 @@
           padding: 15px;
           font-size: 14px;
           font-weight: 600;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
           /* Prevent cursor flickering */
@@ -672,31 +715,31 @@
       .add-part-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
-          cursor: pointer;
+        
       }
   
       .export-btn {
           background: #4C566A;
           color: #E5E9F0;
-          cursor: pointer;
+        
       }
   
       .export-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
-          cursor: pointer;
+        
       }
   
       .import-btn {
           background: #4C566A;
           color: #E5E9F0;
-          cursor: pointer;
+        
       }
   
       .import-btn:hover {
           background: #5E81AC;
           color: #ECEFF4;
-          cursor: pointer;
+        
       }
   
       #importFile {
@@ -803,15 +846,13 @@
       .modal-buttons button {
           padding: 8px 12px;
           font-size: 13px;
-          cursor: pointer;
+        
           /* Prevent cursor flickering */
           position: relative;
           z-index: 1;
       }
   
-      .modal-buttons button:hover {
-          cursor: pointer;
-      }
+
   
       .notification {
           position: fixed;
@@ -1112,7 +1153,7 @@
           border: none;
           padding: 8px 16px;
           font-size: 13px;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
       }
@@ -1168,7 +1209,7 @@
           border: none;
           padding: 6px 12px;
           font-size: 12px;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
           border-radius: 0;
@@ -1236,7 +1277,7 @@
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-          cursor: pointer !important;
+    
           border: 1px solid var(--nord4) !important;
           box-shadow: 0 1px 2px rgba(0,0,0,0.03);
           transition: all 0.2s ease;
@@ -1602,7 +1643,7 @@
           border: none;
           border-radius: 4px;
           font-size: 0.9rem;
-          cursor: pointer;
+        
           transition: all 0.2s ease;
       }
   
@@ -1675,11 +1716,11 @@
     border: 1px solid var(--nord8);
     background: rgba(136, 192, 208, 0.1);
     transition: all 0.2s ease;
-    cursor: pointer !important;
     font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     /* Prevent cursor flickering */
     position: relative;
     z-index: 1;
+    cursor: inherit;
     /* Remove default button styling */
     appearance: none;
     -webkit-appearance: none;
@@ -1692,32 +1733,20 @@
     color: var(--nord1);
     transform: translateY(-1px);
     text-decoration: none;
-    cursor: pointer !important;
 }
 
 .about-link:focus {
     outline: 2px solid var(--nord8);
     outline-offset: 2px;
-    cursor: pointer !important;
 }
 
 .about-link:active {
     transform: translateY(0);
-    cursor: pointer !important;
 }
 
-/* Prevent any cursor state conflicts on the About button */
-.about-link,
-.about-link * {
-    cursor: pointer !important;
-}
 
-/* Force cursor consistency on hover/focus states */
-.about-link:hover,
-.about-link:focus,
-.about-link:active {
-    cursor: pointer !important;
-}
+
+
 
 .version {
     color: #4C566A;
@@ -1735,6 +1764,7 @@
           padding: 8px 16px;
           background: rgba(235, 203, 139, 0.1);
           transition: all 0.2s ease;
+          cursor: inherit;
       }
   
       .coffee-link:hover {
@@ -2280,7 +2310,6 @@
         font-size: 18px;
         width: 28px;
         height: 28px;
-        cursor: pointer;
         border-radius: 4px;
         transition: background 0.2s, color 0.2s;
         display: flex;
@@ -2354,7 +2383,6 @@
           vertical-align: middle;
           line-height: 1.2;
           border: 1px solid #3B4252;
-          cursor: default;
       }
       .type-pill.mlcc { background: #88C0D0; color: #2E3440; }
       .type-pill.boxfilm { background: #A3BE8C; color: #2E3440; }
@@ -2373,7 +2401,6 @@
           vertical-align: middle;
           line-height: 1.2;
           border: 1px dashed #EBCB8B;
-          cursor: pointer;
           opacity: 0.8;
           transition: background 0.2s, color 0.2s, opacity 0.2s;
       }
@@ -2482,6 +2509,11 @@
     max-height: 70vh;
     overflow-y: auto;
     padding-right: 10px;
+    cursor: default;
+}
+
+.about-content * {
+    cursor: default;
 }
 
 .about-content h3 {
@@ -2547,6 +2579,7 @@
     display: flex;
     gap: 15px;
     margin-top: 20px;
+    margin-bottom: 10px;
 }
 
 .contact-link {
@@ -2559,6 +2592,7 @@
     background: var(--nord1);
     border: 1px solid var(--nord2);
     transition: all 0.2s;
+    cursor: inherit;
 }
 
 .contact-link:hover {
@@ -2732,7 +2766,6 @@
     font-size: 13px;
     font-weight: 500;
     font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Dank Mono', 'Source Code Pro', monospace;
-    cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
     overflow: hidden;
@@ -2822,6 +2855,7 @@
     text-decoration: none;
     transition: all 0.2s;
     color: inherit;
+    cursor: inherit;
 }
 
 .ai-link:hover {
@@ -2996,7 +3030,6 @@
     color: var(--nord7);
     padding: 8px 0;
     font-size: 12px;
-    cursor: pointer;
     transition: color 0.2s;
 }
 
@@ -3043,7 +3076,7 @@
     border: 1px solid var(--nord3);
     color: var(--nord9);
     font-size: 16px;
-    cursor: pointer;
+  
     transition: all 0.2s;
 }
 
@@ -3376,7 +3409,6 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
     box-sizing: border-box;
-    cursor: pointer;
     /* Prevent cursor flickering on mobile */
     position: relative;
     z-index: 3;
@@ -3385,14 +3417,12 @@
   /* Ensure all interactive elements have consistent cursor behavior on mobile */
   .btn, .sync-btn, .add-part-btn, .export-btn, .import-btn,
   .manage-projects-btn, .action-icon, .modal-buttons button {
-    cursor: pointer !important;
     -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
     touch-action: manipulation;
   }
   
   /* Prevent cursor flickering on mobile inventory items */
   .inventory-item {
-    cursor: pointer !important;
     -webkit-tap-highlight-color: rgba(67, 76, 94, 0.2);
     touch-action: manipulation;
   }
@@ -3603,7 +3633,6 @@
 
 /* Ensure proper cursor behavior for all interactive elements */
 button, .btn, [role="button"], [onclick], [data-action] {
-    cursor: pointer !important;
     /* Prevent cursor state conflicts */
     position: relative;
     z-index: 1;
@@ -3611,13 +3640,11 @@ button, .btn, [role="button"], [onclick], [data-action] {
 
 /* Prevent cursor flickering on nested elements */
 button *, .btn *, [role="button"] *, [onclick] *, [data-action] * {
-    cursor: inherit !important;
     pointer-events: none;
 }
 
 /* Special handling for modal triggers to prevent cursor lock-up */
 button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
-    cursor: pointer !important;
     /* Force hardware acceleration to prevent cursor state conflicts */
     transform: translateZ(0);
     backface-visibility: hidden;
@@ -3626,21 +3653,14 @@ button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
     transition: all 0.15s ease;
 }
 
-/* Special handling for text inputs */
-input[type="text"], input[type="search"], input[type="url"], input[type="email"], 
-input[type="number"], textarea, [contenteditable] {
-    cursor: text !important;
-}
 
-/* Ensure dropdowns show pointer cursor */
-select, option {
-    cursor: pointer !important;
-}
+
+
 
 /* Fix for Safari and other WebKit browsers */
 @supports (-webkit-touch-callout: none) {
     button, .btn, [role="button"], [onclick], [data-action] {
-        cursor: pointer !important;
+
         -webkit-tap-highlight-color: rgba(94, 129, 172, 0.2);
     }
 }

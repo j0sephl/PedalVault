@@ -898,6 +898,9 @@ function adjustStockInline(partId, action) {
 }
 
 function showAddPartModal() {
+    // Populate project assignments section
+    populateNewPartProjectsSection();
+    
     showModal('addPartModal');
     hideMobileNav();
 }
@@ -908,6 +911,13 @@ function hideAddPartModal() {
     document.getElementById('newPartQuantity').value = '';
     document.getElementById('newPartUrl').value = '';
     document.getElementById('newPartId').value = '';
+    
+    // Clear project assignments
+    const projectRows = document.querySelectorAll('.new-project-qty');
+    projectRows.forEach(input => {
+        input.value = '0';
+    });
+    
     showMobileNav();
 }
 
@@ -1011,8 +1021,76 @@ function populateEditPartProjectsSection(partId) {
     projectsSection.innerHTML = projectsHtml;
 }
 
+function populateNewPartProjectsSection() {
+    const projectsSection = document.getElementById('newPartProjectsDropdownSection');
+    
+    if (!projectsSection) return;
+    
+    // If no projects exist, show a message
+    if (Object.keys(projects).length === 0) {
+        projectsSection.innerHTML = `
+            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 3px solid var(--nord13); color: var(--nord5);">
+                <p style="margin: 0; font-size: 13px;">No projects available. Create a project first to assign parts.</p>
+                <button class="btn btn-add" onclick="hideAddPartModal(); showProjectNameModal();" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">
+                    Create Project
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Create project assignment controls
+    let projectsHtml = `
+        <div style="margin: 15px 0;">
+            <h4 style="color: var(--nord8); font-size: 14px; margin-bottom: 10px;">Project Assignments</h4>
+            <div class="nord-project-inv-list">
+    `;
+    
+    for (const projectId in projects) {
+        const project = projects[projectId];
+        
+        projectsHtml += `
+            <div class="nord-project-inv-row">
+                <span class="nord-project-inv-name" title="${project.name}">${project.name}</span>
+                <div class="modal-item-quantity">
+                    <button type="button" class="quantity-btn" onclick="adjustNewProjectQty('${projectId}', -1)">-</button>
+                    <input type="number" 
+                           class="new-project-qty" 
+                           data-new-project-qty="${projectId}" 
+                           value="0" 
+                           min="0" 
+                           max="9999"
+                           style="width: 60px; text-align: center; background: var(--nord2); color: var(--nord6); border: 1px solid var(--nord4); padding: 4px;">
+                    <button type="button" class="quantity-btn" onclick="adjustNewProjectQty('${projectId}', 1)">+</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    projectsHtml += `
+            </div>
+            <div style="margin-top: 10px; padding: 8px; background: var(--nord1); border-radius: 4px;">
+                <p style="margin: 0; font-size: 11px; color: var(--nord4); line-height: 1.4;">
+                    Set quantities needed for each project. Use 0 to remove from project.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    projectsSection.innerHTML = projectsHtml;
+}
+
 function adjustProjectQty(projectId, delta) {
     const input = document.querySelector(`[data-project-qty="${projectId}"]`);
+    if (input) {
+        const currentValue = parseInt(input.value) || 0;
+        const newValue = Math.max(0, Math.min(9999, currentValue + delta));
+        input.value = newValue;
+    }
+}
+
+function adjustNewProjectQty(projectId, delta) {
+    const input = document.querySelector(`[data-new-project-qty="${projectId}"]`);
     if (input) {
         const currentValue = parseInt(input.value) || 0;
         const newValue = Math.max(0, Math.min(9999, currentValue + delta));
@@ -1165,13 +1243,37 @@ function addNewPart() {
         showNotification('Part ID already exists', 'error');
         return;
     }
+    // Read project assignments from modal
+    const projectRows = document.querySelectorAll('.new-project-qty');
+    const newProjects = {};
+    projectRows.forEach(input => {
+        const projectId = input.getAttribute('data-new-project-qty');
+        const qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+            newProjects[projectId] = qty;
+        }
+    });
+    
     inventory[id] = { 
         name, 
         quantity, 
         purchaseUrl,
-        projects: {}, // Initialize empty projects object
+        projects: newProjects,
         type: type || undefined
     };
+    
+    // Update project BOMs
+    for (const projectId in projects) {
+        if (!projects[projectId].bom) projects[projectId].bom = {};
+        if (newProjects[projectId]) {
+            projects[projectId].bom[id] = {
+                name: name,
+                quantity: newProjects[projectId]
+            };
+        }
+    }
+    
+    saveProjects();
     saveInventory();
     displayInventory();
     hideAddPartModal();
@@ -1561,6 +1663,10 @@ function confirmProjectName() {
         // If Edit Part modal is open, refresh it to show the new project
         if (document.getElementById('editPartModal').classList.contains('show') && editingPartId) {
             showEditPartModal(editingPartId);
+        }
+        // If Add Part modal is open, refresh it to show the new project
+        if (document.getElementById('addPartModal').classList.contains('show')) {
+            populateNewPartProjectsSection();
         }
         // If Project Management modal is open, refresh it to show the new project
         if (document.getElementById('projectManagementModal').classList.contains('show')) {

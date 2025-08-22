@@ -57,15 +57,12 @@ DIY building guitar pedals is an fun, but managing components can be hard. Pedal
 ## Screenshots
 
 ### Inventory Management
-![Inventory View](screenshots/inventory-view.png)
 *Clean, organized component listing with instant search and filtering*
 
 ### Project Tracking  
-![Project Dashboard](screenshots/project-view.png)
 *Visual project status with missing components highlighted*
 
 ### Mobile Experience
-![Mobile Interface](screenshots/mobile-view.png)
 *Touch-optimized interface perfect for workshop use*
 
 ## Completely Free to Use

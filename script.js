@@ -46,6 +46,127 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+/**
+ * Generic utility function to copy text to clipboard
+ * Uses modern clipboard API with fallback to execCommand
+ * @param {string} text - Text to copy to clipboard
+ * @param {Function} onSuccess - Optional callback for success
+ * @param {Function} onError - Optional callback for error
+ * @returns {Promise<boolean>} Promise that resolves to true if successful
+ */
+function copyToClipboard(text, onSuccess, onError) {
+    if (!text) {
+        console.error('No text provided to copy');
+        if (onError) onError('No text provided');
+        return Promise.resolve(false);
+    }
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text)
+            .then(() => {
+                if (onSuccess) onSuccess();
+                return true;
+            })
+            .catch(err => {
+                console.error('Failed to copy with clipboard API:', err);
+                // Fallback to execCommand
+                return fallbackCopyTextToClipboard(text, onSuccess, onError);
+            });
+    } else {
+        // Fallback for older browsers or non-secure contexts
+        return fallbackCopyTextToClipboard(text, onSuccess, onError);
+    }
+}
+
+/**
+ * Copy the prompt template to clipboard
+ * Uses the generic copyToClipboard utility function
+ */
+function copyPromptTemplate() {
+    const promptTemplate = document.getElementById('promptTemplate');
+    if (!promptTemplate) {
+        console.error('Prompt template element not found');
+        return;
+    }
+    
+    const textToCopy = promptTemplate.textContent;
+    
+    copyToClipboard(
+        textToCopy, 
+        () => temporarilyStyleButton('.copy-prompt-btn', 'Copied!', '#4CAF50', 'white', 2000),
+        () => temporarilyStyleButton('.copy-prompt-btn', 'Copy Failed', '#f44336', 'white', 2000)
+    );
+}
+
+/**
+ * Fallback copy method using execCommand
+ * @param {string} text - Text to copy
+ * @param {Function} onSuccess - Optional callback for success
+ * @param {Function} onError - Optional callback for error
+ * @returns {Promise<boolean>} Promise that resolves to true if successful
+ */
+function fallbackCopyTextToClipboard(text, onSuccess, onError) {
+    return new Promise((resolve) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                if (onSuccess) onSuccess();
+                resolve(true);
+            } else {
+                console.error('Fallback copy command failed');
+                if (onError) onError('Copy command failed');
+                resolve(false);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            if (onError) onError('Copy failed');
+            resolve(false);
+        }
+        
+        document.body.removeChild(textArea);
+    });
+}
+
+/**
+ * Utility function to temporarily change button appearance and text
+ * @param {string} buttonSelector - CSS selector for the button
+ * @param {string} newText - Text to display temporarily
+ * @param {string} backgroundColor - Background color to apply
+ * @param {string} textColor - Text color to apply
+ * @param {number} duration - Duration in milliseconds (default: 2000)
+ */
+function temporarilyStyleButton(buttonSelector, newText, backgroundColor, textColor, duration = 2000) {
+    const button = document.querySelector(buttonSelector);
+    if (!button) return;
+    
+    // Store original text
+    const originalText = button.textContent;
+    
+    // Apply new styles
+    button.textContent = newText;
+    button.style.backgroundColor = backgroundColor;
+    button.style.color = textColor;
+    
+    // Restore original appearance after duration
+    setTimeout(() => {
+        button.textContent = originalText;
+        button.style.backgroundColor = '';
+        button.style.color = '';
+    }, duration);
+}
+
+
+
 // =============================================================================
 // DOM ELEMENT CACHE
 // =============================================================================

@@ -2387,6 +2387,7 @@
       .type-pill.mlcc { background: #88C0D0; color: #2E3440; }
       .type-pill.boxfilm { background: #A3BE8C; color: #2E3440; }
       .type-pill.electrolytic { background: #D08770; color: #2E3440; }
+      .type-pill.tantalum { background: #d1b581; color: #2E3440; }
       .type-pill.other { background: #B48EAD; color: #2E3440; }
   
       .set-type-pill {

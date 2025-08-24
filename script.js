@@ -1846,52 +1846,8 @@ function compareBOM(event) {
             
             // Check if file is CSV
             if (file.name.toLowerCase().endsWith('.csv')) {
-                // Use PapaParse to parse CSV
-                const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
-                if (parsed.errors.length) {
-                    console.error('CSV parse errors:', parsed.errors);
-                    throw new Error('CSV parse error: ' + parsed.errors[0].message);
-                }
-                parsed.data.forEach((row, index) => {
-                    // Normalize headers
-                    let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
-                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
-                    if (!name) {
-                        return; // skip if no name
-                    }
-                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
-                    
-                    // If no explicit ID provided, try to find matching part in inventory first
-                    if (!id) {
-                        // Try to find exact match by name first
-                        let foundId = null;
-                        for (const [invId, invPart] of Object.entries(inventory)) {
-                            if (invPart.name.toLowerCase() === name.toLowerCase()) {
-                                foundId = invId;
-                                break;
-                            }
-                        }
-                        
-                        // If no exact match, try normalized matching
-                        if (!foundId) {
-                            const normalizedName = normalizeValue(name);
-                            for (const [invId, invPart] of Object.entries(inventory)) {
-                                if (normalizeValue(invPart.name) === normalizedName) {
-                                    foundId = invId;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Use found ID or create a normalized one as fallback
-                        id = foundId || normalizeValue(name);
-                    }
-                    
-                    bom[id] = {
-                        name: name,
-                        quantity: quantity
-                    };
-                });
+                // Use the shared CSV parsing function
+                bom = parseBOMFromCSV(fileContent);
             } else {
                 // Parse JSON
                 const parsedBom = JSON.parse(fileContent);
@@ -1927,6 +1883,103 @@ function compareBOM(event) {
     };
     reader.readAsText(file);
     event.target.value = '';
+}
+
+/**
+ * Parse BOM data from CSV content (either file content or pasted text)
+ * @param {string} csvContent - The CSV content to parse
+ * @returns {Object} Parsed BOM data
+ */
+function parseBOMFromCSV(csvContent) {
+    const parsed = Papa.parse(csvContent, { header: true, skipEmptyLines: true });
+    if (parsed.errors.length) {
+        console.error('CSV parse errors:', parsed.errors);
+        throw new Error('CSV parse error: ' + parsed.errors[0].message);
+    }
+    
+    let bom = {};
+    parsed.data.forEach((row, index) => {
+        // Normalize headers
+        let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
+        const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
+        if (!name) {
+            return; // skip if no name
+        }
+        const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
+        
+        // If no explicit ID provided, try to find matching part in inventory first
+        if (!id) {
+            // Try to find exact match by name first
+            let foundId = null;
+            for (const [invId, invPart] of Object.entries(inventory)) {
+                if (invPart.name.toLowerCase() === name.toLowerCase()) {
+                    foundId = invId;
+                    break;
+                }
+            }
+            
+            // If no exact match, try normalized matching
+            if (!foundId) {
+                const normalizedName = normalizeValue(name);
+                for (const [invId, invPart] of Object.entries(inventory)) {
+                    if (normalizeValue(invPart.name) === normalizedName) {
+                        foundId = invId;
+                        break;
+                    }
+                }
+            }
+            
+            // Use found ID or create a normalized one as fallback
+            id = foundId || normalizeValue(name);
+        }
+        
+        bom[id] = {
+            name: name,
+            quantity: quantity
+        };
+    });
+    
+    if (Object.keys(bom).length === 0) {
+        throw new Error('No valid part data found. Expected columns: Name/Part/Component and Quantity');
+    }
+    
+    return bom;
+}
+
+/**
+ * Process pasted BOM data from the textarea input
+ * Reuses the same CSV parsing logic as compareBOM function
+ */
+function processPastedBOM() {
+    const bomTextInput = document.getElementById('bomTextInput');
+    if (!bomTextInput) {
+        console.error('BOM text input not found');
+        return;
+    }
+    
+    const pastedText = bomTextInput.value.trim();
+    if (!pastedText) {
+        alert('Please paste BOM data first');
+        return;
+    }
+    
+    try {
+        // Use the shared CSV parsing function
+        const bom = parseBOMFromCSV(pastedText);
+        
+        // Store the BOM data and show the project name modal - same as compareBOM
+        pendingBomData = bom;
+        showProjectNameModal();
+        
+        // Clear the input
+        bomTextInput.value = '';
+        
+        // Hide the BOM assistant modal
+        hideBOMAssistantModal();
+        
+    } catch (err) {
+        showNotification("Error processing pasted BOM: " + err.message, "error");
+    }
 }
 
 function addMissingParts() {

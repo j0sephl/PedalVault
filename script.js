@@ -94,8 +94,8 @@ function copyPromptTemplate() {
     
     copyToClipboard(
         textToCopy, 
-        () => temporarilyStyleButton('.copy-prompt-btn', 'Copied!', '#4CAF50', 'white', 2000),
-        () => temporarilyStyleButton('.copy-prompt-btn', 'Copy Failed', '#f44336', 'white', 2000)
+        () => showNotification('Prompt template copied to clipboard!', 'success'),
+        () => showNotification('Failed to copy prompt template', 'error')
     );
 }
 
@@ -137,33 +137,7 @@ function fallbackCopyTextToClipboard(text, onSuccess, onError) {
     });
 }
 
-/**
- * Utility function to temporarily change button appearance and text
- * @param {string} buttonSelector - CSS selector for the button
- * @param {string} newText - Text to display temporarily
- * @param {string} backgroundColor - Background color to apply
- * @param {string} textColor - Text color to apply
- * @param {number} duration - Duration in milliseconds (default: 2000)
- */
-function temporarilyStyleButton(buttonSelector, newText, backgroundColor, textColor, duration = 2000) {
-    const button = document.querySelector(buttonSelector);
-    if (!button) return;
-    
-    // Store original text
-    const originalText = button.textContent;
-    
-    // Apply new styles
-    button.textContent = newText;
-    button.style.backgroundColor = backgroundColor;
-    button.style.color = textColor;
-    
-    // Restore original appearance after duration
-    setTimeout(() => {
-        button.textContent = originalText;
-        button.style.backgroundColor = '';
-        button.style.color = '';
-    }, duration);
-}
+
 
 
 

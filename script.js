@@ -46,6 +46,101 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+/**
+ * Generic utility function to copy text to clipboard
+ * Uses modern clipboard API with fallback to execCommand
+ * @param {string} text - Text to copy to clipboard
+ * @param {Function} onSuccess - Optional callback for success
+ * @param {Function} onError - Optional callback for error
+ * @returns {Promise<boolean>} Promise that resolves to true if successful
+ */
+function copyToClipboard(text, onSuccess, onError) {
+    if (!text) {
+        console.error('No text provided to copy');
+        if (onError) onError('No text provided');
+        return Promise.resolve(false);
+    }
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text)
+            .then(() => {
+                if (onSuccess) onSuccess();
+                return true;
+            })
+            .catch(err => {
+                console.error('Failed to copy with clipboard API:', err);
+                // Fallback to execCommand
+                return fallbackCopyTextToClipboard(text, onSuccess, onError);
+            });
+    } else {
+        // Fallback for older browsers or non-secure contexts
+        return fallbackCopyTextToClipboard(text, onSuccess, onError);
+    }
+}
+
+/**
+ * Copy the prompt template to clipboard
+ * Uses the generic copyToClipboard utility function
+ */
+function copyPromptTemplate() {
+    const promptTemplate = document.getElementById('promptTemplate');
+    if (!promptTemplate) {
+        console.error('Prompt template element not found');
+        return;
+    }
+    
+    const textToCopy = promptTemplate.textContent;
+    
+    copyToClipboard(
+        textToCopy, 
+        () => showNotification('Prompt template copied to clipboard!', 'success'),
+        () => showNotification('Failed to copy prompt template', 'error')
+    );
+}
+
+/**
+ * Fallback copy method using execCommand
+ * @param {string} text - Text to copy
+ * @param {Function} onSuccess - Optional callback for success
+ * @param {Function} onError - Optional callback for error
+ * @returns {Promise<boolean>} Promise that resolves to true if successful
+ */
+function fallbackCopyTextToClipboard(text, onSuccess, onError) {
+    return new Promise((resolve) => {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                if (onSuccess) onSuccess();
+                resolve(true);
+            } else {
+                console.error('Fallback copy command failed');
+                if (onError) onError('Copy command failed');
+                resolve(false);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            if (onError) onError('Copy failed');
+            resolve(false);
+        }
+        
+        document.body.removeChild(textArea);
+    });
+}
+
+
+
+
+
 // =============================================================================
 // DOM ELEMENT CACHE
 // =============================================================================
@@ -1846,52 +1941,8 @@ function compareBOM(event) {
             
             // Check if file is CSV
             if (file.name.toLowerCase().endsWith('.csv')) {
-                // Use PapaParse to parse CSV
-                const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
-                if (parsed.errors.length) {
-                    console.error('CSV parse errors:', parsed.errors);
-                    throw new Error('CSV parse error: ' + parsed.errors[0].message);
-                }
-                parsed.data.forEach((row, index) => {
-                    // Normalize headers
-                    let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
-                    const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
-                    if (!name) {
-                        return; // skip if no name
-                    }
-                    const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
-                    
-                    // If no explicit ID provided, try to find matching part in inventory first
-                    if (!id) {
-                        // Try to find exact match by name first
-                        let foundId = null;
-                        for (const [invId, invPart] of Object.entries(inventory)) {
-                            if (invPart.name.toLowerCase() === name.toLowerCase()) {
-                                foundId = invId;
-                                break;
-                            }
-                        }
-                        
-                        // If no exact match, try normalized matching
-                        if (!foundId) {
-                            const normalizedName = normalizeValue(name);
-                            for (const [invId, invPart] of Object.entries(inventory)) {
-                                if (normalizeValue(invPart.name) === normalizedName) {
-                                    foundId = invId;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // Use found ID or create a normalized one as fallback
-                        id = foundId || normalizeValue(name);
-                    }
-                    
-                    bom[id] = {
-                        name: name,
-                        quantity: quantity
-                    };
-                });
+                // Use the shared CSV parsing function
+                bom = parseBOMFromCSV(fileContent);
             } else {
                 // Parse JSON
                 const parsedBom = JSON.parse(fileContent);
@@ -1927,6 +1978,103 @@ function compareBOM(event) {
     };
     reader.readAsText(file);
     event.target.value = '';
+}
+
+/**
+ * Parse BOM data from CSV content (either file content or pasted text)
+ * @param {string} csvContent - The CSV content to parse
+ * @returns {Object} Parsed BOM data
+ */
+function parseBOMFromCSV(csvContent) {
+    const parsed = Papa.parse(csvContent, { header: true, skipEmptyLines: true });
+    if (parsed.errors.length) {
+        console.error('CSV parse errors:', parsed.errors);
+        throw new Error('CSV parse error: ' + parsed.errors[0].message);
+    }
+    
+    let bom = {};
+    parsed.data.forEach((row, index) => {
+        // Normalize headers
+        let id = row['Part ID'] || row['part id'] || row['ID'] || row['id'] || '';
+        const name = row['Name'] || row['name'] || row['Part Name'] || row['part name'] || row['Component'] || row['component'] || '';
+        if (!name) {
+            return; // skip if no name
+        }
+        const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
+        
+        // If no explicit ID provided, try to find matching part in inventory first
+        if (!id) {
+            // Try to find exact match by name first
+            let foundId = null;
+            for (const [invId, invPart] of Object.entries(inventory)) {
+                if (invPart.name.toLowerCase() === name.toLowerCase()) {
+                    foundId = invId;
+                    break;
+                }
+            }
+            
+            // If no exact match, try normalized matching
+            if (!foundId) {
+                const normalizedName = normalizeValue(name);
+                for (const [invId, invPart] of Object.entries(inventory)) {
+                    if (normalizeValue(invPart.name) === normalizedName) {
+                        foundId = invId;
+                        break;
+                    }
+                }
+            }
+            
+            // Use found ID or create a normalized one as fallback
+            id = foundId || normalizeValue(name);
+        }
+        
+        bom[id] = {
+            name: name,
+            quantity: quantity
+        };
+    });
+    
+    if (Object.keys(bom).length === 0) {
+        throw new Error('No valid part data found. Expected columns: Name/Part/Component and Quantity');
+    }
+    
+    return bom;
+}
+
+/**
+ * Process pasted BOM data from the textarea input
+ * Reuses the same CSV parsing logic as compareBOM function
+ */
+function processPastedBOM() {
+    const bomTextInput = document.getElementById('bomTextInput');
+    if (!bomTextInput) {
+        console.error('BOM text input not found');
+        return;
+    }
+    
+    const pastedText = bomTextInput.value.trim();
+    if (!pastedText) {
+        alert('Please paste BOM data first');
+        return;
+    }
+    
+    try {
+        // Use the shared CSV parsing function
+        const bom = parseBOMFromCSV(pastedText);
+        
+        // Store the BOM data and show the project name modal - same as compareBOM
+        pendingBomData = bom;
+        showProjectNameModal();
+        
+        // Clear the input
+        bomTextInput.value = '';
+        
+        // Hide the BOM assistant modal
+        hideBOMAssistantModal();
+        
+    } catch (err) {
+        showNotification("Error processing pasted BOM: " + err.message, "error");
+    }
 }
 
 function addMissingParts() {

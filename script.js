@@ -2726,24 +2726,32 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
     }
     
     // Update project BOMs to use canonical IDs
+    // BOM entries are objects: { name, quantity }. Entries pointing at merged
+    // duplicates are remapped to the canonical ID (summing quantities if both
+    // exist); entries with no canonical match are kept as-is, since a BOM may
+    // legitimately reference parts that aren't in the inventory yet.
     for (const project of Object.values(projects)) {
         if (project.bom) {
             const updatedBom = {};
-            for (const [id, quantity] of Object.entries(project.bom)) {
-                // Check if the inventory item still exists
-                if (inventory[id]) {
-                    const normalizedId = normalizeValue(inventory[id].name || '');
-                    const canonicalId = normalizedToCanonical[normalizedId];
-                    if (canonicalId && inventory[canonicalId]) {
-                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
-                    }
+            for (const [id, entry] of Object.entries(project.bom)) {
+                const isObjectEntry = entry && typeof entry === 'object';
+                const entryName = isObjectEntry ? entry.name : undefined;
+                // Tolerate legacy numeric entries by coercing them to a quantity
+                const entryQuantity = isObjectEntry ? (entry.quantity || 0) : (Number(entry) || 0);
+                
+                // Resolve the canonical ID via the part's name if it's in inventory,
+                // otherwise via the BOM entry's own name or raw ID
+                const lookupName = inventory[id] ? (inventory[id].name || '') : (entryName || id);
+                const canonicalId = normalizedToCanonical[normalizeValue(lookupName)] ||
+                    normalizedToCanonical[normalizeValue(id)];
+                
+                const targetId = (canonicalId && inventory[canonicalId]) ? canonicalId : id;
+                const targetName = (inventory[targetId] && inventory[targetId].name) || entryName || id;
+                
+                if (updatedBom[targetId]) {
+                    updatedBom[targetId].quantity = (updatedBom[targetId].quantity || 0) + entryQuantity;
                 } else {
-                    // If the original part doesn't exist, try to find a canonical match by ID
-                    const normalizedId = normalizeValue(id);
-                    const canonicalId = normalizedToCanonical[normalizedId];
-                    if (canonicalId && inventory[canonicalId]) {
-                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
-                    }
+                    updatedBom[targetId] = { name: targetName, quantity: entryQuantity };
                 }
             }
             project.bom = updatedBom;

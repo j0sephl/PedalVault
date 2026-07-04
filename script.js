@@ -1228,6 +1228,7 @@ function saveEditPart() {
         showNotification('Part ID already exists', 'error');
         return;
     }
+    const previousPartId = editingPartId;
     if (newId !== editingPartId) {
         const part = inventory[editingPartId];
         inventory[newId] = {
@@ -1263,6 +1264,11 @@ function saveEditPart() {
     // Update project BOMs
     for (const projectId in projects) {
         if (!projects[projectId].bom) projects[projectId].bom = {};
+        // If the part ID changed, remove the entry stored under the old ID
+        // so BOMs don't keep orphaned references to it
+        if (newId !== previousPartId) {
+            delete projects[projectId].bom[previousPartId];
+        }
         if (newProjects[projectId]) {
             projects[projectId].bom[newId] = {
                 name: newName,

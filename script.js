@@ -409,11 +409,17 @@ function normalizeValue(str) {
     return normalized;
 }
 
+// Dirty flags so pending debounced saves can be flushed if the page is
+// hidden or closed before the debounce timer fires
+let inventoryDirty = false;
+let projectsDirty = false;
+
 /**
  * Save projects data to browser's local storage
  * Persists project information including BOMs between browser sessions
  */
 function saveProjects() {
+    projectsDirty = true;
     debouncedSaveProjects();
 }
 
@@ -422,6 +428,7 @@ function saveProjects() {
  * Persists component inventory between browser sessions
  */
 function saveInventory() {
+    inventoryDirty = true;
     debouncedSaveInventory();
 }
 
@@ -3250,8 +3257,8 @@ function detectDevicePerformance() {
 // LOCALSTORAGE PERFORMANCE OPTIMIZATIONS
 // =============================================================================
 
-// Debounced save functions to prevent excessive localStorage writes
-const debouncedSaveInventory = debounce(() => {
+// Synchronous writers used by both the debounced saves and the unload flush
+function writeInventoryToStorage() {
     try {
         const compressed = compressData(inventory);
         localStorage.setItem('guitarPedalInventory', compressed);
@@ -3260,9 +3267,10 @@ const debouncedSaveInventory = debounce(() => {
         // Fallback to uncompressed if compression fails
         localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
     }
-}, 1000);
+    inventoryDirty = false;
+}
 
-const debouncedSaveProjects = debounce(() => {
+function writeProjectsToStorage() {
     try {
         const compressed = compressData(projects);
         localStorage.setItem('guitarPedalProjects', compressed);
@@ -3271,7 +3279,28 @@ const debouncedSaveProjects = debounce(() => {
         // Fallback to uncompressed if compression fails
         localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
     }
-}, 1000);
+    projectsDirty = false;
+}
+
+// Debounced save functions to prevent excessive localStorage writes
+const debouncedSaveInventory = debounce(writeInventoryToStorage, 1000);
+const debouncedSaveProjects = debounce(writeProjectsToStorage, 1000);
+
+// Flush any pending debounced saves immediately so edits made within the
+// debounce window aren't lost when the tab is hidden, closed, or navigated away
+function flushPendingSaves() {
+    if (inventoryDirty) writeInventoryToStorage();
+    if (projectsDirty) writeProjectsToStorage();
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        flushPendingSaves();
+    }
+});
+
+// pagehide covers browsers/situations where visibilitychange doesn't fire on close
+window.addEventListener('pagehide', flushPendingSaves);
 
 // Simple compression for localStorage
 function compressData(data) {

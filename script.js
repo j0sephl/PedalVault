@@ -52,6 +52,43 @@ function escapeHtml(str) {
 }
 
 /**
+ * Check that a URL is safe to open or save as a purchase link.
+ * Only http: and https: are allowed (blocks javascript:, data:, etc.).
+ * @param {string} url - URL to validate
+ * @returns {boolean} True if the URL parses and uses http(s)
+ */
+function isSafeHttpUrl(url) {
+    if (typeof url !== 'string' || !url) return false;
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Normalize a user-entered purchase URL for storage.
+ * Adds https:// to scheme-less input like "www.mouser.com/...".
+ * Returns '' for anything that still isn't a valid http(s) URL.
+ * @param {string} url - Raw user input
+ * @returns {string} A safe http(s) URL, or ''
+ */
+function sanitizePurchaseUrl(url) {
+    if (typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (isSafeHttpUrl(trimmed)) return trimmed;
+    // Tolerate scheme-less input (the old code stored it as-is,
+    // which produced a broken relative link anyway)
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+        const withScheme = 'https://' + trimmed;
+        if (isSafeHttpUrl(withScheme)) return withScheme;
+    }
+    return '';
+}
+
+/**
  * Generic utility function to copy text to clipboard
  * Uses modern clipboard API with fallback to execCommand
  * @param {string} text - Text to copy to clipboard
@@ -582,6 +619,20 @@ function exportInventory(format) {
     showNotification(`Saved inventory to ${filename}`);
 }
 
+/**
+ * Drop non-http(s) purchase URLs from imported inventory data.
+ * Imported files are untrusted; a javascript: URL here would execute
+ * when the user clicks the part's shop button.
+ */
+function sanitizeImportedPurchaseUrls(inventoryData) {
+    for (const partId in inventoryData) {
+        const part = inventoryData[partId];
+        if (part && part.purchaseUrl) {
+            part.purchaseUrl = sanitizePurchaseUrl(String(part.purchaseUrl));
+        }
+    }
+}
+
 function importInventory(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -632,6 +683,7 @@ function importInventory(event) {
             if (importedData.inventory && importedData.projects) {
                 inventory = importedData.inventory;
                 projects = importedData.projects;
+                sanitizeImportedPurchaseUrls(inventory);
                 // Auto-merge duplicates after import (silently)
                 mergeDuplicateInventoryEntries(false);
                 saveProjects();
@@ -639,6 +691,7 @@ function importInventory(event) {
             } else if (typeof importedData === 'object' && importedData !== null) {
                 // Fallback for old format or CSV import
                 inventory = importedData;
+                sanitizeImportedPurchaseUrls(inventory);
                 // --- Begin: Ensure projects are globally tagged and BOMs updated ---
                 for (const partId in inventory) {
                     const part = inventory[partId];
@@ -1220,11 +1273,16 @@ function saveEditPart() {
     if (!editingPartId) return;
     const newName = document.getElementById('editPartName').value.trim();
     const newQuantity = parseInt(document.getElementById('editPartQuantity').value) || 0;
-    const newUrl = document.getElementById('editPartUrl').value.trim();
+    const rawNewUrl = document.getElementById('editPartUrl').value.trim();
+    const newUrl = sanitizePurchaseUrl(rawNewUrl);
     let newId = document.getElementById('editPartId').value.trim();
     const newType = document.getElementById('editPartType').value;
     if (!newName) {
         showNotification('Please enter a part name', 'error');
+        return;
+    }
+    if (rawNewUrl && !newUrl) {
+        showNotification('Purchase link must be a valid http(s) URL', 'error');
         return;
     }
     // Generate ID: normalize name + _ + normalize type (if type is selected)
@@ -1327,7 +1385,12 @@ function confirmDeletePart() {
 function addNewPart() {
     const name = document.getElementById('newPartName').value.trim();
     const quantity = parseInt(document.getElementById('newPartQuantity').value) || 0;
-    const purchaseUrl = document.getElementById('newPartUrl').value.trim();
+    const rawPurchaseUrl = document.getElementById('newPartUrl').value.trim();
+    const purchaseUrl = sanitizePurchaseUrl(rawPurchaseUrl);
+    if (rawPurchaseUrl && !purchaseUrl) {
+        showNotification('Purchase link must be a valid http(s) URL', 'error');
+        return;
+    }
     let id = document.getElementById('newPartId').value.trim();
     const type = document.getElementById('newPartType').value;
     
@@ -1395,7 +1458,14 @@ function addNewPart() {
 function handlePurchaseClick(partId) {
     const part = inventory[partId];
     if (part && part.purchaseUrl) {
-        window.open(part.purchaseUrl, '_blank');
+        // Validate at click time too: URLs may come from imported files
+        // saved before sanitization existed
+        const safeUrl = sanitizePurchaseUrl(part.purchaseUrl);
+        if (!safeUrl) {
+            showNotification('Purchase link is not a valid web address', 'error');
+            return;
+        }
+        window.open(safeUrl, '_blank', 'noopener');
     } else {
         showNotification('No purchase link available', 'error');
     }
@@ -2104,7 +2174,7 @@ function addMissingParts() {
             inventory[id] = {
                 name: part.name,
                 quantity: 0,
-                purchaseUrl: part.purchaseUrl || '',
+                purchaseUrl: sanitizePurchaseUrl(part.purchaseUrl || ''),
                 projects: {}
             };
             addedCount++;

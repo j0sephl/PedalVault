@@ -1,158 +1,153 @@
-const CACHE_NAME = 'pedalvault-v1.0';
-const STATIC_CACHE = 'pedalvault-static-v1.0';
+// Bump this version on every release so clients pick up new caches.
+// The old cache is deleted on activate.
+const SW_VERSION = 'v2.0.0';
+const APP_SHELL_CACHE = `pedalvault-shell-${SW_VERSION}`;
+const STATIC_CACHE = `pedalvault-static-${SW_VERSION}`;
 
-// Only cache your own app files - no external CDNs
-const STATIC_ASSETS = [
+// App shell: served network-first so deployed updates reach users promptly,
+// with the cached copy as an offline fallback.
+const APP_SHELL_URLS = [
     './',
     './index.html',
-    './style.css', 
+    './style.css',
     './script.js',
     './rive-logo.js',
-    './gpi.riv',
     './manifest.json',
-    './offline.html',
-    './lib/rive.min.js',
-    '/icons/ios/180.png?v=2024-new',
-    './favicon.ico'
+    './offline.html'
 ];
 
-// Install event - cache static assets
+// Static assets: served cache-first since they effectively never change.
+const STATIC_PRECACHE_URLS = [
+    './favicon.ico',
+    './gpi.riv'
+];
+
+// Paths (relative to the SW scope) treated as long-lived static assets
+// when requested at runtime (fonts, icons, Rive animation).
+const STATIC_RUNTIME_PATTERN = /\/(fonts|icons)\/|\.(woff2?|png|ico|svg|riv)$/;
+
+// Resolved pathnames of the app shell files, for request matching
+const APP_SHELL_PATHS = new Set(
+    APP_SHELL_URLS.map(url => new URL(url, self.location.href).pathname)
+);
+
 self.addEventListener('install', event => {
-    console.log('Service Worker installing...');
     event.waitUntil(
-        caches.open(STATIC_CACHE)
-            .then(cache => {
-                console.log('Caching app assets');
-                return cache.addAll(STATIC_ASSETS);
-            })
-            .catch(error => {
-                console.error('Cache installation failed:', error);
-                // Don't fail the install if caching fails
-                return Promise.resolve();
-            })
-            .then(() => {
-                console.log('Service Worker install complete');
-                return self.skipWaiting();
-            })
+        (async () => {
+            const shellCache = await caches.open(APP_SHELL_CACHE);
+            // Core shell files must all cache successfully
+            await shellCache.addAll(APP_SHELL_URLS);
+
+            // Static extras are best-effort: a missing icon shouldn't
+            // prevent the new service worker from installing
+            const staticCache = await caches.open(STATIC_CACHE);
+            await Promise.allSettled(
+                STATIC_PRECACHE_URLS.map(url => staticCache.add(url))
+            );
+            // Do NOT skipWaiting() here: the page prompts the user and
+            // sends SKIP_WAITING when they choose to reload
+        })()
     );
 });
 
-// Activate event - clean old caches and take control
 self.addEventListener('activate', event => {
-    console.log('Service Worker activating...');
     event.waitUntil(
-        Promise.all([
-            // Clean up old caches
-            caches.keys().then(cacheNames => {
-                return Promise.all(
-                    cacheNames
-                        .filter(cacheName => cacheName !== STATIC_CACHE)
-                        .map(cacheName => {
-                            console.log('Deleting old cache:', cacheName);
-                            return caches.delete(cacheName);
-                        })
-                );
-            }),
-            // Take control of all pages immediately
-            self.clients.claim()
-        ]).then(() => {
-            console.log('Service Worker activated and ready');
-        })
+        (async () => {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames
+                    .filter(name => name !== APP_SHELL_CACHE && name !== STATIC_CACHE)
+                    .map(name => caches.delete(name))
+            );
+            await self.clients.claim();
+        })()
     );
 });
 
-// Fetch event - Optimized caching strategy
+// Network-first: try the network, update the cache on success,
+// fall back to the cache when offline
+async function networkFirst(request, cacheName, offlineFallbackUrl) {
+    const cache = await caches.open(cacheName);
+    try {
+        const response = await fetch(request);
+        if (response && response.status === 200) {
+            cache.put(request, response.clone());
+        }
+        return response;
+    } catch (error) {
+        const cached = await cache.match(request, { ignoreSearch: request.mode === 'navigate' });
+        if (cached) {
+            return cached;
+        }
+        if (offlineFallbackUrl) {
+            const fallback = await caches.match(offlineFallbackUrl);
+            if (fallback) {
+                return fallback;
+            }
+        }
+        throw error;
+    }
+}
+
+// Cache-first: serve from cache, fetch and cache on miss
+async function cacheFirst(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    if (cached) {
+        return cached;
+    }
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+        cache.put(request, response.clone());
+    }
+    return response;
+}
+
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
-    
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    const { request } = event;
+
+    if (request.method !== 'GET') {
         return;
     }
-    
-    // Skip chrome-extension and other protocol requests
+
+    const url = new URL(request.url);
     if (!url.protocol.startsWith('http')) {
         return;
     }
-    
-    // For external CDN resources, just pass through to network
+
+    // Let external resources (CDNs, analytics) load normally
     if (url.origin !== location.origin) {
-        // Let external resources load normally without caching
-        event.respondWith(fetch(event.request));
         return;
     }
-    
-    // For your app resources, use cache-first strategy
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Return cached version if available
-                if (response) {
-                    // Log less frequently to reduce console spam
-                    if (Math.random() < 0.1) console.log('Serving from cache:', event.request.url);
-                    return response;
-                }
-                
-                // Otherwise fetch from network
-                return fetch(event.request)
-                    .then(networkResponse => {
-                        // Only cache successful responses from your domain
-                        if (networkResponse && networkResponse.status === 200) {
-                            // Clone the response before caching
-                            const responseToCache = networkResponse.clone();
-                            
-                            // Use a separate promise chain for caching to avoid blocking the response
-                            caches.open(STATIC_CACHE)
-                                .then(cache => {
-                                    cache.put(event.request, responseToCache);
-                                })
-                                .catch(error => {
-                                    console.warn('Failed to cache response:', error);
-                                });
-                        }
-                        
-                        return networkResponse;
-                    })
-                    .catch(error => {
-                        console.error('Network fetch failed:', error);
-                        
-                        // If it's a navigation request and network fails, show offline page
-                        if (event.request.mode === 'navigate') {
-                            return caches.match('./offline.html') || 
-                                   new Response('App is offline', { 
-                                       status: 503, 
-                                       statusText: 'Service Unavailable' 
-                                   });
-                        }
-                        
-                        // For other requests, just return the error
-                        throw error;
-                    });
-            })
-            .catch(error => {
-                console.error('Cache match failed:', error);
-                // Fallback to network
-                return fetch(event.request);
-            })
-    );
+
+    // Navigations: network-first, falling back to the cached app shell,
+    // then the offline page (the host rewrites all routes to index.html)
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            networkFirst(request, APP_SHELL_CACHE, './offline.html')
+        );
+        return;
+    }
+
+    // App shell files: network-first so code updates reach users promptly
+    if (APP_SHELL_PATHS.has(url.pathname)) {
+        event.respondWith(networkFirst(request, APP_SHELL_CACHE));
+        return;
+    }
+
+    // Long-lived static assets: cache-first
+    if (STATIC_RUNTIME_PATTERN.test(url.pathname)) {
+        event.respondWith(cacheFirst(request, STATIC_CACHE));
+        return;
+    }
+
+    // Everything else same-origin: network-first with cache fallback
+    event.respondWith(networkFirst(request, STATIC_CACHE));
 });
 
-// Handle messages from the app
+// The page sends SKIP_WAITING when the user accepts the update prompt
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
-
-// Periodic cleanup (optional)
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'CLEANUP_CACHE') {
-        caches.keys().then(cacheNames => {
-            cacheNames.forEach(cacheName => {
-                if (cacheName !== STATIC_CACHE) {
-                    caches.delete(cacheName);
-                }
-            });
-        });
-    }
-}); 

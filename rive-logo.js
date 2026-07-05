@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
             autoplay: true,
             stateMachines: 'State Machine 1',
             onLoad: () => {
-                console.log('Rive animation loaded successfully');
                 // Ensure the animation starts in Idle state after loading
                 riveInstance.play('Idle');
             },

@@ -3676,6 +3676,7 @@ button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 
 /* Mobile nav gets special hardware acceleration that doesn't conflict with translateY */
@@ -3720,10 +3721,6 @@ button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
     contain: layout paint;
     content-visibility: auto;
     contain-intrinsic-size: 1px 5000px;
-}
-
-.inventory-item {
-    contain: layout style paint;
 }
 
 /* Mobile uses the same thick squared scrollbars as desktop */

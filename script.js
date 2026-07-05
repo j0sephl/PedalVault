@@ -334,6 +334,10 @@ let currentSearchQuery = '';           // Current search query string
 // Temporary data holders for multi-step operations
 let pendingBomData = null;             // BOM data awaiting project name assignment
 
+// Quantities below this count as "low stock" everywhere (sort order and
+// the red quantity highlight previously used different thresholds)
+const LOW_STOCK_THRESHOLD = 10;
+
 // =============================================================================
 // DATA NORMALIZATION AND PERSISTENCE
 // =============================================================================
@@ -720,8 +724,8 @@ function getSortedInventoryEntries() {
         case 'stock-status':
             // Sort by stock status (low stock first), then by name
             return projectFilteredEntries.sort((a, b) => {
-                const aLowStock = a[1].quantity < 5;
-                const bLowStock = b[1].quantity < 5;
+                const aLowStock = a[1].quantity < LOW_STOCK_THRESHOLD;
+                const bLowStock = b[1].quantity < LOW_STOCK_THRESHOLD;
                 if (aLowStock && !bLowStock) return -1;
                 if (!aLowStock && bLowStock) return 1;
                 return a[1].name.localeCompare(b[1].name);
@@ -832,7 +836,7 @@ function createInventoryItemElement(id, part) {
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-controls">
-                <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
                     <button class="quantity-btn" data-action="decrease">-</button>
                     <span class="quantity-number">${part.quantity}</span>
                     <button class="quantity-btn" data-action="increase">+</button>
@@ -859,7 +863,7 @@ function createInventoryItemElement(id, part) {
                 </div>
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
-            <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+            <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
                 <button class="quantity-btn" data-action="decrease">-</button>
                 <span class="quantity-number">${part.quantity}</span>
                 <button class="quantity-btn" data-action="increase">+</button>

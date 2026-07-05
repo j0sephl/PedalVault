@@ -78,30 +78,89 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                console.log('🔧 Attempting to register Service Worker...');
+                let refreshing = false;
+                // Distinguish an update (page already controlled) from the very
+                // first install, where clients.claim() also fires controllerchange
+                let controlled = !!navigator.serviceWorker.controller;
+
+                // Reload once after a new service worker replaces the old one
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!controlled) {
+                        // First install just claimed the page; no reload needed
+                        controlled = true;
+                        return;
+                    }
+                    if (refreshing) return;
+                    refreshing = true;
+                    window.location.reload();
+                });
+
+                function showUpdateBanner(waitingWorker) {
+                    if (document.getElementById('swUpdateBanner')) return;
+
+                    const banner = document.createElement('div');
+                    banner.id = 'swUpdateBanner';
+                    banner.setAttribute('role', 'alert');
+                    banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+                        'background:#3B4252;color:#E5E9F0;border:2px solid #88C0D0;border-radius:4px;' +
+                        'padding:12px 16px;z-index:2000;display:flex;align-items:center;gap:12px;' +
+                        "font-family:'JetBrains Mono',monospace;font-size:14px;max-width:90vw;" +
+                        'box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+
+                    const message = document.createElement('span');
+                    message.textContent = 'A new version of PedalVault is available.';
+
+                    const reloadBtn = document.createElement('button');
+                    reloadBtn.textContent = 'Reload';
+                    reloadBtn.style.cssText = 'background:#88C0D0;color:#2E3440;border:none;border-radius:4px;' +
+                        'padding:6px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;';
+                    reloadBtn.addEventListener('click', () => {
+                        reloadBtn.disabled = true;
+                        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+                    });
+
+                    const dismissBtn = document.createElement('button');
+                    dismissBtn.textContent = 'Later';
+                    dismissBtn.style.cssText = 'background:transparent;color:#E5E9F0;border:1px solid #4C566A;' +
+                        'border-radius:4px;padding:6px 14px;font-family:inherit;font-size:13px;cursor:pointer;';
+                    dismissBtn.addEventListener('click', () => banner.remove());
+
+                    banner.appendChild(message);
+                    banner.appendChild(reloadBtn);
+                    banner.appendChild(dismissBtn);
+                    document.body.appendChild(banner);
+                }
+
                 navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
-                        console.log('✅ ServiceWorker registration successful:', registration);
-                        console.log('📍 Scope:', registration.scope);
-                        console.log('🔄 Update found:', registration.updatefound ? 'Yes' : 'No');
-                        
-                        // Listen for updates
+                        // An update may already be waiting (e.g. from a previous visit)
+                        if (registration.waiting && navigator.serviceWorker.controller) {
+                            showUpdateBanner(registration.waiting);
+                        }
+
                         registration.addEventListener('updatefound', () => {
-                            console.log('🆕 Service Worker update found');
                             const newWorker = registration.installing;
+                            if (!newWorker) return;
                             newWorker.addEventListener('statechange', () => {
-                                console.log('🔄 Service Worker state changed to:', newWorker.state);
+                                // Only prompt if this is an update to an already-controlled
+                                // page; on first install there's nothing to reload for
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showUpdateBanner(newWorker);
+                                }
                             });
+                        });
+
+                        // Check for updates when the user returns to the tab
+                        document.addEventListener('visibilitychange', () => {
+                            if (document.visibilityState === 'visible') {
+                                registration.update().catch(() => {});
+                            }
                         });
                     })
                     .catch(err => {
-                        console.error('❌ ServiceWorker registration failed:', err);
-                        console.error('📄 Error details:', err.message);
-                        console.error('🔍 Stack trace:', err.stack);
+                        console.error('ServiceWorker registration failed:', err);
                     });
             });
-        } else {
-            console.warn('⚠️ Service Worker not supported in this browser');
         }
     </script>
     

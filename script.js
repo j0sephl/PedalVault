@@ -409,11 +409,17 @@ function normalizeValue(str) {
     return normalized;
 }
 
+// Dirty flags so pending debounced saves can be flushed if the page is
+// hidden or closed before the debounce timer fires
+let inventoryDirty = false;
+let projectsDirty = false;
+
 /**
  * Save projects data to browser's local storage
  * Persists project information including BOMs between browser sessions
  */
 function saveProjects() {
+    projectsDirty = true;
     debouncedSaveProjects();
 }
 
@@ -422,6 +428,7 @@ function saveProjects() {
  * Persists component inventory between browser sessions
  */
 function saveInventory() {
+    inventoryDirty = true;
     debouncedSaveInventory();
 }
 
@@ -1221,6 +1228,7 @@ function saveEditPart() {
         showNotification('Part ID already exists', 'error');
         return;
     }
+    const previousPartId = editingPartId;
     if (newId !== editingPartId) {
         const part = inventory[editingPartId];
         inventory[newId] = {
@@ -1256,6 +1264,11 @@ function saveEditPart() {
     // Update project BOMs
     for (const projectId in projects) {
         if (!projects[projectId].bom) projects[projectId].bom = {};
+        // If the part ID changed, remove the entry stored under the old ID
+        // so BOMs don't keep orphaned references to it
+        if (newId !== previousPartId) {
+            delete projects[projectId].bom[previousPartId];
+        }
         if (newProjects[projectId]) {
             projects[projectId].bom[newId] = {
                 name: newName,
@@ -2726,24 +2739,32 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
     }
     
     // Update project BOMs to use canonical IDs
+    // BOM entries are objects: { name, quantity }. Entries pointing at merged
+    // duplicates are remapped to the canonical ID (summing quantities if both
+    // exist); entries with no canonical match are kept as-is, since a BOM may
+    // legitimately reference parts that aren't in the inventory yet.
     for (const project of Object.values(projects)) {
         if (project.bom) {
             const updatedBom = {};
-            for (const [id, quantity] of Object.entries(project.bom)) {
-                // Check if the inventory item still exists
-                if (inventory[id]) {
-                    const normalizedId = normalizeValue(inventory[id].name || '');
-                    const canonicalId = normalizedToCanonical[normalizedId];
-                    if (canonicalId && inventory[canonicalId]) {
-                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
-                    }
+            for (const [id, entry] of Object.entries(project.bom)) {
+                const isObjectEntry = entry && typeof entry === 'object';
+                const entryName = isObjectEntry ? entry.name : undefined;
+                // Tolerate legacy numeric entries by coercing them to a quantity
+                const entryQuantity = isObjectEntry ? (entry.quantity || 0) : (Number(entry) || 0);
+                
+                // Resolve the canonical ID via the part's name if it's in inventory,
+                // otherwise via the BOM entry's own name or raw ID
+                const lookupName = inventory[id] ? (inventory[id].name || '') : (entryName || id);
+                const canonicalId = normalizedToCanonical[normalizeValue(lookupName)] ||
+                    normalizedToCanonical[normalizeValue(id)];
+                
+                const targetId = (canonicalId && inventory[canonicalId]) ? canonicalId : id;
+                const targetName = (inventory[targetId] && inventory[targetId].name) || entryName || id;
+                
+                if (updatedBom[targetId]) {
+                    updatedBom[targetId].quantity = (updatedBom[targetId].quantity || 0) + entryQuantity;
                 } else {
-                    // If the original part doesn't exist, try to find a canonical match by ID
-                    const normalizedId = normalizeValue(id);
-                    const canonicalId = normalizedToCanonical[normalizedId];
-                    if (canonicalId && inventory[canonicalId]) {
-                        updatedBom[canonicalId] = (updatedBom[canonicalId] || 0) + quantity;
-                    }
+                    updatedBom[targetId] = { name: targetName, quantity: entryQuantity };
                 }
             }
             project.bom = updatedBom;
@@ -3242,8 +3263,8 @@ function detectDevicePerformance() {
 // LOCALSTORAGE PERFORMANCE OPTIMIZATIONS
 // =============================================================================
 
-// Debounced save functions to prevent excessive localStorage writes
-const debouncedSaveInventory = debounce(() => {
+// Synchronous writers used by both the debounced saves and the unload flush
+function writeInventoryToStorage() {
     try {
         const compressed = compressData(inventory);
         localStorage.setItem('guitarPedalInventory', compressed);
@@ -3252,9 +3273,10 @@ const debouncedSaveInventory = debounce(() => {
         // Fallback to uncompressed if compression fails
         localStorage.setItem('guitarPedalInventory', JSON.stringify(inventory));
     }
-}, 1000);
+    inventoryDirty = false;
+}
 
-const debouncedSaveProjects = debounce(() => {
+function writeProjectsToStorage() {
     try {
         const compressed = compressData(projects);
         localStorage.setItem('guitarPedalProjects', compressed);
@@ -3263,7 +3285,28 @@ const debouncedSaveProjects = debounce(() => {
         // Fallback to uncompressed if compression fails
         localStorage.setItem('guitarPedalProjects', JSON.stringify(projects));
     }
-}, 1000);
+    projectsDirty = false;
+}
+
+// Debounced save functions to prevent excessive localStorage writes
+const debouncedSaveInventory = debounce(writeInventoryToStorage, 1000);
+const debouncedSaveProjects = debounce(writeProjectsToStorage, 1000);
+
+// Flush any pending debounced saves immediately so edits made within the
+// debounce window aren't lost when the tab is hidden, closed, or navigated away
+function flushPendingSaves() {
+    if (inventoryDirty) writeInventoryToStorage();
+    if (projectsDirty) writeProjectsToStorage();
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        flushPendingSaves();
+    }
+});
+
+// pagehide covers browsers/situations where visibilitychange doesn't fire on close
+window.addEventListener('pagehide', flushPendingSaves);
 
 // Simple compression for localStorage
 function compressData(data) {

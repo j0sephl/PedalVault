@@ -89,6 +89,21 @@ function sanitizePurchaseUrl(url) {
 }
 
 /**
+ * Escape a value for inclusion in a CSV cell
+ * Doubles quotes and wraps the value when it contains a comma,
+ * quote, or newline
+ * @param {*} val - Value to escape
+ * @returns {string} CSV-safe cell value
+ */
+function csvEscape(val) {
+    if (val == null) return '';
+    val = String(val);
+    if (val.includes('"')) val = val.replace(/"/g, '""');
+    if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
+    return val;
+}
+
+/**
  * Generic utility function to copy text to clipboard
  * Uses modern clipboard API with fallback to execCommand
  * @param {string} text - Text to copy to clipboard
@@ -314,7 +329,6 @@ function initializeApp() {
     if (sortDropdown) sortDropdown.addEventListener('change', changeSortOrder);
 
     // Initialize performance optimizations
-    initializeIntersectionObserver();
     detectDevicePerformance();
     checkBatteryOptimizations();
     
@@ -326,18 +340,10 @@ function initializeApp() {
         if (e.key === 'Escape') {
             clearStuckNotifications();
         }
-        // Debug shortcut: Test notification with Ctrl+Shift+N (or Cmd+Shift+N on Mac)
-        // Uncomment for debugging: 
-        // if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
-        //     e.preventDefault();
-        //     testNotification();
-        // }
     });
 
-    // ... existing code ...
     const bomAssistantBtn = DOM.get('bomAssistantBtn');
     if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
-    // ... existing code ...
 }
 
 // =============================================================================
@@ -369,6 +375,10 @@ let currentSearchQuery = '';           // Current search query string
 
 // Temporary data holders for multi-step operations
 let pendingBomData = null;             // BOM data awaiting project name assignment
+
+// Quantities below this count as "low stock" everywhere (sort order and
+// the red quantity highlight previously used different thresholds)
+const LOW_STOCK_THRESHOLD = 10;
 
 // =============================================================================
 // DATA NORMALIZATION AND PERSISTENCE
@@ -408,7 +418,6 @@ function cleanupInvalidInventoryEntries() {
     });
     
     if (removedCount > 0) {
-        console.log(`Cleaned up ${removedCount} invalid inventory entries`);
         saveInventory();
     }
     
@@ -576,15 +585,6 @@ function exportInventory(format) {
          * @param {*} val - Value to escape
          * @returns {string} Properly escaped CSV field
          */
-        function csvEscape(val) {
-            if (val == null) return '';
-            val = String(val);
-            // Escape quotes by doubling them
-            if (val.includes('"')) val = val.replace(/"/g, '""');
-            // Wrap in quotes if contains comma, quote, or newline
-            if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
-            return val;
-        }
         
         // Convert inventory entries to CSV rows
         const rows = Object.entries(inventory).map(([id, part]) => [
@@ -789,8 +789,8 @@ function getSortedInventoryEntries() {
         case 'stock-status':
             // Sort by stock status (low stock first), then by name
             return projectFilteredEntries.sort((a, b) => {
-                const aLowStock = a[1].quantity < 5;
-                const bLowStock = b[1].quantity < 5;
+                const aLowStock = a[1].quantity < LOW_STOCK_THRESHOLD;
+                const bLowStock = b[1].quantity < LOW_STOCK_THRESHOLD;
                 if (aLowStock && !bLowStock) return -1;
                 if (!aLowStock && bLowStock) return 1;
                 return a[1].name.localeCompare(b[1].name);
@@ -813,16 +813,8 @@ function changeSortOrder() {
 // INVENTORY DISPLAY AND RENDERING
 // =============================================================================
 
-// Add virtual scrolling configuration
-const VIRTUAL_SCROLLING = {
-    enabled: false, // Will be enabled automatically for large inventories
-    itemHeight: 80, // Approximate height of each inventory item
-    visibleBuffer: 10 // Extra items to render outside viewport
-};
-
 function displayInventory() {
     const inventoryItems = document.getElementById('inventoryItems');
-    const isMobile = window.innerWidth <= 1024;
     
     // Ensure search state is synchronized with the actual input value
     const searchInput = DOM.get('searchInput');
@@ -837,53 +829,7 @@ function displayInventory() {
     
     // Get filtered and sorted entries (filtering is already done in getSortedInventoryEntries)
     const sortedEntries = getSortedInventoryEntries();
-
-    // Enable virtual scrolling for very large inventories (desktop only)
-    // Increased threshold to avoid limiting display for normal-sized inventories
-    const shouldUseVirtualScrolling = sortedEntries.length > 2000;
-    
-    if (shouldUseVirtualScrolling && !isMobile) {
-        renderVirtualizedInventory(sortedEntries, inventoryItems);
-    } else {
-        renderFullInventory(sortedEntries, inventoryItems);
-    }
-}
-
-function renderVirtualizedInventory(entries, container) {
-    const containerHeight = container.offsetHeight || 600;
-    const visibleItems = Math.ceil(containerHeight / VIRTUAL_SCROLLING.itemHeight) + VIRTUAL_SCROLLING.visibleBuffer;
-    
-    let startIndex = 0;
-    let endIndex = Math.min(visibleItems, entries.length);
-    
-    function renderVisibleItems() {
-        const fragment = document.createDocumentFragment();
-        
-        for (let i = startIndex; i < endIndex; i++) {
-            const [id, part] = entries[i];
-            const item = createInventoryItemElement(id, part);
-            fragment.appendChild(item);
-        }
-        
-        container.innerHTML = '';
-        container.appendChild(fragment);
-    }
-    
-    // Initial render
-    renderVisibleItems();
-    
-    // Add scroll listener for virtual scrolling
-    container.addEventListener('scroll', debounce(() => {
-        const scrollTop = container.scrollTop;
-        const newStartIndex = Math.floor(scrollTop / VIRTUAL_SCROLLING.itemHeight);
-        const newEndIndex = Math.min(newStartIndex + visibleItems, entries.length);
-        
-        if (newStartIndex !== startIndex || newEndIndex !== endIndex) {
-            startIndex = newStartIndex;
-            endIndex = newEndIndex;
-            renderVisibleItems();
-        }
-    }, 16)); // 60fps
+    renderFullInventory(sortedEntries, inventoryItems);
 }
 
 function renderFullInventory(entries, container) {
@@ -956,7 +902,7 @@ function createInventoryItemElement(id, part) {
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-controls">
-                <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+                <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
                     <button class="quantity-btn" data-action="decrease">-</button>
                     <span class="quantity-number">${part.quantity}</span>
                     <button class="quantity-btn" data-action="increase">+</button>
@@ -983,7 +929,7 @@ function createInventoryItemElement(id, part) {
                 </div>
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
-            <div class="item-quantity ${part.quantity < 10 ? 'low' : ''}">
+            <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
                 <button class="quantity-btn" data-action="decrease">-</button>
                 <span class="quantity-number">${part.quantity}</span>
                 <button class="quantity-btn" data-action="increase">+</button>
@@ -1549,11 +1495,6 @@ function clearStuckNotifications() {
         // Force reflow to ensure styles are applied
         notification.offsetHeight;
     }
-}
-
-// Test function to debug notifications (for development use)
-function testNotification() {
-    showNotification('✅ Test notification - this should slide in smoothly!', 'success');
 }
 
 /**
@@ -2513,14 +2454,6 @@ function exportProjectBOM(format) {
         const headers = ['Part Name', 'Quantity', 'Purchase URL'];
         
         // Helper function to escape CSV fields
-        function csvEscape(val) {
-            if (val == null) return '';
-            val = String(val);
-            if (val.includes('"')) val = val.replace(/"/g, '""');
-            if (val.search(/[",\n]/) !== -1) return '"' + val + '"';
-            return val;
-        }
-
         // Create CSV rows
         const rows = Object.entries(bom).map(([id, part]) => {
             const inventoryPart = inventory[id];
@@ -2954,7 +2887,6 @@ if (editPartNameInput && editPartTypeDropdown && editPartTypeSuggestion) {
     });
 }
 
-// ... existing code ...
 function normalizeAllBOMReferences() {
     // Build a map from normalized ID to canonical inventory ID
     const normToCanonical = {};
@@ -2982,7 +2914,6 @@ function normalizeAllBOMReferences() {
     }
     saveProjects();
 }
-// ... existing code ...
 
 function repairBOMData() {
     for (const projectId in projects) {
@@ -3095,7 +3026,6 @@ window.addEventListener('resize', debounce(() => {
     }
 }, 200));
 
-// ... existing code ...
 function showBOMAssistantModal() {
     // Auto-close About modal if open
     const aboutModal = document.getElementById('aboutModal');
@@ -3111,7 +3041,6 @@ function hideBOMAssistantModal() {
     showMobileNav();
 }
 
-// ... existing code ...
 function hideMobileNav() {
     // Only hide on mobile devices
     if (window.innerWidth > 1024) return;
@@ -3208,109 +3137,6 @@ function hideModal(modalId) {
 }
 
 // =============================================================================
-// MEMORY MANAGEMENT AND EVENT CLEANUP
-// =============================================================================
-
-// Store event listeners for cleanup
-let activeEventListeners = new Map();
-
-function addManagedEventListener(element, event, handler, options = false) {
-    if (!element) return;
-    
-    element.addEventListener(event, handler, options);
-    
-    // Store for cleanup
-    const key = `${element.id || element.className}_${event}`;
-    if (!activeEventListeners.has(key)) {
-        activeEventListeners.set(key, []);
-    }
-    activeEventListeners.get(key).push({ element, event, handler, options });
-}
-
-function cleanupEventListeners() {
-    activeEventListeners.forEach((listeners, key) => {
-        listeners.forEach(({ element, event, handler, options }) => {
-            if (element && element.removeEventListener) {
-                element.removeEventListener(event, handler, options);
-            }
-        });
-    });
-    activeEventListeners.clear();
-}
-
-// =============================================================================
-// PERFORMANCE OPTIMIZATIONS
-// =============================================================================
-
-// Intersection Observer for lazy loading
-let intersectionObserver = null;
-
-function initializeIntersectionObserver() {
-    if ('IntersectionObserver' in window) {
-        intersectionObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const item = entry.target;
-                    // Lazy load heavy computations here if needed
-                    item.classList.add('visible');
-                }
-            });
-        }, {
-            rootMargin: '50px',
-            threshold: 0.1
-        });
-    }
-}
-
-// Memory-efficient search with caching
-let searchCache = new Map();
-let searchCacheTimeout = null;
-
-function getCachedSearchResults(query) {
-    const cached = searchCache.get(query);
-    if (cached && Date.now() - cached.timestamp < 30000) { // 30 second cache
-        return cached.results;
-    }
-    return null;
-}
-
-function setCachedSearchResults(query, results) {
-    // Limit cache size
-    if (searchCache.size > 50) {
-        const firstKey = searchCache.keys().next().value;
-        searchCache.delete(firstKey);
-    }
-    
-    searchCache.set(query, {
-        results: results,
-        timestamp: Date.now()
-    });
-    
-    // Clear cache periodically
-    if (searchCacheTimeout) clearTimeout(searchCacheTimeout);
-    searchCacheTimeout = setTimeout(() => {
-        searchCache.clear();
-    }, 300000); // 5 minutes
-}
-
-// Optimized search function
-function optimizedSearch(query, entries) {
-    if (!query) return entries;
-    
-    const cached = getCachedSearchResults(query);
-    if (cached) return cached;
-    
-    const lowerQuery = query.toLowerCase();
-    const results = entries.filter(([id, part]) => {
-        return part.name.toLowerCase().includes(lowerQuery) ||
-               id.toLowerCase().includes(lowerQuery);
-    });
-    
-    setCachedSearchResults(query, results);
-    return results;
-}
-
-// =============================================================================
 // BATTERY AND PERFORMANCE AWARENESS
 // =============================================================================
 
@@ -3340,8 +3166,6 @@ function detectDevicePerformance() {
     
     if (time > 50) { // Slow device detected
         document.body.classList.add('slow-device');
-        // Reduce virtual scrolling threshold
-        VIRTUAL_SCROLLING.enabled = false;
         return 'slow';
     } else if (time > 20) {
         return 'medium';
@@ -3439,30 +3263,4 @@ function decompressData(data) {
     });
     
     return JSON.parse(decompressed);
-}
-
-// Batch localStorage operations
-let pendingOperations = [];
-let flushTimeout = null;
-
-function queueStorageOperation(key, data) {
-    pendingOperations.push({ key, data });
-    
-    if (flushTimeout) clearTimeout(flushTimeout);
-    flushTimeout = setTimeout(flushPendingOperations, 100);
-}
-
-function flushPendingOperations() {
-    const operations = [...pendingOperations];
-    pendingOperations = [];
-    
-    requestIdleCallback(() => {
-        operations.forEach(({ key, data }) => {
-            try {
-                localStorage.setItem(key, compressData(data));
-            } catch (error) {
-                console.warn(`Failed to save ${key}:`, error);
-            }
-        });
-    }, { timeout: 1000 });
 }

@@ -12,7 +12,7 @@
 
 ## Why Guitar Pedal Inventory?
 
-DIY building guitar pedals is an fun, but managing components can be hard. PedalVault eliminates the frustration of:
+DIY guitar pedal building is fun, but managing components can be hard. PedalVault eliminates the frustration of:
 
 - **Lost Components** - Never lose track of your resistors, capacitors, and ICs again
 - **Project Delays** - Know exactly what you have before starting a build
@@ -27,7 +27,7 @@ DIY building guitar pedals is an fun, but managing components can be hard. Pedal
 - **Auto-Detection** - Intelligent duplicate detection and merging.
 - **Search & Filter** - Find components instantly with smart search.
 - **Website links** - Set links to reorder parts.
-- **NFC Functionality** - Use NFC to remove components from your inventory.
+- **NFC-Friendly URLs** - Program NFC tags with a part's link (e.g. `?part=<id>&remove=1`) to remove components from inventory with a tap.
 
 ### Project-Centric Workflow
 - **BOM Integration** - Import bills of materials from AI assistants or text.
@@ -79,7 +79,7 @@ Built with vanilla JavaScript and modern web standards:
 
 - **Progressive Web App** - Installable and offline-capable
 - **Responsive Design** - Mobile-first CSS Grid and Flexbox
-- **Performance Optimized** - Virtual scrolling, lazy loading, efficient rendering
+- **No Build Step** - Plain HTML, CSS, and JavaScript; no framework or bundler required
 
 ## Contributing
 
@@ -109,7 +109,4 @@ Creative Commons Attribution-NonCommercial 4.0
 
 *No installation required. Works in any modern browser.*
 
-## License
-
-**Creative Commons Attribution-ShareAlike 4.0 International License**
 [Full License Text](https://creativecommons.org/licenses/by-nc/4.0/)

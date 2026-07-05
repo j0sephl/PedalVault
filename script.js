@@ -35,15 +35,20 @@ function debounce(func, wait) {
 }
 
 /**
- * Escape HTML to prevent XSS attacks
+ * Escape HTML to prevent XSS attacks.
+ * Also escapes quotes so the result is safe inside double- or
+ * single-quoted attribute values, not just text content.
  * @param {string} str - String to escape
  * @returns {string} HTML-escaped string
  */
 function escapeHtml(str) {
     if (typeof str !== 'string') return str;
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 /**
@@ -846,7 +851,7 @@ function createInventoryItemElement(id, part) {
         if (isMobile) {
             // On mobile, always show a clickable tag for projects
             projectTagsHtml = `
-                <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">
+                <span class="project-tag more-tags" data-part-id="${escapeHtml(id)}" title="Show all projects">
                     +${projectEntries.length} project${projectEntries.length > 1 ? 's' : ''}
                 </span>
             `;
@@ -854,8 +859,8 @@ function createInventoryItemElement(id, part) {
             projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
                 const project = projects[projectId];
                 return project ? `
-                    <span class="project-tag" data-project-id="${projectId}" title="${project.name} (${qty} needed)">
-                        ${project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name} (${qty})
+                    <span class="project-tag" data-project-id="${escapeHtml(projectId)}" title="${escapeHtml(project.name)} (${qty} needed)">
+                        ${escapeHtml(project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name)} (${qty})
                     </span>
                 ` : '';
             }).join('');
@@ -863,7 +868,7 @@ function createInventoryItemElement(id, part) {
             if (projectEntries.length > maxTags) {
                 const moreCount = projectEntries.length - maxTags;
                 projectTagsHtml += `
-                    <span class="project-tag more-tags" data-part-id="${id}" title="Show all projects">+${moreCount} more</span>
+                    <span class="project-tag more-tags" data-part-id="${escapeHtml(id)}" title="Show all projects">+${moreCount} more</span>
                 `;
             }
         }
@@ -873,10 +878,11 @@ function createInventoryItemElement(id, part) {
     let typePillHtml = '';
     const isCap = /\b(capacitor|cap)\b/i.test(part.name);
     if (isCap && part.type) {
-        const typeClass = part.type.toLowerCase().replace(/\s/g, '');
-        typePillHtml = `<span class="type-pill ${typeClass}">${part.type}</span>`;
+        // Restrict the CSS class to safe characters; the visible label is escaped
+        const typeClass = part.type.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+        typePillHtml = `<span class="type-pill ${typeClass}">${escapeHtml(part.type)}</span>`;
     } else if (isCap && !part.type) {
-        typePillHtml = `<span class="set-type-pill" data-set-type="${id}" title="Set capacitor type">Set Type</span>`;
+        typePillHtml = `<span class="set-type-pill" title="Set capacitor type">Set Type</span>`;
     }
 
     // Responsive: type pill below name on mobile, inline on desktop
@@ -896,13 +902,13 @@ function createInventoryItemElement(id, part) {
                     <button class="quantity-btn" data-action="increase">+</button>
                 </div>
                 <div class="item-actions">
-                    <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                    <button class="action-icon edit-icon" title="Edit part">
                         <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                     </button>
-                    <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                    <button class="action-icon delete-icon" title="Delete part">
                         <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                     </button>
-                    <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                    <button class="action-icon shop-icon" title="Open purchase link">
                         <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
                     </button>
                 </div>
@@ -923,13 +929,13 @@ function createInventoryItemElement(id, part) {
                 <button class="quantity-btn" data-action="increase">+</button>
             </div>
             <div class="item-actions">
-                <button class="action-icon edit-icon" onclick="showEditPartModal('${id}')" title="Edit part">
+                <button class="action-icon edit-icon" title="Edit part">
                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 </button>
-                <button class="action-icon delete-icon" onclick="showDeletePartModal('${id}')" title="Delete part">
+                <button class="action-icon delete-icon" title="Delete part">
                     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
-                <button class="action-icon shop-icon" onclick="handlePurchaseClick('${id}')" title="Open purchase link">
+                <button class="action-icon shop-icon" title="Open purchase link">
                     <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
                 </button>
             </div>
@@ -942,6 +948,15 @@ function createInventoryItemElement(id, part) {
     
     if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
     if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
+
+    // Action buttons (previously inline onclick handlers, which allowed
+    // JS injection via crafted part IDs)
+    const editBtn = item.querySelector('.edit-icon');
+    const deleteBtn = item.querySelector('.delete-icon');
+    const shopBtn = item.querySelector('.shop-icon');
+    if (editBtn) editBtn.addEventListener('click', () => showEditPartModal(id));
+    if (deleteBtn) deleteBtn.addEventListener('click', () => showDeletePartModal(id));
+    if (shopBtn) shopBtn.addEventListener('click', () => handlePurchaseClick(id));
 
     // Add project tag click handlers
     const projectTags = item.querySelectorAll('.project-tag');
@@ -1087,17 +1102,17 @@ function populateEditPartProjectsSection(partId) {
         
         projectsHtml += `
             <div class="nord-project-inv-row">
-                <span class="nord-project-inv-name" title="${project.name}">${project.name}</span>
+                <span class="nord-project-inv-name" title="${escapeHtml(project.name)}">${escapeHtml(project.name)}</span>
                 <div class="modal-item-quantity">
-                    <button type="button" class="quantity-btn" onclick="adjustProjectQty('${projectId}', -1)">-</button>
+                    <button type="button" class="quantity-btn" data-qty-delta="-1">-</button>
                     <input type="number" 
                            class="edit-project-qty" 
-                           data-project-qty="${projectId}" 
-                           value="${currentQty}" 
+                           data-project-qty="${escapeHtml(projectId)}" 
+                           value="${Number(currentQty) || 0}" 
                            min="0" 
                            max="9999"
                            style="width: 60px; text-align: center; background: var(--nord2); color: var(--nord6); border: 1px solid var(--nord4); padding: 4px;">
-                    <button type="button" class="quantity-btn" onclick="adjustProjectQty('${projectId}', 1)">+</button>
+                    <button type="button" class="quantity-btn" data-qty-delta="1">+</button>
                 </div>
             </div>
         `;
@@ -1114,6 +1129,25 @@ function populateEditPartProjectsSection(partId) {
     `;
     
     projectsSection.innerHTML = projectsHtml;
+    attachQtyDeltaHandler(projectsSection);
+}
+
+/**
+ * Delegated click handler for the +/- buttons in modal project rows.
+ * Adjusts the sibling number input directly, so no project IDs need to
+ * be embedded in inline handlers or query selectors.
+ * Uses .onclick assignment so repeated modal opens don't stack listeners.
+ */
+function attachQtyDeltaHandler(container) {
+    container.onclick = (e) => {
+        const btn = e.target.closest('[data-qty-delta]');
+        if (!btn || !container.contains(btn)) return;
+        const input = btn.parentElement.querySelector('input[type="number"]');
+        if (!input) return;
+        const delta = parseInt(btn.getAttribute('data-qty-delta'), 10) || 0;
+        const currentValue = parseInt(input.value) || 0;
+        input.value = Math.max(0, Math.min(9999, currentValue + delta));
+    };
 }
 
 function populateNewPartProjectsSection() {
@@ -1146,17 +1180,17 @@ function populateNewPartProjectsSection() {
         
         projectsHtml += `
             <div class="nord-project-inv-row">
-                <span class="nord-project-inv-name" title="${project.name}">${project.name}</span>
+                <span class="nord-project-inv-name" title="${escapeHtml(project.name)}">${escapeHtml(project.name)}</span>
                 <div class="modal-item-quantity">
-                    <button type="button" class="quantity-btn" onclick="adjustNewProjectQty('${projectId}', -1)">-</button>
+                    <button type="button" class="quantity-btn" data-qty-delta="-1">-</button>
                     <input type="number" 
                            class="new-project-qty" 
-                           data-new-project-qty="${projectId}" 
+                           data-new-project-qty="${escapeHtml(projectId)}" 
                            value="0" 
                            min="0" 
                            max="9999"
                            style="width: 60px; text-align: center; background: var(--nord2); color: var(--nord6); border: 1px solid var(--nord4); padding: 4px;">
-                    <button type="button" class="quantity-btn" onclick="adjustNewProjectQty('${projectId}', 1)">+</button>
+                    <button type="button" class="quantity-btn" data-qty-delta="1">+</button>
                 </div>
             </div>
         `;
@@ -1173,24 +1207,7 @@ function populateNewPartProjectsSection() {
     `;
     
     projectsSection.innerHTML = projectsHtml;
-}
-
-function adjustProjectQty(projectId, delta) {
-    const input = document.querySelector(`[data-project-qty="${projectId}"]`);
-    if (input) {
-        const currentValue = parseInt(input.value) || 0;
-        const newValue = Math.max(0, Math.min(9999, currentValue + delta));
-        input.value = newValue;
-    }
-}
-
-function adjustNewProjectQty(projectId, delta) {
-    const input = document.querySelector(`[data-new-project-qty="${projectId}"]`);
-    if (input) {
-        const currentValue = parseInt(input.value) || 0;
-        const newValue = Math.max(0, Math.min(9999, currentValue + delta));
-        input.value = newValue;
-    }
+    attachQtyDeltaHandler(projectsSection);
 }
 
 function hideEditPartModal() {
@@ -1589,7 +1606,7 @@ function showProjectDetails(projectId) {
                 if (normalizeValue(invId) === normId) {
                     part = inventory[invId];
                     matchedId = invId;
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${escapeHtml(part.name)})</span>`;
                     found = true;
                     break;
                 }
@@ -1607,7 +1624,7 @@ function showProjectDetails(projectId) {
                 if (bestDist <= 2 && bestId) {
                     part = inventory[bestId];
                     matchedId = bestId;
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${escapeHtml(part.name)})</span>`;
                 }
             }
         }
@@ -1850,7 +1867,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                 if (normalizeValue(invId) === normId) {
                     part = inventory[invId];
                     matchedId = invId;
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${escapeHtml(part.name)})</span>`;
                     found = true;
                     break;
                 }
@@ -1868,7 +1885,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                 if (bestDist <= 2 && bestId) {
                     part = inventory[bestId];
                     matchedId = bestId;
-                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${part.name})</span>`;
+                    fuzzyNote = `<span style='color:#EBCB8B;font-size:11px;'>(Auto-matched to: ${escapeHtml(part.name)})</span>`;
                 }
             }
         }
@@ -1881,7 +1898,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                         <span class="status-icon status-error">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/></svg>
                         </span>
-                        <strong>${bom[id].name}</strong>
+                        <strong>${escapeHtml(bom[id].name)}</strong>
                     </span>
                     <span class="bom-part-status">: Missing entirely (need ${bom[id].quantity})</span>
                 </li>
@@ -1896,7 +1913,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                         <span class="status-icon status-warning">
                             <svg viewBox="0 0 24 24"><polygon points="12,2 22,21 2,21" fill="currentColor" opacity="0.15"/><rect x="11" y="10" width="2" height="5" fill="currentColor"/><rect x="11" y="17" width="2" height="2" fill="currentColor"/></svg>
                         </span>
-                        <strong>${bom[id].name}</strong>
+                        <strong>${escapeHtml(bom[id].name)}</strong>
                     </span>
                     <span class="bom-part-status">: Have ${have}, need ${bom[id].quantity}</span>
                 </li>
@@ -1909,7 +1926,7 @@ function createProjectFromBom(projectName, projectId, bom) {
                         <span class="status-icon status-success">
                             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/><polyline points="8 12.5 11 16 16 9" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                         </span>
-                        <strong>${bom[id].name}</strong>
+                        <strong>${escapeHtml(bom[id].name)}</strong>
                     </span>
                     <span class="bom-part-status">: In stock (have ${part.quantity}, need ${bom[id].quantity})</span>
                 </li>
@@ -2136,15 +2153,18 @@ function showProjectManagementModal() {
         
         projectElement.innerHTML = `
             <div>
-                <strong>${project.name}</strong>
+                <strong>${escapeHtml(project.name)}</strong>
                 <div class="project-info">
                     ${taggedParts} parts tagged
                 </div>
             </div>
             <div>
-                <button onclick="showDeleteProjectModal('${projectId}')" class="project-delete-btn">Delete</button>
+                <button class="project-delete-btn">Delete</button>
             </div>
         `;
+        
+        projectElement.querySelector('.project-delete-btn')
+            .addEventListener('click', () => showDeleteProjectModal(projectId));
         
         projectList.appendChild(projectElement);
     }
@@ -2340,12 +2360,12 @@ function showAllProjectRequirements() {
             sectionHtml += `
                 <li class="requirements-list-item ${part.status}">
                     ${statusIcon}
-                    <span class="part-name">${part.name}</span>
+                    <span class="part-name">${escapeHtml(part.name)}</span>
                     <span class="part-qty-info">
                         Have: <b>${part.inventoryQty}</b> / Need: <b>${part.total}</b>
                         ${part.status !== 'sufficient' ? ` / Short: <b>${Math.max(0, part.total - part.inventoryQty)}</b>` : ''}
                     </span>
-                    <span class="part-usage" title="${escapeHtml(fullUsageText)}">[${truncatedUsage}]</span>
+                    <span class="part-usage" title="${escapeHtml(fullUsageText)}">[${escapeHtml(truncatedUsage)}]</span>
                 </li>
             `;
         });

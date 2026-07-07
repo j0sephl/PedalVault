@@ -1016,6 +1016,14 @@ function adjustStockInline(partId, action) {
 function showAddPartModal() {
     // Populate project assignments section
     populateNewPartProjectsSection();
+
+    const typeDropdown = document.getElementById('newPartType');
+    const typeSuggestion = document.getElementById('newPartTypeSuggestion');
+    const nameInput = document.getElementById('newPartName');
+    if (typeDropdown && typeSuggestion && nameInput) {
+        updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion);
+        updateTypeSuggestion(nameInput, typeDropdown, typeSuggestion);
+    }
     
     showModal('addPartModal');
     hideMobileNav();
@@ -1033,6 +1041,13 @@ function hideAddPartModal() {
     projectRows.forEach(input => {
         input.value = '0';
     });
+
+    const typeDropdown = document.getElementById('newPartType');
+    const typeSuggestion = document.getElementById('newPartTypeSuggestion');
+    const nameInput = document.getElementById('newPartName');
+    if (typeDropdown && typeSuggestion && nameInput) {
+        updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion);
+    }
     
     showMobileNav();
 }
@@ -1202,6 +1217,13 @@ function populateNewPartProjectsSection() {
 
 function hideEditPartModal() {
     hideModal('editPartModal');
+
+    const typeDropdown = document.getElementById('editPartType');
+    const typeSuggestion = document.getElementById('editPartTypeSuggestion');
+    if (typeDropdown && typeSuggestion) {
+        updateTypeDropdownVisibility({ value: '' }, typeDropdown, typeSuggestion);
+    }
+
     editingPartId = null;
     showMobileNav();
 }

@@ -1044,9 +1044,8 @@ function hideAddPartModal() {
 
     const typeDropdown = document.getElementById('newPartType');
     const typeSuggestion = document.getElementById('newPartTypeSuggestion');
-    const nameInput = document.getElementById('newPartName');
-    if (typeDropdown && typeSuggestion && nameInput) {
-        updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion);
+    if (typeDropdown && typeSuggestion) {
+        resetPartTypeFields(typeDropdown, typeSuggestion);
     }
     
     showMobileNav();
@@ -1221,7 +1220,7 @@ function hideEditPartModal() {
     const typeDropdown = document.getElementById('editPartType');
     const typeSuggestion = document.getElementById('editPartTypeSuggestion');
     if (typeDropdown && typeSuggestion) {
-        updateTypeDropdownVisibility({ value: '' }, typeDropdown, typeSuggestion);
+        resetPartTypeFields(typeDropdown, typeSuggestion);
     }
 
     editingPartId = null;
@@ -2905,6 +2904,19 @@ function suggestCapacitorType(partName) {
     return null;
 }
 
+function resetPartTypeFields(typeDropdown, typeSuggestion) {
+    if (!typeDropdown || !typeSuggestion) return;
+    typeDropdown.classList.add('hidden');
+    typeSuggestion.classList.add('hidden');
+    typeDropdown.innerHTML = '';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Select Type (optional) --';
+    typeDropdown.appendChild(defaultOpt);
+    typeDropdown.value = '';
+    typeSuggestion.textContent = '';
+}
+
 // Utility to show/hide type dropdown and suggestion based on part name
 function updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion, preserveValue) {
     const category = getPartTypeCategory(nameInput.value);
@@ -2916,10 +2928,7 @@ function updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion, p
         typeDropdown.classList.remove('hidden');
         typeSuggestion.classList.remove('hidden');
     } else {
-        typeDropdown.classList.add('hidden');
-        typeSuggestion.classList.add('hidden');
-        typeDropdown.value = '';
-        typeSuggestion.textContent = '';
+        resetPartTypeFields(typeDropdown, typeSuggestion);
     }
 }
 

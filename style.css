@@ -2388,6 +2388,9 @@
       .type-pill.boxfilm { background: #A3BE8C; color: #2E3440; }
       .type-pill.electrolytic { background: #D08770; color: #2E3440; }
       .type-pill.tantalum { background: #d1b581; color: #2E3440; }
+      .type-pill.metalfilm { background: #5E81AC; color: #ECEFF4; }
+      .type-pill.carbonfilm { background: #BF616A; color: #ECEFF4; }
+      .type-pill.carboncomp { background: #A0826D; color: #ECEFF4; }
       .type-pill.other { background: #B48EAD; color: #2E3440; }
   
       .set-type-pill {

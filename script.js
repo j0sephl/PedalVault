@@ -882,13 +882,13 @@ function createInventoryItemElement(id, part) {
 
     // --- Type pill logic ---
     let typePillHtml = '';
-    const isCap = /\b(capacitor|cap)\b/i.test(part.name);
-    if (isCap && part.type) {
+    const typeCategory = getPartTypeCategory(part.name);
+    if (typeCategory && part.type) {
         // Restrict the CSS class to safe characters; the visible label is escaped
         const typeClass = part.type.toLowerCase().replace(/[^a-z0-9_-]/g, '');
         typePillHtml = `<span class="type-pill ${typeClass}">${escapeHtml(part.type)}</span>`;
-    } else if (isCap && !part.type) {
-        typePillHtml = `<span class="set-type-pill" title="Set capacitor type">Set Type</span>`;
+    } else if (typeCategory && !part.type) {
+        typePillHtml = `<span class="set-type-pill" title="Set ${typeCategory} type">Set Type</span>`;
     }
 
     // Responsive: type pill below name on mobile, inline on desktop
@@ -1048,25 +1048,9 @@ function showEditPartModal(partId) {
     const typeSuggestion = document.getElementById('editPartTypeSuggestion');
     const editPartNameInput = document.getElementById('editPartName');
     if (typeDropdown && typeSuggestion && editPartNameInput) {
-        typeDropdown.value = part.type || '';
         // Always update dropdown/suggestion visibility and content on modal open
-        updateTypeDropdownVisibility(editPartNameInput, typeDropdown, typeSuggestion);
-        // Also update suggestion text if visible
-        if (!typeDropdown.classList.contains('hidden')) {
-            const suggestion = suggestCapacitorType(editPartNameInput.value);
-            if (suggestion) {
-                typeSuggestion.textContent = `Suggested type: ${suggestion}`;
-                if (!typeDropdown.value) {
-                    for (const opt of typeDropdown.options) {
-                        if (opt.value === suggestion) typeDropdown.value = suggestion;
-                    }
-                }
-            } else {
-                typeSuggestion.textContent = '';
-            }
-        } else {
-            typeSuggestion.textContent = '';
-        }
+        updateTypeDropdownVisibility(editPartNameInput, typeDropdown, typeSuggestion, part.type || '');
+        updateTypeSuggestion(editPartNameInput, typeDropdown, typeSuggestion);
     }
     
     // Populate project assignments section
@@ -2806,6 +2790,79 @@ function mergeDuplicateInventoryEntries(showNotifications = true) {
     }
 }
 
+// --- Part type categories (capacitors & resistors) ---
+const CAPACITOR_TYPES = ['MLCC', 'Box Film', 'Electrolytic', 'Tantalum', 'Other'];
+const RESISTOR_TYPES = ['Metal Film', 'Carbon Film', 'Carbon Comp', 'Other'];
+
+const PART_TYPE_LABELS = {
+    'MLCC': 'MLCC (Ceramic)',
+    'Box Film': 'Box Film',
+    'Electrolytic': 'Electrolytic',
+    'Tantalum': 'Tantalum',
+    'Metal Film': 'Metal Film',
+    'Carbon Film': 'Carbon Film',
+    'Carbon Comp': 'Carbon Comp',
+    'Other': 'Other'
+};
+
+function isCapacitorPart(name) {
+    return /\b(capacitor|cap)\b/i.test(name);
+}
+
+function isResistorPart(name) {
+    return /\b(resistor|res)\b/i.test(name);
+}
+
+function getPartTypeCategory(name) {
+    if (isCapacitorPart(name)) return 'capacitor';
+    if (isResistorPart(name)) return 'resistor';
+    return null;
+}
+
+function getTypeOptionsForCategory(category) {
+    if (category === 'capacitor') return CAPACITOR_TYPES;
+    if (category === 'resistor') return RESISTOR_TYPES;
+    return [];
+}
+
+function populateTypeDropdown(dropdown, category, selectedValue) {
+    dropdown.innerHTML = '';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Select Type (optional) --';
+    dropdown.appendChild(defaultOpt);
+
+    for (const type of getTypeOptionsForCategory(category)) {
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = PART_TYPE_LABELS[type] || type;
+        if (type === selectedValue) opt.selected = true;
+        dropdown.appendChild(opt);
+    }
+}
+
+function suggestPartType(partName, category) {
+    if (category === 'capacitor') return suggestCapacitorType(partName);
+    return null;
+}
+
+function updateTypeSuggestion(nameInput, typeDropdown, typeSuggestion) {
+    const category = getPartTypeCategory(nameInput.value);
+    const suggestion = category ? suggestPartType(nameInput.value, category) : null;
+    if (suggestion && !typeDropdown.classList.contains('hidden')) {
+        typeSuggestion.textContent = `Suggested type: ${suggestion}`;
+        if (!typeDropdown.value) {
+            for (const opt of typeDropdown.options) {
+                if (opt.value === suggestion) typeDropdown.value = suggestion;
+            }
+        }
+    } else if (!typeDropdown.classList.contains('hidden')) {
+        typeSuggestion.textContent = '';
+    } else {
+        typeSuggestion.textContent = '';
+    }
+}
+
 // --- Auto-suggest capacitor type based on value ---
 function suggestCapacitorType(partName) {
     // Extract value and unit (e.g., 100nF, 2.2uF, 1nF, 10uF, etc.)
@@ -2827,10 +2884,13 @@ function suggestCapacitorType(partName) {
 }
 
 // Utility to show/hide type dropdown and suggestion based on part name
-function updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion) {
-    const name = nameInput.value.toLowerCase();
-    const isCap = /\b(capacitor|cap)\b/i.test(name);
-    if (isCap) {
+function updateTypeDropdownVisibility(nameInput, typeDropdown, typeSuggestion, preserveValue) {
+    const category = getPartTypeCategory(nameInput.value);
+    if (category) {
+        const options = getTypeOptionsForCategory(category);
+        const valueToKeep = preserveValue !== undefined ? preserveValue : typeDropdown.value;
+        const validSelected = options.includes(valueToKeep) ? valueToKeep : '';
+        populateTypeDropdown(typeDropdown, category, validSelected);
         typeDropdown.classList.remove('hidden');
         typeSuggestion.classList.remove('hidden');
     } else {
@@ -2850,17 +2910,7 @@ if (newPartNameInput && newPartTypeDropdown && newPartTypeSuggestion) {
     newPartTypeSuggestion.classList.add('hidden');
     newPartNameInput.addEventListener('input', () => {
         updateTypeDropdownVisibility(newPartNameInput, newPartTypeDropdown, newPartTypeSuggestion);
-        const suggestion = suggestCapacitorType(newPartNameInput.value);
-        if (suggestion && !newPartTypeDropdown.classList.contains('hidden')) {
-            newPartTypeSuggestion.textContent = `Suggested type: ${suggestion}`;
-            if (!newPartTypeDropdown.value) {
-                for (const opt of newPartTypeDropdown.options) {
-                    if (opt.value === suggestion) newPartTypeDropdown.value = suggestion;
-                }
-            }
-        } else if (!newPartTypeDropdown.classList.contains('hidden')) {
-            newPartTypeSuggestion.textContent = '';
-        }
+        updateTypeSuggestion(newPartNameInput, newPartTypeDropdown, newPartTypeSuggestion);
     });
 }
 
@@ -2873,17 +2923,7 @@ if (editPartNameInput && editPartTypeDropdown && editPartTypeSuggestion) {
     editPartTypeSuggestion.classList.add('hidden');
     editPartNameInput.addEventListener('input', () => {
         updateTypeDropdownVisibility(editPartNameInput, editPartTypeDropdown, editPartTypeSuggestion);
-        const suggestion = suggestCapacitorType(editPartNameInput.value);
-        if (suggestion && !editPartTypeDropdown.classList.contains('hidden')) {
-            editPartTypeSuggestion.textContent = `Suggested type: ${suggestion}`;
-            if (!editPartTypeDropdown.value) {
-                for (const opt of editPartTypeDropdown.options) {
-                    if (opt.value === suggestion) editPartTypeDropdown.value = suggestion;
-                }
-            }
-        } else if (!editPartTypeDropdown.classList.contains('hidden')) {
-            editPartTypeSuggestion.textContent = '';
-        }
+        updateTypeSuggestion(editPartNameInput, editPartTypeDropdown, editPartTypeSuggestion);
     });
 }
 

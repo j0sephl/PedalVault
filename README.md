@@ -36,7 +36,8 @@ DIY guitar pedal building is fun, but managing components can be hard. PedalVaul
 
 ### AI-Powered Assistance
 - **BOM Assistant** - Built-in prompts for ChatGPT, Claude, and other AI tools.
-- **Smart Capacitor Suggestions** - Auto-categorize capacitor types.
+- **Component Type Tracking** - Categorize capacitors (MLCC, film, electrolytic) and resistors (metal film, carbon film, carbon comp).
+- **Smart Capacitor Suggestions** - Auto-categorize capacitor types based on value.
 - **Fuzzy Matching** - Automatically link similar component names across projects.
 
 ### Mobile-First Design

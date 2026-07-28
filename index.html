@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Content Security Policy for enhanced security -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
@@ -243,9 +243,14 @@
                   </g>
                   <rect class="cls-2" x="16" y="14.67" width="623.79" height="119.31"/>
                 </svg>
-                <p>Pedal Part Inventory</p>
+                <h1 class="header-tagline">Pedal Part Inventory</h1>
             </div>
         </header>
+
+        <div id="mobileBackupReminder" class="mobile-backup-reminder hidden" role="status" aria-live="polite">
+            <span class="mobile-backup-text">Data stays in this browser only — export a backup so you don't lose parts.</span>
+            <button type="button" class="mobile-backup-btn" onclick="showExportModal()">Export Backup</button>
+        </div>
 
         <main class="content">
             <div class="main-content">
@@ -253,11 +258,11 @@
                     <nav class="sync-buttons" role="navigation" aria-label="Main actions"> 
                         <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
                         <button class="sync-btn import-btn full-width" id="bomAssistantBtn">BOM Assistant</button>
-                        <button class="sync-btn import-btn full-width" id="compareBOMBtn">Compare BOM</button>
-                        <button class="sync-btn import-btn full-width" id="quickPasteBOMBtn">Quick Paste BOM</button>
+                        <button class="sync-btn import-btn full-width" id="compareBOMBtn" title="Upload a BOM file, create a project, and compare against your stock">Import BOM &amp; Check Stock</button>
+                        <button class="sync-btn import-btn full-width" id="quickPasteBOMBtn" title="Paste CSV from an AI tool and check stock">Quick Paste BOM</button>
                         <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" id="loadDataBtn">Load Data</button>
-                        <button class="sync-btn export-btn full-width" id="saveDataBtn">Save Data</button>
+                        <button class="sync-btn import-btn full-width" id="loadDataBtn">Load Backup</button>
+                        <button class="sync-btn export-btn full-width" id="saveDataBtn">Export Backup</button>
                     </nav>
                 </aside>
 
@@ -266,11 +271,14 @@
                         <button id="manageProjectsBtn" class="manage-projects-btn">Manage Projects</button>
                         <button id="compareAllProjectsBtn" class="manage-projects-btn">Compare All Projects</button>
                         <div class="inventory-controls">
-                            <input type="text" id="searchInput" class="search-input" placeholder="Search parts...">
-                            <select class="sort-dropdown" id="projectFilter">
+                            <label for="searchInput" class="visually-hidden">Search parts</label>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Search parts..." aria-label="Search parts">
+                            <label for="projectFilter" class="visually-hidden">Filter by project</label>
+                            <select class="sort-dropdown" id="projectFilter" aria-label="Filter by project">
                                 <option value="all">All Projects</option>
                             </select>
-                            <select class="sort-dropdown" id="sortDropdown">
+                            <label for="sortDropdown" class="visually-hidden">Sort inventory</label>
+                            <select class="sort-dropdown" id="sortDropdown" aria-label="Sort inventory">
                                 <option value="name-asc">Name A-Z</option>
                                 <option value="name-desc">Name Z-A</option>
                                 <option value="quantity-asc">Quantity Low-High</option>
@@ -288,9 +296,9 @@
 
         <footer class="footer">
             <div class="footer-content">
-                <span class="data-note desktop-only">Your data is stored in your browser. <b>Save regularly</b> to avoid loss.</span>
+                <span class="data-note desktop-only">Your data is stored in your browser. <b>Export a backup regularly</b> to avoid loss.</span>
                 <div class="footer-links">
-                    <button type="button" onclick="showAboutModal()" class="about-link desktop-only" title="About PedalVault">About</button>
+                    <button type="button" onclick="showAboutModal()" class="about-link desktop-only" aria-label="About PedalVault">About</button>
                     <span class="version desktop-only">v1.0</span>
                 </div>
             </div>
@@ -298,17 +306,22 @@
     </div>
 
     <!-- Add Part Modal -->
-    <div class="modal" id="addPartModal">
+    <div class="modal" id="addPartModal" role="dialog" aria-modal="true" aria-labelledby="addPartModal-title">
         <div class="modal-content">
-            <h2>Add New Part</h2>
-            <input type="text" id="newPartName" placeholder="Part name (e.g., 'Resistor 10kΩ')">
-            <select id="newPartType" class="part-type-dropdown hidden">
+            <h2 id="addPartModal-title">Add New Part</h2>
+            <label for="newPartName" class="field-label">Part name</label>
+            <input type="text" id="newPartName" placeholder="e.g., Resistor 10kΩ">
+            <label for="newPartType" class="field-label hidden">Component type</label>
+            <select id="newPartType" class="part-type-dropdown hidden" aria-label="Component type">
                 <option value="">-- Select Type (optional) --</option>
             </select>
             <div id="newPartTypeSuggestion" class="type-suggestion"></div>
-            <input type="number" id="newPartQuantity" placeholder="Initial quantity" min="0">
-            <input type="url" id="newPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="newPartId" placeholder="NFC Tag ID (optional)">
+            <label for="newPartQuantity" class="field-label">Initial quantity</label>
+            <input type="number" id="newPartQuantity" placeholder="0" min="0">
+            <label for="newPartUrl" class="field-label">Purchase URL</label>
+            <input type="url" id="newPartUrl" placeholder="Mouser, Digikey, etc.">
+            <label for="newPartId" class="field-label">NFC Tag ID <span class="field-optional">(optional)</span></label>
+            <input type="text" id="newPartId" placeholder="Optional NFC tag ID">
             <div id="newPartProjectsDropdownSection"></div>
             <div class="modal-buttons">
                 <button class="btn btn-add flex-1" onclick="addNewPart()">Add Part</button>
@@ -318,17 +331,22 @@
     </div>
 
     <!-- Edit Part Modal -->
-    <div class="modal" id="editPartModal">
+    <div class="modal" id="editPartModal" role="dialog" aria-modal="true" aria-labelledby="editPartModal-title">
         <div class="modal-content">
-            <h2>Edit Part</h2>
+            <h2 id="editPartModal-title">Edit Part</h2>
+            <label for="editPartName" class="field-label">Part name</label>
             <input type="text" id="editPartName" placeholder="Part name">
-            <select id="editPartType" class="part-type-dropdown hidden">
+            <label for="editPartType" class="field-label hidden">Component type</label>
+            <select id="editPartType" class="part-type-dropdown hidden" aria-label="Component type">
                 <option value="">-- Select Type (optional) --</option>
             </select>
             <div id="editPartTypeSuggestion" class="type-suggestion"></div>
-            <input type="number" id="editPartQuantity" placeholder="Quantity" min="0">
-            <input type="url" id="editPartUrl" placeholder="Purchase URL (Mouser, Digikey, etc.)">
-            <input type="text" id="editPartId" placeholder="NFC Tag ID" class="readonly-input">
+            <label for="editPartQuantity" class="field-label">Quantity</label>
+            <input type="number" id="editPartQuantity" placeholder="0" min="0">
+            <label for="editPartUrl" class="field-label">Purchase URL</label>
+            <input type="url" id="editPartUrl" placeholder="Mouser, Digikey, etc.">
+            <label for="editPartId" class="field-label">NFC Tag ID</label>
+            <input type="text" id="editPartId" placeholder="NFC tag ID" class="readonly-input" readonly aria-readonly="true">
             <div id="editPartProjectsDropdownSection"></div>
             <div class="modal-buttons">
                 <button class="btn btn-add flex-1" onclick="saveEditPart()">Save Changes</button>
@@ -338,9 +356,9 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal" id="deletePartModal">
+    <div class="modal" id="deletePartModal" role="dialog" aria-modal="true" aria-labelledby="deletePartModal-title">
         <div class="modal-content">
-            <h2>Delete Part</h2>
+            <h2 id="deletePartModal-title">Delete Part</h2>
             <p id="deletePartMessage">Are you sure you want to delete this part? This action cannot be undone.</p>
             <div class="modal-buttons">
                 <button class="btn btn-remove" onclick="confirmDeletePart()">Delete</button>
@@ -350,13 +368,13 @@
     </div>
 
     <!-- Notification -->
-    <div class="notification" id="notification"></div>
+    <div class="notification" id="notification" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Export Options Modal -->
-    <div class="modal" id="exportModal">
+    <div class="modal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportModal-title">
         <div class="modal-content">
-            <h2>Save Inventory</h2>
-            <p class="export-format-text">Choose save format:</p>
+            <h2 id="exportModal-title">Export Backup</h2>
+            <p class="export-format-text">Download a copy of your inventory and projects to this device:</p>
             <div class="modal-buttons">
                 <button class="btn json-btn flex-1" onclick="exportInventory('json')">JSON</button>
                 <button class="btn csv-btn flex-1" onclick="exportInventory('csv')">CSV</button>
@@ -366,9 +384,9 @@
     </div>
 
     <!-- BOM Comparison Modal -->
-    <div class="modal" id="bomModal">
+    <div class="modal" id="bomModal" role="dialog" aria-modal="true" aria-labelledby="bomModal-title">
         <div class="modal-content">
-            <h2>BOM Comparison Results</h2>
+            <h2 id="bomModal-title">BOM Comparison Results</h2>
             <div id="bomResults" class="bom-results"></div>
             <div class="modal-buttons modal-buttons-top">
                 <button class="btn cancel-btn flex-1" onclick="hideBOMModal()">Close</button>
@@ -377,9 +395,9 @@
     </div>
 
     <!-- Project Management Modal -->
-    <div class="modal" id="projectManagementModal">
+    <div class="modal" id="projectManagementModal" role="dialog" aria-modal="true" aria-labelledby="projectManagementModal-title">
         <div class="modal-content">
-            <h2>Project Management</h2>
+            <h2 id="projectManagementModal-title">Project Management</h2>
             <button class="btn btn-add flex-1" onclick="showProjectNameModal()" id="createProjectBtn">+ Create Project</button>
             <div id="projectList" class="project-list">
                 <!-- Projects will be listed here -->
@@ -391,9 +409,9 @@
     </div>
 
     <!-- Delete Project Confirmation Modal -->
-    <div class="modal" id="deleteProjectModal">
+    <div class="modal" id="deleteProjectModal" role="dialog" aria-modal="true" aria-labelledby="deleteProjectModal-title">
         <div class="modal-content">
-            <h2>Delete Project</h2>
+            <h2 id="deleteProjectModal-title">Delete Project</h2>
             <p id="deleteProjectMessage" class="project-info"></p>
             <div class="modal-buttons">
                 <button class="btn btn-remove flex-1" onclick="confirmDeleteProject()">Delete</button>
@@ -403,7 +421,7 @@
     </div>
 
     <!-- Project Details Modal -->
-    <div class="modal" id="projectDetailsModal">
+    <div class="modal" id="projectDetailsModal" role="dialog" aria-modal="true" aria-labelledby="projectDetailsTitle">
         <div class="modal-content modal-content-wide">
             <h2 id="projectDetailsTitle">Project Details</h2>
             <div id="projectStatus" class="project-status"></div>
@@ -415,9 +433,9 @@
     </div>
 
     <!-- All Projects Requirements Modal -->
-    <div class="modal" id="allProjectRequirementsModal">
+    <div class="modal" id="allProjectRequirementsModal" role="dialog" aria-modal="true" aria-labelledby="allProjectRequirementsModal-title">
         <div class="modal-content">
-            <h2>All Project Requirements</h2>
+            <h2 id="allProjectRequirementsModal-title">All Project Requirements</h2>
             <div id="allProjectRequirements"></div>
             <div class="modal-buttons">
                 <button class="btn close-btn flex-1" onclick="hideAllProjectRequirementsModal()">Close</button>
@@ -426,10 +444,11 @@
     </div>
 
     <!-- Export BOM Modal -->
-    <div class="modal" id="exportBOMModal">
+    <div class="modal" id="exportBOMModal" role="dialog" aria-modal="true" aria-labelledby="exportBOMModal-title">
         <div class="modal-content">
-            <h2>Export Project BOM</h2>
-            <select id="exportBOMProject" class="sort-dropdown full-width" style="margin-bottom: 15px;">
+            <h2 id="exportBOMModal-title">Export Project BOM</h2>
+            <label for="exportBOMProject" class="field-label">Project</label>
+            <select id="exportBOMProject" class="sort-dropdown full-width" style="margin-bottom: 15px;" aria-label="Select project to export">
                 <option value="">Select a project...</option>
             </select>
             <p class="export-format-text">Choose export format:</p>
@@ -442,9 +461,11 @@
     </div>
 
     <!-- Project Name Modal -->
-    <div class="modal" id="projectNameModal">
+    <div class="modal" id="projectNameModal" role="dialog" aria-modal="true" aria-labelledby="projectNameModal-title">
         <div class="modal-content">
-            <h2>New Project</h2>
+            <h2 id="projectNameModal-title">New Project</h2>
+            <p id="projectNameModalHint" class="modal-hint hidden"></p>
+            <label for="projectNameInput" class="field-label">Project name</label>
             <input type="text" id="projectNameInput" placeholder="Enter project name" class="full-width">
             <div class="modal-buttons">
                 <button class="btn btn-add flex-1" onclick="confirmProjectName()">Create Project</button>
@@ -457,9 +478,9 @@
     <input type="file" id="importFile" accept=".json,.csv" onchange="importInventory(event)" class="hidden">
 
     <!-- All Project Tags Modal -->
-    <div class="modal" id="allProjectTagsModal">
+    <div class="modal" id="allProjectTagsModal" role="dialog" aria-modal="true" aria-labelledby="allProjectTagsModal-title">
         <div class="modal-content">
-            <h2>Project Tags</h2>
+            <h2 id="allProjectTagsModal-title">Project Tags</h2>
             <div id="allProjectTagsList" class="all-project-tags-list"></div>
             <div class="modal-buttons">
                 <button class="btn close-btn flex-1" onclick="hideAllProjectTagsModal()">Close</button>
@@ -468,9 +489,9 @@
     </div>
 
     <!-- BOM Assistant Modal -->
-    <div class="modal" id="bomAssistantModal">
+    <div class="modal" id="bomAssistantModal" role="dialog" aria-modal="true" aria-labelledby="bomAssistantModal-title">
         <div class="modal-content modal-content-wide">
-            <h2>BOM Assistant - Generate BOMs with AI</h2>
+            <h2 id="bomAssistantModal-title">BOM Assistant - Generate BOMs with AI</h2>
             <div class="bom-assistant-content">
                 <p class="assistant-intro">Use AI tools like ChatGPT, Claude, or Gemini to generate BOMs from schematics and import them directly into PedalVault.</p>
                 
@@ -516,11 +537,12 @@ Please provide only the CSV data, no additional text or explanations.</pre>
                         <div class="import-method">
                             <h4>Method A: Paste Text Directly</h4>
                             <p>Copy the AI's CSV response and paste it below:</p>
+                            <label for="bomTextInput" class="field-label">Pasted BOM data</label>
                             <textarea id="bomTextInput" placeholder="Paste CSV data from your AI tool here...
 Example:
 Name,Quantity
 Resistor 10kΩ,3
-Capacitor 100nF,2" rows="8" class="full-width"></textarea>
+Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"></textarea>
                             <button class="btn btn-add" onclick="processPastedBOM()">Import Pasted BOM</button>
                         </div>
                         <div class="import-method">
@@ -566,9 +588,9 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
     </div>
 
     <!-- About Modal -->
-    <div class="modal" id="aboutModal">
+    <div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutModal-title">
         <div class="modal-content">
-            <h2>About PedalVault</h2>
+            <h2 id="aboutModal-title">About PedalVault</h2>
             <div class="about-content">
                 <p><strong>PedalVault</strong> is a guitar pedal parts inventory management system designed for DIY pedal builders and electronics enthusiasts.</p>
                 
@@ -665,6 +687,7 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
             <span>Data</span>
+            <span class="mobile-nav-badge hidden" id="dataTabBadge" aria-label="Backup export recommended"></span>
         </button>
         <button class="mobile-nav-item" data-tab="projects">
             <svg class="mobile-nav-icon" viewBox="0 0 24 24">
@@ -700,11 +723,17 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
             </svg>
             BOM Assistant
         </button>
+            <button class="mobile-menu-item" onclick="showQuickPasteBOM()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M19 2H8c-1.1 0-2 .9-2 2v3H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V4c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V6h10v2z"/>
+            </svg>
+            Quick Paste BOM
+        </button>
         <button class="mobile-menu-item" onclick="document.getElementById('importBOM').click()">
             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
-            Compare BOM
+            Import BOM &amp; Check Stock
         </button>
     </div>
 
@@ -714,13 +743,13 @@ Capacitor 100nF,2" rows="8" class="full-width"></textarea>
             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
-            Load Data
+            Load Backup
         </button>
         <button class="mobile-menu-item" onclick="showExportModal()">
             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
             </svg>
-            Save Data
+            Save Backup
         </button>
     </div>
 

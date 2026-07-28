@@ -278,6 +278,8 @@ function initializeApp() {
     // Add event listeners only if elements exist (defensive programming)
     if (addPartBtn) addPartBtn.addEventListener('click', showAddPartModal);
     if (compareBOMBtn) compareBOMBtn.addEventListener('click', () => DOM.get('importBOM').click());
+    const quickPasteBOMBtn = DOM.get('quickPasteBOMBtn');
+    if (quickPasteBOMBtn) quickPasteBOMBtn.addEventListener('click', showQuickPasteBOM);
     if (exportBOMModalBtn) exportBOMModalBtn.addEventListener('click', showExportBOMModal);
     if (saveDataBtn) saveDataBtn.addEventListener('click', showExportModal);
     
@@ -333,14 +335,13 @@ function initializeApp() {
     checkBatteryOptimizations();
     
     // Initialize the application data and display
+    loadBackupPendingState();
     initializeInventory();
+    updateHeaderCompactMode();
+    updateBackupReminderUI();
 
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            clearStuckNotifications();
-        }
-    });
+    // Keyboard: Escape closes top modal; Tab trapped inside open modal
+    document.addEventListener('keydown', handleModalKeydown);
 
     const bomAssistantBtn = DOM.get('bomAssistantBtn');
     if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
@@ -464,6 +465,73 @@ function normalizeValue(str) {
 // hidden or closed before the debounce timer fires
 let inventoryDirty = false;
 let projectsDirty = false;
+let backupExportPending = false;
+
+const BACKUP_PENDING_KEY = 'pedalvault-backup-pending';
+const COMPACT_HEADER_KEY = 'pedalvault-compact-header';
+const VISITED_KEY = 'pedalvault-visited';
+
+function markBackupPending() {
+    backupExportPending = true;
+    try {
+        localStorage.setItem(BACKUP_PENDING_KEY, '1');
+    } catch (e) { /* ignore quota errors */ }
+    updateBackupReminderUI();
+}
+
+function clearBackupPending() {
+    backupExportPending = false;
+    try {
+        localStorage.removeItem(BACKUP_PENDING_KEY);
+    } catch (e) { /* ignore */ }
+    updateBackupReminderUI();
+}
+
+function loadBackupPendingState() {
+    try {
+        backupExportPending = localStorage.getItem(BACKUP_PENDING_KEY) === '1';
+    } catch (e) {
+        backupExportPending = false;
+    }
+}
+
+function updateBackupReminderUI() {
+    const banner = document.getElementById('mobileBackupReminder');
+    const badge = document.getElementById('dataTabBadge');
+    const isMobile = window.innerWidth <= 1024;
+    const show = backupExportPending && isMobile;
+
+    if (banner) {
+        banner.classList.toggle('hidden', !show);
+    }
+    if (badge) {
+        badge.classList.toggle('hidden', !backupExportPending);
+    }
+}
+
+function updateHeaderCompactMode() {
+    const header = document.querySelector('.header');
+    if (!header) return;
+
+    const hasInventory = Object.keys(inventory).length > 0;
+    let compact = false;
+    try {
+        compact = localStorage.getItem(COMPACT_HEADER_KEY) === '1'
+            || localStorage.getItem(VISITED_KEY) === '1'
+            || hasInventory;
+    } catch (e) {
+        compact = hasInventory;
+    }
+
+    header.classList.toggle('header-compact', compact);
+
+    try {
+        localStorage.setItem(VISITED_KEY, '1');
+        if (hasInventory) {
+            localStorage.setItem(COMPACT_HEADER_KEY, '1');
+        }
+    } catch (e) { /* ignore */ }
+}
 
 /**
  * Save projects data to browser's local storage
@@ -471,6 +539,7 @@ let projectsDirty = false;
  */
 function saveProjects() {
     projectsDirty = true;
+    markBackupPending();
     debouncedSaveProjects();
 }
 
@@ -480,6 +549,7 @@ function saveProjects() {
  */
 function saveInventory() {
     inventoryDirty = true;
+    markBackupPending();
     debouncedSaveInventory();
 }
 
@@ -511,16 +581,7 @@ function initializeInventory() {
         // Auto-merge any duplicate entries that may have been created (silently)
         mergeDuplicateInventoryEntries(false);
     } else {
-        // Create sample data for new users to demonstrate functionality
-        inventory = {
-            'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
-            'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
-            'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
-            'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
-            'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
-            'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
-        };
-        saveInventory();
+        inventory = {};
     }
     
     // Initialize project data and relationships
@@ -623,7 +684,8 @@ function exportInventory(format) {
     document.body.removeChild(link);
     
     hideExportModal();
-    showNotification(`Saved inventory to ${filename}`);
+    clearBackupPending();
+    showNotification(`Exported backup to ${filename}`);
 }
 
 /**
@@ -731,6 +793,7 @@ function importInventory(event) {
             displayInventory();
             currentPartId = null;
             showNotification('Inventory imported successfully!');
+            clearBackupPending();
         } catch (err) {
             showNotification('Error importing inventory: ' + err.message, 'error');
         }
@@ -829,7 +892,79 @@ function displayInventory() {
     
     // Get filtered and sorted entries (filtering is already done in getSortedInventoryEntries)
     const sortedEntries = getSortedInventoryEntries();
+
+    if (sortedEntries.length === 0) {
+        if (Object.keys(inventory).length === 0) {
+            renderEmptyState(inventoryItems, 'welcome');
+        } else {
+            renderEmptyState(inventoryItems, 'no-results');
+        }
+        updateHeaderCompactMode();
+        return;
+    }
+
     renderFullInventory(sortedEntries, inventoryItems);
+    updateHeaderCompactMode();
+}
+
+function renderEmptyState(container, mode) {
+    const isWelcome = mode === 'welcome';
+    container.innerHTML = `
+        <div class="empty-state">
+            <h2 class="empty-state-title">${isWelcome ? 'Your workshop drawer is empty' : 'No matching parts'}</h2>
+            <p class="empty-state-text">${isWelcome
+                ? 'Add parts, import a BOM, or restore a backup to start tracking stock for your builds.'
+                : 'Try a different search term, sort order, or project filter.'}</p>
+            <div class="empty-state-actions">
+                ${isWelcome ? `
+                    <button type="button" class="btn btn-add empty-state-btn" data-empty-action="add-part">+ Add First Part</button>
+                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="import-bom">Import BOM &amp; Check Stock</button>
+                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="quick-paste">Quick Paste BOM</button>
+                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="load-backup">Load Backup</button>
+                    <button type="button" class="btn cancel-btn empty-state-btn" data-empty-action="sample">Load Sample Parts</button>
+                ` : `
+                    <button type="button" class="btn cancel-btn empty-state-btn" data-empty-action="clear-filters">Clear Search &amp; Filters</button>
+                `}
+            </div>
+        </div>
+    `;
+
+    container.querySelectorAll('[data-empty-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.getAttribute('data-empty-action');
+            if (action === 'add-part') showAddPartModal();
+            else if (action === 'import-bom') document.getElementById('importBOM').click();
+            else if (action === 'quick-paste') showQuickPasteBOM();
+            else if (action === 'load-backup') document.getElementById('importFile').click();
+            else if (action === 'sample') loadSampleInventory();
+            else if (action === 'clear-filters') {
+                currentSearchQuery = '';
+                currentProjectFilter = 'all';
+                currentSortOrder = 'name-asc';
+                const searchInput = DOM.get('searchInput');
+                const projectFilter = DOM.get('projectFilter');
+                const sortDropdown = DOM.get('sortDropdown');
+                if (searchInput) searchInput.value = '';
+                if (projectFilter) projectFilter.value = 'all';
+                if (sortDropdown) sortDropdown.value = 'name-asc';
+                displayInventory();
+            }
+        });
+    });
+}
+
+function loadSampleInventory() {
+    inventory = {
+        'resistor_10k': { name: 'Resistor 10kΩ', quantity: 25 },
+        'capacitor_100nf': { name: 'Capacitor 100nF', quantity: 15 },
+        'op_amp_4558': { name: 'Op-Amp JRC4558', quantity: 8 },
+        'led_3mm': { name: 'LED 3mm Red', quantity: 12 },
+        'potentiometer_100k': { name: 'Potentiometer 100kΩ', quantity: 6 },
+        'switch_3pdt': { name: '3PDT Footswitch', quantity: 3 }
+    };
+    saveInventory();
+    displayInventory();
+    showNotification('Loaded sample parts — replace with your own inventory anytime');
 }
 
 function renderFullInventory(entries, container) {
@@ -903,18 +1038,18 @@ function createInventoryItemElement(id, part) {
             </div>
             <div class="item-controls">
                 <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
-                    <button class="quantity-btn" data-action="decrease">-</button>
+                    <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
                     <span class="quantity-number">${part.quantity}</span>
-                    <button class="quantity-btn" data-action="increase">+</button>
+                    <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
                 </div>
                 <div class="item-actions">
-                    <button class="action-icon edit-icon" title="Edit part">
+                    <button class="action-icon edit-icon" aria-label="Edit part">
                         <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                     </button>
-                    <button class="action-icon delete-icon" title="Delete part">
+                    <button class="action-icon delete-icon" aria-label="Delete part">
                         <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                     </button>
-                    <button class="action-icon shop-icon" title="Open purchase link">
+                    <button class="action-icon shop-icon" aria-label="Open purchase link">
                         <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
                     </button>
                 </div>
@@ -930,12 +1065,12 @@ function createInventoryItemElement(id, part) {
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
-                <button class="quantity-btn" data-action="decrease">-</button>
+                <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
                 <span class="quantity-number">${part.quantity}</span>
-                <button class="quantity-btn" data-action="increase">+</button>
+                <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
             </div>
             <div class="item-actions">
-                <button class="action-icon edit-icon" title="Edit part">
+                <button class="action-icon edit-icon" aria-label="Edit part">
                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 </button>
                 <button class="action-icon delete-icon" title="Delete part">
@@ -1083,7 +1218,7 @@ function populateEditPartProjectsSection(partId) {
     // If no projects exist, show a message
     if (Object.keys(projects).length === 0) {
         projectsSection.innerHTML = `
-            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 3px solid var(--nord13); color: var(--nord5);">
+            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 1px solid var(--nord13); color: var(--nord5);">
                 <p style="margin: 0; font-size: 13px;">No projects available. Create a project first to assign parts.</p>
                 <button class="btn btn-add" onclick="hideEditPartModal(); showProjectNameModal();" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">
                     Create Project
@@ -1162,7 +1297,7 @@ function populateNewPartProjectsSection() {
     // If no projects exist, show a message
     if (Object.keys(projects).length === 0) {
         projectsSection.innerHTML = `
-            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 3px solid var(--nord13); color: var(--nord5);">
+            <div style="margin: 15px 0; padding: 10px; background: var(--nord1); border-left: 1px solid var(--nord13); color: var(--nord5);">
                 <p style="margin: 0; font-size: 13px;">No projects available. Create a project first to assign parts.</p>
                 <button class="btn btn-add" onclick="hideAddPartModal(); showProjectNameModal();" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">
                     Create Project
@@ -1468,6 +1603,7 @@ function showNotification(message, type = 'success') {
     setTimeout(() => {
         notification.textContent = message;
         notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+        notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
         
         // Force another reflow before adding show class
         notification.offsetHeight;
@@ -1765,6 +1901,26 @@ function removeProjectTag(partId, projectId) {
 }
 
 function showProjectNameModal() {
+    const title = document.getElementById('projectNameModal-title');
+    const hint = document.getElementById('projectNameModalHint');
+    const confirmBtn = document.querySelector('#projectNameModal .btn-add');
+
+    if (pendingBomData) {
+        if (title) title.textContent = 'Name Your Build Project';
+        if (hint) {
+            hint.textContent = 'Your BOM will be saved as a new project, then compared against parts on hand.';
+            hint.classList.remove('hidden');
+        }
+        if (confirmBtn) confirmBtn.textContent = 'Create Project & Check Stock';
+    } else {
+        if (title) title.textContent = 'New Project';
+        if (hint) {
+            hint.textContent = '';
+            hint.classList.add('hidden');
+        }
+        if (confirmBtn) confirmBtn.textContent = 'Create Project';
+    }
+
     showModal('projectNameModal');
     document.getElementById('projectNameInput').value = '';
     document.getElementById('projectNameInput').focus();
@@ -1773,8 +1929,14 @@ function showProjectNameModal() {
 function hideProjectNameModal() {
     hideModal('projectNameModal');
     pendingBomData = null;
-    // Also clear the input for safety
     document.getElementById('projectNameInput').value = '';
+    const hint = document.getElementById('projectNameModalHint');
+    if (hint) {
+        hint.textContent = '';
+        hint.classList.add('hidden');
+    }
+    const confirmBtn = document.querySelector('#projectNameModal .btn-add');
+    if (confirmBtn) confirmBtn.textContent = 'Create Project';
 }
 
 function confirmProjectName() {
@@ -2100,7 +2262,7 @@ function processPastedBOM() {
     
     const pastedText = bomTextInput.value.trim();
     if (!pastedText) {
-        alert('Please paste BOM data first');
+        showNotification('Paste BOM CSV data first', 'error');
         return;
     }
     
@@ -2410,7 +2572,7 @@ function showAllProjectRequirements() {
     if (groupedParts.sufficient.length > 0) {
         html += createSimpleListSection('Sufficient Stock', groupedParts.sufficient, 'sufficient');
     }
-    document.getElementById('allProjectRequirementsModal').querySelector('h2').innerHTML = 'All Project Requirements';
+    document.getElementById('allProjectRequirementsModal').querySelector('h2').textContent = 'All Project Requirements';
     document.getElementById('allProjectRequirements').innerHTML = html;
     showModal('allProjectRequirementsModal');
     hideMobileNav();
@@ -2517,11 +2679,17 @@ function createSyncButtons() {
             </svg>
             BOM Assistant
         </button>
-        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()">
+        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()" title="Upload a BOM file, create a project, and compare against your stock">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
-            Compare BOM
+            Import BOM &amp; Check Stock
+        </button>
+        <button class="sync-btn import-btn full-width" onclick="showQuickPasteBOM()" title="Paste CSV from an AI tool and check stock">
+            <svg class="sync-icon" viewBox="0 0 24 24">
+                <path d="M19 2H8c-1.1 0-2 .9-2 2v3H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V4c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V6h10v2z"/>
+            </svg>
+            Quick Paste BOM
         </button>
         <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
@@ -2533,13 +2701,13 @@ function createSyncButtons() {
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
             </svg>
-            Load Data
+            Load Backup
         </button>
         <button class="sync-btn export-btn full-width" onclick="showExportModal()">
             <svg class="sync-icon" viewBox="0 0 24 24">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
-            Save Data
+            Export Backup
         </button>
         <button class="sync-btn import-btn full-width" onclick="mergeDuplicateInventoryEntries()">
             <svg class="sync-icon" viewBox="0 0 24 24">
@@ -2664,7 +2832,7 @@ function showAboutModal(event) {
     // Auto-close BOM Assistant modal if open
     const bomAssistantModal = document.getElementById('bomAssistantModal');
     if (bomAssistantModal && bomAssistantModal.classList.contains('show')) {
-        hideModal('bomAssistantModal');
+        hideBOMAssistantModal();
     }
     showModal('aboutModal');
     hideMobileNav();
@@ -3083,6 +3251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Handle window resize for mobile nav visibility
 window.addEventListener('resize', debounce(() => {
+    updateBackupReminderUI();
     const mobileNav = document.querySelector('.mobile-nav');
     if (window.innerWidth <= 1024) {
         if (mobileNav && !mobileNav.classList.contains('show')) {
@@ -3096,6 +3265,25 @@ window.addEventListener('resize', debounce(() => {
         }
     }
 }, 200));
+
+function showQuickPasteBOM() {
+    showBOMAssistantModal();
+    requestAnimationFrame(() => {
+        const textarea = document.getElementById('bomTextInput');
+        const modal = document.getElementById('bomAssistantModal');
+        if (textarea) {
+            textarea.focus();
+            textarea.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        if (modal) {
+            const content = modal.querySelector('.modal-content');
+            if (content && textarea) {
+                const offset = textarea.offsetTop - 24;
+                content.scrollTop = Math.max(0, offset);
+            }
+        }
+    });
+}
 
 function showBOMAssistantModal() {
     // Auto-close About modal if open
@@ -3179,16 +3367,112 @@ function smartTruncateUsage(projects, maxLength = 40) {
 }
 
 /**
+ * Modal accessibility: focus management, scroll lock, Escape, and Tab trap
+ */
+let modalStack = [];
+let modalPreviousFocus = null;
+
+const MODAL_CLOSE_HANDLERS = {
+    addPartModal: hideAddPartModal,
+    editPartModal: hideEditPartModal,
+    deletePartModal: hideDeletePartModal,
+    exportModal: hideExportModal,
+    bomModal: hideBOMModal,
+    projectManagementModal: hideProjectManagementModal,
+    deleteProjectModal: hideDeleteProjectModal,
+    projectDetailsModal: hideProjectDetailsModal,
+    allProjectRequirementsModal: hideAllProjectRequirementsModal,
+    exportBOMModal: hideExportBOMModal,
+    projectNameModal: hideProjectNameModal,
+    allProjectTagsModal: () => hideAllProjectTagsModal(false),
+    bomAssistantModal: hideBOMAssistantModal,
+    aboutModal: hideAboutModal
+};
+
+function getFocusableElements(container) {
+    return Array.from(container.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(el => el.offsetParent !== null || el === document.activeElement);
+}
+
+function handleModalKeydown(e) {
+    if (e.key === 'Escape') {
+        if (closeTopModal()) {
+            e.preventDefault();
+            return;
+        }
+        clearStuckNotifications();
+        return;
+    }
+
+    if (e.key !== 'Tab' || modalStack.length === 0) return;
+
+    const modal = document.getElementById(modalStack[modalStack.length - 1]);
+    if (!modal || !modal.classList.contains('show')) return;
+
+    const focusables = getFocusableElements(modal);
+    if (focusables.length === 0) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
+}
+
+function closeTopModal() {
+    const topId = modalStack[modalStack.length - 1];
+    if (!topId) return false;
+    const handler = MODAL_CLOSE_HANDLERS[topId];
+    if (handler) {
+        handler();
+        return true;
+    }
+    hideModal(topId);
+    return true;
+}
+
+function handleModalBackdropClick(e) {
+    if (e.target !== e.currentTarget) return;
+    const modalId = e.currentTarget.id;
+    const handler = MODAL_CLOSE_HANDLERS[modalId];
+    if (handler) handler();
+    else hideModal(modalId);
+}
+
+/**
  * Show modal with slide-in animation
  */
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
-    
+
+    if (!modalStack.includes(modalId)) {
+        if (modalStack.length === 0) {
+            modalPreviousFocus = document.activeElement;
+        }
+        modalStack.push(modalId);
+    }
+
     modal.style.display = 'block';
-    // Force reflow to ensure display:block is applied before animation
     modal.offsetHeight;
     modal.classList.add('show');
+    document.body.classList.add('modal-open');
+
+    if (!modal.dataset.backdropBound) {
+        modal.addEventListener('click', handleModalBackdropClick);
+        modal.dataset.backdropBound = 'true';
+    }
+
+    const focusables = getFocusableElements(modal);
+    if (focusables.length) {
+        requestAnimationFrame(() => focusables[0].focus());
+    }
 }
 
 /**
@@ -3197,14 +3481,23 @@ function showModal(modalId) {
 function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
-    
+
     modal.classList.remove('show');
-    // Wait for animation to complete before hiding
+    modalStack = modalStack.filter(id => id !== modalId);
+
+    if (modalStack.length === 0) {
+        document.body.classList.remove('modal-open');
+        if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') {
+            modalPreviousFocus.focus();
+        }
+        modalPreviousFocus = null;
+    }
+
     setTimeout(() => {
         if (!modal.classList.contains('show')) {
             modal.style.display = 'none';
         }
-    }, 300); // Match CSS transition duration
+    }, 300);
 }
 
 // =============================================================================

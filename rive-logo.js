@@ -1,8 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('rive-logo');
-    
+
     if (!canvas) {
         console.error('Rive logo canvas not found');
+        return;
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+        canvas.classList.add('rive-logo-static');
+        return;
+    }
+
+    if (typeof rive === 'undefined') {
+        canvas.style.display = 'none';
         return;
     }
 
@@ -13,17 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
             autoplay: true,
             stateMachines: 'State Machine 1',
             onLoad: () => {
-                // Ensure the animation starts in Idle state after loading
                 riveInstance.play('Idle');
             },
             onLoadError: (error) => {
                 console.error('Failed to load Rive animation:', error);
-                // Hide the canvas if animation fails to load
                 canvas.style.display = 'none';
             }
         });
 
-        // Add hover event listeners with error handling
         canvas.addEventListener('mouseenter', () => {
             try {
                 riveInstance.play('Hover');
@@ -40,14 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Add error handling for runtime errors
         riveInstance.on('error', (error) => {
             console.error('Rive runtime error:', error);
         });
 
     } catch (error) {
         console.error('Failed to initialize Rive:', error);
-        // Hide the canvas if Rive fails to initialize
         canvas.style.display = 'none';
     }
 });

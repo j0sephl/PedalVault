@@ -1650,56 +1650,60 @@ function handlePurchaseClick(partId) {
  */
 function showNotification(message, type = 'success', options = {}) {
     const notification = document.getElementById('notification');
-    const messageEl = notification.querySelector('.notification-message');
-    const undoBtn = document.getElementById('notificationUndoBtn');
-    
-    // Clear any existing timeout to prevent conflicts
+    if (!notification) return;
+
+    // Clear any existing timeouts so rapid notifications don't race
     if (notification.hideTimeout) {
         clearTimeout(notification.hideTimeout);
         notification.hideTimeout = null;
     }
+    if (notification.showTimeout) {
+        clearTimeout(notification.showTimeout);
+        notification.showTimeout = null;
+    }
 
     pendingQtyUndo = typeof options.undo === 'function' ? options.undo : null;
-    
-    // Force reset the notification completely
+
+    // Force reset without destroying structured children (message + undo)
     notification.className = 'notification';
     notification.classList.remove('show', 'error', 'has-undo');
-    notification.style.cssText = ''; // Clear any inline styles
+    notification.style.cssText = '';
+    const messageEl = notification.querySelector('.notification-message');
+    const undoBtn = document.getElementById('notificationUndoBtn');
     if (messageEl) messageEl.textContent = '';
-    else notification.textContent = '';
     if (undoBtn) undoBtn.classList.add('hidden');
-    
+
     // Force reflow to ensure reset is applied
     notification.offsetHeight;
-    
+
     // Small delay to ensure the reset is complete before showing
-    setTimeout(() => {
-        if (messageEl) messageEl.textContent = message;
-        else notification.textContent = message;
-        notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+    notification.showTimeout = setTimeout(() => {
+        notification.showTimeout = null;
+        const liveMessage = notification.querySelector('.notification-message');
+        const liveUndo = document.getElementById('notificationUndoBtn');
+        if (liveMessage) liveMessage.textContent = message;
+        notification.className = `notification${type === 'error' ? ' error' : ''}`;
         notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
 
-        if (undoBtn) {
+        if (liveUndo) {
             if (pendingQtyUndo) {
-                undoBtn.classList.remove('hidden');
+                liveUndo.classList.remove('hidden');
                 notification.classList.add('has-undo');
             } else {
-                undoBtn.classList.add('hidden');
+                liveUndo.classList.add('hidden');
             }
         }
-        
-        // Force another reflow before adding show class
+
         notification.offsetHeight;
-        
         notification.classList.add('show');
-        
-        // Auto-hide notification after 5 seconds (8s when undo is available)
+
         const hideMs = pendingQtyUndo ? 8000 : 5000;
         notification.hideTimeout = setTimeout(() => {
             notification.classList.remove('show');
             notification.hideTimeout = null;
             pendingQtyUndo = null;
-            if (undoBtn) undoBtn.classList.add('hidden');
+            const btn = document.getElementById('notificationUndoBtn');
+            if (btn) btn.classList.add('hidden');
         }, hideMs);
     }, 100);
 }
@@ -1707,25 +1711,25 @@ function showNotification(message, type = 'success', options = {}) {
 function clearStuckNotifications() {
     const notification = document.getElementById('notification');
     if (notification) {
-        // Clear any timeouts
         if (notification.hideTimeout) {
             clearTimeout(notification.hideTimeout);
             notification.hideTimeout = null;
         }
+        if (notification.showTimeout) {
+            clearTimeout(notification.showTimeout);
+            notification.showTimeout = null;
+        }
 
         pendingQtyUndo = null;
-        
-        // Force reset everything about the notification
+
         notification.className = 'notification';
         notification.classList.remove('show', 'error', 'has-undo');
         const messageEl = notification.querySelector('.notification-message');
         if (messageEl) messageEl.textContent = '';
-        else notification.textContent = '';
         const undoBtn = document.getElementById('notificationUndoBtn');
         if (undoBtn) undoBtn.classList.add('hidden');
-        notification.style.cssText = ''; // Clear any inline styles
-        
-        // Force reflow to ensure styles are applied
+        notification.style.cssText = '';
+
         notification.offsetHeight;
     }
 }

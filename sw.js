@@ -1,6 +1,6 @@
 // Bump this version on every release so clients pick up new caches.
 // The old cache is deleted on activate.
-const SW_VERSION = 'v2.0.0';
+const SW_VERSION = 'v2.1.1';
 const APP_SHELL_CACHE = `pedalvault-shell-${SW_VERSION}`;
 const STATIC_CACHE = `pedalvault-static-${SW_VERSION}`;
 
@@ -13,18 +13,23 @@ const APP_SHELL_URLS = [
     './script.js',
     './rive-logo.js',
     './manifest.json',
-    './offline.html'
+    './offline.html',
+    './vendor/papaparse.min.js',
+    './vendor/rive.js'
 ];
 
 // Static assets: served cache-first since they effectively never change.
 const STATIC_PRECACHE_URLS = [
     './favicon.ico',
-    './gpi.riv'
+    './gpi.riv',
+    './fonts/JetBrainsMono-Regular.woff2',
+    './fonts/JetBrainsMono-Bold.woff2',
+    './vendor/rive.wasm'
 ];
 
 // Paths (relative to the SW scope) treated as long-lived static assets
 // when requested at runtime (fonts, icons, Rive animation).
-const STATIC_RUNTIME_PATTERN = /\/(fonts|icons)\/|\.(woff2?|png|ico|svg|riv)$/;
+const STATIC_RUNTIME_PATTERN = /\/(fonts|icons|vendor)\/|\.(woff2?|png|ico|svg|riv|wasm)$/;
 
 // Resolved pathnames of the app shell files, for request matching
 const APP_SHELL_PATHS = new Set(

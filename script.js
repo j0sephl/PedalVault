@@ -254,13 +254,9 @@ function initializeApp() {
     clearStuckNotifications();
     
     // =============================================================================
-    // BUTTON REFERENCES - Main action buttons
+    // BUTTON REFERENCES - Main action buttons (desktop sidebar is built by
+    // createSyncButtons with onclick handlers; bind remaining chrome here)
     // =============================================================================
-    const addPartBtn = DOM.get('addPartBtn');
-    const compareBOMBtn = DOM.get('compareBOMBtn');
-    const exportBOMModalBtn = DOM.get('exportBOMModalBtn');
-    const saveDataBtn = DOM.get('saveDataBtn');
-    const loadDataBtn = DOM.get('loadDataBtn');
     
     // Project management specific buttons
     const manageProjectsBtn = DOM.get('manageProjectsBtn');
@@ -275,51 +271,6 @@ function initializeApp() {
     // EVENT LISTENER SETUP - Connect UI elements to functionality
     // =============================================================================
     
-    // Add event listeners only if elements exist (defensive programming)
-    if (addPartBtn) addPartBtn.addEventListener('click', showAddPartModal);
-    if (compareBOMBtn) compareBOMBtn.addEventListener('click', () => DOM.get('importBOM').click());
-    const quickPasteBOMBtn = DOM.get('quickPasteBOMBtn');
-    if (quickPasteBOMBtn) quickPasteBOMBtn.addEventListener('click', showQuickPasteBOM);
-    if (exportBOMModalBtn) exportBOMModalBtn.addEventListener('click', showExportBOMModal);
-    if (saveDataBtn) saveDataBtn.addEventListener('click', showExportModal);
-    
-    // Load Data button with modern File System Access API support
-    if (loadDataBtn) {
-        loadDataBtn.addEventListener('click', async () => {
-            try {
-                // Try using the File System Access API first (Chrome/Edge)
-                // This provides a better user experience with native file dialogs
-                if ('showOpenFilePicker' in window) {
-                    const [fileHandle] = await window.showOpenFilePicker({
-                        types: [{
-                            description: 'Inventory Files',
-                            accept: {
-                                'application/json': ['.json'],
-                                'text/csv': ['.csv']
-                            }
-                        }]
-                    });
-                    const file = await fileHandle.getFile();
-                    const event = { target: { files: [file] } };
-                    importInventory(event);
-                } else {
-                    // Fallback for browsers that don't support File System Access API
-                    // Uses traditional hidden file input approach
-                    const importFile = DOM.get('importFile');
-                    if (importFile) {
-                        importFile.value = '';
-                        importFile.click();
-                    }
-                }
-            } catch (err) {
-                // User cancelled file selection - not an error
-                if (err.name !== 'AbortError') {
-                    console.error('Error opening file:', err);
-                }
-            }
-        });
-    }
-    
     // Project management button event listeners
     if (manageProjectsBtn) manageProjectsBtn.addEventListener('click', showProjectManagementModal);
     if (compareAllProjectsBtn) compareAllProjectsBtn.addEventListener('click', showAllProjectRequirements);
@@ -329,6 +280,21 @@ function initializeApp() {
     if (searchInput) searchInput.addEventListener('input', debounce(searchParts, 250));
     if (projectFilter) projectFilter.addEventListener('change', filterByProject);
     if (sortDropdown) sortDropdown.addEventListener('change', changeSortOrder);
+
+    // Load-backup confirm + qty undo (wired once)
+    const cancelLoadBackupBtn = DOM.get('cancelLoadBackupBtn');
+    const confirmLoadBackupBtn = DOM.get('confirmLoadBackupBtn');
+    if (cancelLoadBackupBtn) cancelLoadBackupBtn.addEventListener('click', hideLoadBackupConfirmModal);
+    if (confirmLoadBackupBtn) confirmLoadBackupBtn.addEventListener('click', confirmLoadBackup);
+
+    const notificationUndoBtn = DOM.get('notificationUndoBtn');
+    if (notificationUndoBtn) {
+        notificationUndoBtn.addEventListener('click', () => {
+            if (typeof pendingQtyUndo === 'function') {
+                pendingQtyUndo();
+            }
+        });
+    }
 
     // Initialize performance optimizations
     detectDevicePerformance();
@@ -342,9 +308,6 @@ function initializeApp() {
 
     // Keyboard: Escape closes top modal; Tab trapped inside open modal
     document.addEventListener('keydown', handleModalKeydown);
-
-    const bomAssistantBtn = DOM.get('bomAssistantBtn');
-    if (bomAssistantBtn) bomAssistantBtn.addEventListener('click', showBOMAssistantModal);
 }
 
 // =============================================================================
@@ -356,6 +319,8 @@ function initializeApp() {
  * Format: { partId: { name, quantity, purchaseUrl, projects: {projectId: quantity}, type } }
  */
 let inventory = {};
+let pendingQtyUndo = null;
+let pendingImportFile = null;
 
 /**
  * Projects data structure  
@@ -705,7 +670,77 @@ function sanitizeImportedPurchaseUrls(inventoryData) {
 function importInventory(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
+    const partCount = Object.keys(inventory).length;
+    const projectCount = Object.keys(projects).length;
+    if (partCount > 0 || projectCount > 0) {
+        pendingImportFile = file;
+        const message = document.getElementById('loadBackupConfirmMessage');
+        if (message) {
+            message.textContent = `Replace ${partCount} part${partCount === 1 ? '' : 's'} and ${projectCount} project${projectCount === 1 ? '' : 's'} with “${file.name}”? This overwrites data stored in this browser.`;
+        }
+        showModal('loadBackupConfirmModal');
+        hideMobileNav();
+        // Keep the input value so Cancel can clear it; confirm proceeds from pendingImportFile
+        return;
+    }
+
+    proceedImportInventory(file, event.target);
+}
+
+function requestLoadBackup() {
+    const importFile = document.getElementById('importFile');
+    if (!importFile) return;
+
+    // Prefer File System Access API when available (desktop Chrome/Edge)
+    (async () => {
+        try {
+            if ('showOpenFilePicker' in window) {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Inventory Files',
+                        accept: {
+                            'application/json': ['.json'],
+                            'text/csv': ['.csv']
+                        }
+                    }]
+                });
+                const file = await fileHandle.getFile();
+                importInventory({ target: { files: [file], value: '' } });
+                return;
+            }
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+            console.error('Error opening file:', err);
+        }
+        importFile.value = '';
+        importFile.click();
+    })();
+}
+
+function hideLoadBackupConfirmModal() {
+    hideModal('loadBackupConfirmModal');
+    pendingImportFile = null;
+    const importFile = document.getElementById('importFile');
+    if (importFile) importFile.value = '';
+    showMobileNav();
+}
+
+function confirmLoadBackup() {
+    const file = pendingImportFile;
+    hideModal('loadBackupConfirmModal');
+    pendingImportFile = null;
+    const importFile = document.getElementById('importFile');
+    if (!file) {
+        if (importFile) importFile.value = '';
+        showMobileNav();
+        return;
+    }
+    proceedImportInventory(file, importFile);
+    showMobileNav();
+}
+
+function proceedImportInventory(file, inputEl) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -715,6 +750,9 @@ function importInventory(event) {
             // Check if file is CSV
             if (file.name.toLowerCase().endsWith('.csv')) {
                 // Use PapaParse to parse CSV
+                if (typeof Papa === 'undefined') {
+                    throw new Error('CSV parser unavailable offline. Reload while online once, or use JSON backup.');
+                }
                 const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
                 if (parsed.errors.length) {
                     throw new Error('CSV parse error: ' + parsed.errors[0].message);
@@ -728,12 +766,12 @@ function importInventory(event) {
                     const type = row['Type'] || row['type'] || '';
                     const quantity = parseInt(row['Quantity'] || row['quantity'] || '0') || 0;
                     const purchaseUrl = row['Purchase URL'] || row['purchase url'] || '';
-                    let projects = {};
+                    let projectsMap = {};
                     const projectsRaw = row['Projects'] || row['projects'] || '';
                     if (projectsRaw) {
                         projectsRaw.split(';').forEach(pair => {
                             const [pid, qty] = pair.split(':').map(s => s.trim());
-                            if (pid) projects[pid] = qty ? parseInt(qty) || 0 : 0;
+                            if (pid) projectsMap[pid] = qty ? parseInt(qty) || 0 : 0;
                         });
                     }
                     importedData[id] = {
@@ -741,7 +779,7 @@ function importInventory(event) {
                         type: type || undefined,
                         quantity: quantity,
                         purchaseUrl: purchaseUrl,
-                        projects: projects
+                        projects: projectsMap
                     };
                 });
             } else {
@@ -796,10 +834,11 @@ function importInventory(event) {
             clearBackupPending();
         } catch (err) {
             showNotification('Error importing inventory: ' + err.message, 'error');
+        } finally {
+            if (inputEl) inputEl.value = '';
         }
     };
     reader.readAsText(file);
-    event.target.value = '';
 }
 
 // =============================================================================
@@ -913,15 +952,20 @@ function renderEmptyState(container, mode) {
         <div class="empty-state">
             <h2 class="empty-state-title">${isWelcome ? 'Your workshop drawer is empty' : 'No matching parts'}</h2>
             <p class="empty-state-text">${isWelcome
-                ? 'Add parts, import a BOM, or restore a backup to start tracking stock for your builds.'
+                ? 'Import a BOM to check stock, or add your first part. Your data stays in this browser.'
                 : 'Try a different search term, sort order, or project filter.'}</p>
             <div class="empty-state-actions">
                 ${isWelcome ? `
+                    <button type="button" class="btn import-btn empty-state-btn empty-state-primary" data-empty-action="import-bom">Import BOM &amp; Check Stock</button>
                     <button type="button" class="btn btn-add empty-state-btn" data-empty-action="add-part">+ Add First Part</button>
-                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="import-bom">Import BOM &amp; Check Stock</button>
-                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="quick-paste">Quick Paste BOM</button>
-                    <button type="button" class="btn import-btn empty-state-btn" data-empty-action="load-backup">Load Backup</button>
-                    <button type="button" class="btn cancel-btn empty-state-btn" data-empty-action="sample">Load Sample Parts</button>
+                    <details class="empty-state-more">
+                        <summary>More options</summary>
+                        <div class="empty-state-more-body">
+                            <button type="button" class="btn import-btn empty-state-btn" data-empty-action="quick-paste">Quick Paste BOM</button>
+                            <button type="button" class="btn import-btn empty-state-btn" data-empty-action="load-backup">Load Backup</button>
+                            <button type="button" class="btn cancel-btn empty-state-btn" data-empty-action="sample">Load Sample Parts</button>
+                        </div>
+                    </details>
                 ` : `
                     <button type="button" class="btn cancel-btn empty-state-btn" data-empty-action="clear-filters">Clear Search &amp; Filters</button>
                 `}
@@ -935,7 +979,7 @@ function renderEmptyState(container, mode) {
             if (action === 'add-part') showAddPartModal();
             else if (action === 'import-bom') document.getElementById('importBOM').click();
             else if (action === 'quick-paste') showQuickPasteBOM();
-            else if (action === 'load-backup') document.getElementById('importFile').click();
+            else if (action === 'load-backup') requestLoadBackup();
             else if (action === 'sample') loadSampleInventory();
             else if (action === 'clear-filters') {
                 currentSearchQuery = '';
@@ -983,7 +1027,9 @@ function createInventoryItemElement(id, part) {
     const maxTags = isMobile ? 0 : (window.innerWidth > 1280 ? 3 : 1);
     
     const item = document.createElement('div');
-    item.className = 'inventory-item';
+    const qty = part.quantity;
+    const stockClass = qty <= 0 ? 'stock-out' : (qty < LOW_STOCK_THRESHOLD ? 'stock-low' : 'stock-ok');
+    item.className = `inventory-item ${stockClass}`;
     item.setAttribute('data-part-id', id);
 
     const projectEntries = part.projects ? Object.entries(part.projects) : [];
@@ -997,11 +1043,11 @@ function createInventoryItemElement(id, part) {
                 </span>
             `;
         } else {
-            projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qty]) => {
+            projectTagsHtml = projectEntries.slice(0, maxTags).map(([projectId, qtyNeeded]) => {
                 const project = projects[projectId];
                 return project ? `
-                    <span class="project-tag" data-project-id="${escapeHtml(projectId)}" title="${escapeHtml(project.name)} (${qty} needed)">
-                        ${escapeHtml(project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name)} (${qty})
+                    <span class="project-tag" data-project-id="${escapeHtml(projectId)}" title="${escapeHtml(project.name)} (${qtyNeeded} needed)">
+                        ${escapeHtml(project.name.length > 12 ? project.name.slice(0, 10) + '…' : project.name)} (${qtyNeeded})
                     </span>
                 ` : '';
             }).join('');
@@ -1026,6 +1072,38 @@ function createInventoryItemElement(id, part) {
         typePillHtml = `<span class="set-type-pill" title="Set ${typeCategory} type">Set Type</span>`;
     }
 
+    const stockLabel = qty <= 0
+        ? '<span class="stock-label" aria-label="Out of stock">OUT</span>'
+        : (qty < LOW_STOCK_THRESHOLD
+            ? '<span class="stock-label" aria-label="Low stock">LOW</span>'
+            : '');
+    const qtyClass = qty < LOW_STOCK_THRESHOLD ? 'item-quantity low' : 'item-quantity';
+
+    const quantityHtml = `
+        <div class="${qtyClass}">
+            <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+            <span class="quantity-value">
+                ${stockLabel}
+                <span class="quantity-number">${qty}</span>
+            </span>
+            <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
+        </div>
+    `;
+
+    const actionsHtml = `
+        <div class="item-actions">
+            <button class="action-icon edit-icon" aria-label="Edit part" title="Edit part">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
+            <button class="action-icon shop-icon" aria-label="Open purchase link" title="Open purchase link">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+            </button>
+            <button class="action-icon delete-icon" aria-label="Delete part" title="Delete part">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+        </div>
+    `;
+
     // Responsive: type pill below name on mobile, inline on desktop
     if (isMobile) {
         item.innerHTML = `
@@ -1037,22 +1115,8 @@ function createInventoryItemElement(id, part) {
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
             <div class="item-controls">
-                <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
-                    <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
-                    <span class="quantity-number">${part.quantity}</span>
-                    <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
-                </div>
-                <div class="item-actions">
-                    <button class="action-icon edit-icon" aria-label="Edit part">
-                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                    </button>
-                    <button class="action-icon delete-icon" aria-label="Delete part">
-                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                    </button>
-                    <button class="action-icon shop-icon" aria-label="Open purchase link">
-                        <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
-                    </button>
-                </div>
+                ${quantityHtml}
+                ${actionsHtml}
             </div>
         `;
     } else {
@@ -1064,22 +1128,8 @@ function createInventoryItemElement(id, part) {
                 </div>
                 <div class="project-tags">${projectTagsHtml}</div>
             </div>
-            <div class="item-quantity ${part.quantity < LOW_STOCK_THRESHOLD ? 'low' : ''}">
-                <button class="quantity-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
-                <span class="quantity-number">${part.quantity}</span>
-                <button class="quantity-btn" data-action="increase" aria-label="Increase quantity">+</button>
-            </div>
-            <div class="item-actions">
-                <button class="action-icon edit-icon" aria-label="Edit part">
-                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-                </button>
-                <button class="action-icon delete-icon" title="Delete part">
-                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                </button>
-                <button class="action-icon shop-icon" title="Open purchase link">
-                    <svg viewBox="0 0 24 24"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
-                </button>
-            </div>
+            ${quantityHtml}
+            ${actionsHtml}
         `;
     }
 
@@ -1130,14 +1180,20 @@ function createInventoryItemElement(id, part) {
 function adjustStockInline(partId, action) {
     const part = inventory[partId];
     if (!part) return;
+
+    const previousQuantity = part.quantity;
     
     if (action === 'add') {
         part.quantity += 1;
-        showNotification(`Added 1 ${part.name}`);
+        showNotification(`Added 1 ${part.name}`, 'success', {
+            undo: () => restoreQuantity(partId, previousQuantity)
+        });
     } else if (action === 'remove') {
         if (part.quantity > 0) {
             part.quantity -= 1;
-            showNotification(`Removed 1 ${part.name}`);
+            showNotification(`Removed 1 ${part.name}`, 'success', {
+                undo: () => restoreQuantity(partId, previousQuantity)
+            });
         } else {
             showNotification('Cannot remove more items', 'error');
             return;
@@ -1146,6 +1202,16 @@ function adjustStockInline(partId, action) {
     
     saveInventory();
     displayInventory();
+}
+
+function restoreQuantity(partId, quantity) {
+    const part = inventory[partId];
+    if (!part) return;
+    part.quantity = quantity;
+    pendingQtyUndo = null;
+    saveInventory();
+    displayInventory();
+    showNotification(`Restored ${part.name} to ${quantity}`);
 }
 
 function showAddPartModal() {
@@ -1580,41 +1646,61 @@ function handlePurchaseClick(partId) {
  * 
  * @param {string} message - The message to display
  * @param {string} type - 'success' (default) or 'error' for styling
+ * @param {{ undo?: Function }} [options] - Optional undo callback for qty adjustments
  */
-function showNotification(message, type = 'success') {
+function showNotification(message, type = 'success', options = {}) {
     const notification = document.getElementById('notification');
+    const messageEl = notification.querySelector('.notification-message');
+    const undoBtn = document.getElementById('notificationUndoBtn');
     
     // Clear any existing timeout to prevent conflicts
     if (notification.hideTimeout) {
         clearTimeout(notification.hideTimeout);
         notification.hideTimeout = null;
     }
+
+    pendingQtyUndo = typeof options.undo === 'function' ? options.undo : null;
     
     // Force reset the notification completely
     notification.className = 'notification';
-    notification.classList.remove('show', 'error');
+    notification.classList.remove('show', 'error', 'has-undo');
     notification.style.cssText = ''; // Clear any inline styles
-    notification.textContent = '';
+    if (messageEl) messageEl.textContent = '';
+    else notification.textContent = '';
+    if (undoBtn) undoBtn.classList.add('hidden');
     
     // Force reflow to ensure reset is applied
     notification.offsetHeight;
     
     // Small delay to ensure the reset is complete before showing
     setTimeout(() => {
-        notification.textContent = message;
+        if (messageEl) messageEl.textContent = message;
+        else notification.textContent = message;
         notification.className = `notification ${type === 'error' ? 'error' : ''}`;
         notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+
+        if (undoBtn) {
+            if (pendingQtyUndo) {
+                undoBtn.classList.remove('hidden');
+                notification.classList.add('has-undo');
+            } else {
+                undoBtn.classList.add('hidden');
+            }
+        }
         
         // Force another reflow before adding show class
         notification.offsetHeight;
         
         notification.classList.add('show');
         
-        // Auto-hide notification after 5 seconds
+        // Auto-hide notification after 5 seconds (8s when undo is available)
+        const hideMs = pendingQtyUndo ? 8000 : 5000;
         notification.hideTimeout = setTimeout(() => {
             notification.classList.remove('show');
             notification.hideTimeout = null;
-        }, 5000);
+            pendingQtyUndo = null;
+            if (undoBtn) undoBtn.classList.add('hidden');
+        }, hideMs);
     }, 100);
 }
 
@@ -1626,11 +1712,17 @@ function clearStuckNotifications() {
             clearTimeout(notification.hideTimeout);
             notification.hideTimeout = null;
         }
+
+        pendingQtyUndo = null;
         
         // Force reset everything about the notification
         notification.className = 'notification';
-        notification.classList.remove('show', 'error');
-        notification.textContent = '';
+        notification.classList.remove('show', 'error', 'has-undo');
+        const messageEl = notification.querySelector('.notification-message');
+        if (messageEl) messageEl.textContent = '';
+        else notification.textContent = '';
+        const undoBtn = document.getElementById('notificationUndoBtn');
+        if (undoBtn) undoBtn.classList.add('hidden');
         notification.style.cssText = ''; // Clear any inline styles
         
         // Force reflow to ensure styles are applied
@@ -2665,56 +2757,66 @@ function exportProjectBOM(format) {
 // Add this function to create the sync buttons HTML
 function createSyncButtons() {
     return `
-        <button class="add-part-btn" onclick="showAddPartModal()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
+        <button type="button" class="add-part-btn" onclick="showAddPartModal()">
+            <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
             Add New Part
         </button>
-        <button class="add-part-btn" onclick="showBOMAssistantModal()">
-            <svg class="sync-icon" viewBox="0 0 192 192">
-                <polygon points="111.44 20.77 131.36 74.6 185.2 94.52 131.36 114.45 111.44 168.28 91.52 114.45 37.68 94.52 91.52 74.6 111.44 20.77"/>
-                <polygon points="56.47 119.23 63.71 138.78 83.26 146.01 63.71 153.24 56.47 172.79 49.24 153.24 29.69 146.01 49.24 138.78 56.47 119.23"/>
-                <polygon points="33.59 16.76 40.82 36.31 60.37 43.55 40.82 50.78 33.59 70.33 26.35 50.78 6.8 43.55 26.35 36.31 33.59 16.76"/>
-            </svg>
-            BOM Assistant
-        </button>
-        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importBOM').click()" title="Upload a BOM file, create a project, and compare against your stock">
-            <svg class="sync-icon" viewBox="0 0 24 24">
+        <button type="button" class="sync-btn import-btn sync-btn-secondary full-width" onclick="document.getElementById('importBOM').click()" title="Upload a BOM file, create a project, and compare against your stock">
+            <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99c.41.41 1.09.41 1.5 0s.41-1.09 0-1.5l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
             Import BOM &amp; Check Stock
         </button>
-        <button class="sync-btn import-btn full-width" onclick="showQuickPasteBOM()" title="Paste CSV from an AI tool and check stock">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M19 2H8c-1.1 0-2 .9-2 2v3H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V4c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V6h10v2z"/>
-            </svg>
-            Quick Paste BOM
-        </button>
-        <button class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
-            </svg>
-            Export Project BOM
-        </button>
-        <button class="sync-btn import-btn full-width" onclick="document.getElementById('importFile').click()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-            </svg>
-            Load Backup
-        </button>
-        <button class="sync-btn export-btn full-width" onclick="showExportModal()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-            </svg>
-            Export Backup
-        </button>
-        <button class="sync-btn import-btn full-width" onclick="mergeDuplicateInventoryEntries()">
-            <svg class="sync-icon" viewBox="0 0 24 24">
-                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
-            </svg>
-            Merge Duplicates
-        </button>
+        <details class="sync-group">
+            <summary class="sync-group-summary">BOM tools</summary>
+            <div class="sync-group-body">
+                <button type="button" class="sync-btn import-btn full-width" onclick="showBOMAssistantModal()">
+                    <svg class="sync-icon" viewBox="0 0 192 192" aria-hidden="true">
+                        <polygon points="111.44 20.77 131.36 74.6 185.2 94.52 131.36 114.45 111.44 168.28 91.52 114.45 37.68 94.52 91.52 74.6 111.44 20.77"/>
+                        <polygon points="56.47 119.23 63.71 138.78 83.26 146.01 63.71 153.24 56.47 172.79 49.24 153.24 29.69 146.01 49.24 138.78 56.47 119.23"/>
+                        <polygon points="33.59 16.76 40.82 36.31 60.37 43.55 40.82 50.78 33.59 70.33 26.35 50.78 6.8 43.55 26.35 36.31 33.59 16.76"/>
+                    </svg>
+                    BOM Assistant
+                </button>
+                <button type="button" class="sync-btn import-btn full-width" onclick="showQuickPasteBOM()" title="Paste CSV from an AI tool and check stock">
+                    <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 2H8c-1.1 0-2 .9-2 2v3H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V4c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V6h10v2z"/>
+                    </svg>
+                    Quick Paste BOM
+                </button>
+                <button type="button" class="sync-btn export-btn full-width" onclick="showExportBOMModal()">
+                    <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
+                    </svg>
+                    Export Project BOM
+                </button>
+            </div>
+        </details>
+        <details class="sync-group">
+            <summary class="sync-group-summary">Backup &amp; cleanup</summary>
+            <div class="sync-group-body">
+                <button type="button" class="sync-btn import-btn full-width" onclick="requestLoadBackup()">
+                    <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+                    </svg>
+                    Load Backup
+                </button>
+                <button type="button" class="sync-btn export-btn full-width" onclick="showExportModal()">
+                    <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                    </svg>
+                    Export Backup
+                </button>
+                <button type="button" class="sync-btn import-btn full-width" onclick="mergeDuplicateInventoryEntries()">
+                    <svg class="sync-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
+                    </svg>
+                    Merge Duplicates
+                </button>
+            </div>
+        </details>
     `;
 }
 

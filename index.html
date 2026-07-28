@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Content Security Policy for enhanced security -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; child-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; block-all-mixed-content; upgrade-insecure-requests;">
     
     <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -63,10 +63,10 @@
     <meta name="msapplication-wide310x150logo" content="/icons/windows11/Wide310x150Logo.scale-200.png">
     <meta name="msapplication-square310x310logo" content="/icons/windows11/LargeTile.scale-200.png">
     
-    <!-- External scripts -->
-      <script src="https://unpkg.com/@rive-app/canvas@2.10.3" defer></script>
+    <!-- Local vendor scripts (offline-capable) -->
+    <script src="vendor/rive.js" defer></script>
     <script src="rive-logo.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="vendor/papaparse.min.js"></script>
     
     <!-- Vercel Analytics -->
     <script>
@@ -165,8 +165,6 @@
     </script>
     
     <!-- Preconnect to external resources -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -209,6 +207,7 @@
     </script>
 </head>
 <body>
+    <a class="skip-link" href="#inventoryItems">Skip to inventory</a>
     <div class="container">
         <header class="header">
             <div class="logo">
@@ -255,14 +254,8 @@
         <main class="content">
             <div class="main-content">
                 <aside class="left-panel">
-                    <nav class="sync-buttons" role="navigation" aria-label="Main actions"> 
-                        <button class="add-part-btn" id="addPartBtn">+ Add New Part</button>
-                        <button class="sync-btn import-btn full-width" id="bomAssistantBtn">BOM Assistant</button>
-                        <button class="sync-btn import-btn full-width" id="compareBOMBtn" title="Upload a BOM file, create a project, and compare against your stock">Import BOM &amp; Check Stock</button>
-                        <button class="sync-btn import-btn full-width" id="quickPasteBOMBtn" title="Paste CSV from an AI tool and check stock">Quick Paste BOM</button>
-                        <button class="sync-btn export-btn full-width" id="exportBOMModalBtn">Export Project BOM</button>
-                        <button class="sync-btn import-btn full-width" id="loadDataBtn">Load Backup</button>
-                        <button class="sync-btn export-btn full-width" id="saveDataBtn">Export Backup</button>
+                    <nav class="sync-buttons" role="navigation" aria-label="Main actions">
+                        <!-- Replaced at runtime by createSyncButtons() -->
                     </nav>
                 </aside>
 
@@ -368,7 +361,10 @@
     </div>
 
     <!-- Notification -->
-    <div class="notification" id="notification" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="notification" id="notification" role="status" aria-live="polite" aria-atomic="true">
+        <span class="notification-message"></span>
+        <button type="button" class="notification-undo hidden" id="notificationUndoBtn">Undo</button>
+    </div>
 
     <!-- Export Options Modal -->
     <div class="modal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportModal-title">
@@ -666,15 +662,28 @@ Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"><
         </div>
     </div>
 
+    <!-- Load Backup Confirm Modal -->
+    <div class="modal" id="loadBackupConfirmModal" role="dialog" aria-modal="true" aria-labelledby="loadBackupConfirmModal-title">
+        <div class="modal-content">
+            <h2 id="loadBackupConfirmModal-title">Replace inventory?</h2>
+            <p id="loadBackupConfirmMessage" class="modal-body-text">Loading a backup will replace the parts and projects currently in this browser.</p>
+            <p class="modal-hint">Export a backup first if you are not sure.</p>
+            <div class="modal-buttons">
+                <button type="button" class="btn cancel-btn flex-1" id="cancelLoadBackupBtn">Cancel</button>
+                <button type="button" class="btn btn-remove flex-1" id="confirmLoadBackupBtn">Replace &amp; Load</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 
     <!-- Mobile Bottom Navigation -->
     <nav class="mobile-nav">
-        <button class="mobile-nav-item" data-tab="action">
+        <button class="mobile-nav-item" data-tab="action" aria-label="Parts">
             <svg class="mobile-nav-icon" viewBox="0 0 24 24">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
-            <span>Action</span>
+            <span>Parts</span>
         </button>
         <button class="mobile-nav-item" data-tab="bom">
             <svg class="mobile-nav-icon" viewBox="0 0 24 24">
@@ -682,11 +691,11 @@ Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"><
             </svg>
             <span>BOM</span>
         </button>
-        <button class="mobile-nav-item" data-tab="data">
+        <button class="mobile-nav-item" data-tab="data" aria-label="Backup">
             <svg class="mobile-nav-icon" viewBox="0 0 24 24">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
-            <span>Data</span>
+            <span>Backup</span>
             <span class="mobile-nav-badge hidden" id="dataTabBadge" aria-label="Backup export recommended"></span>
         </button>
         <button class="mobile-nav-item" data-tab="projects">
@@ -697,19 +706,13 @@ Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"><
         </button>
     </nav>
 
-    <!-- Mobile Action Menu -->
+    <!-- Mobile Parts Menu -->
     <div class="mobile-menu" id="actionMenu">
         <button class="mobile-menu-item" onclick="showAddPartModal()">
             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
             Add New Part
-        </button>
-        <button class="mobile-menu-item" onclick="mergeDuplicateInventoryEntries()">
-            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
-                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
-            </svg>
-            Merge Duplicates
         </button>
     </div>
 
@@ -737,9 +740,9 @@ Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"><
         </button>
     </div>
 
-    <!-- Mobile Data Menu -->
+    <!-- Mobile Backup Menu -->
     <div class="mobile-menu" id="dataMenu">
-        <button class="mobile-menu-item" onclick="document.getElementById('importFile').click()">
+        <button class="mobile-menu-item" onclick="requestLoadBackup()">
             <svg class="mobile-menu-icon" viewBox="0 0 24 24">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
@@ -750,6 +753,12 @@ Capacitor 100nF,2" rows="8" class="full-width" aria-label="Paste BOM CSV data"><
                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
             </svg>
             Save Backup
+        </button>
+        <button class="mobile-menu-item" onclick="mergeDuplicateInventoryEntries()">
+            <svg class="mobile-menu-icon" viewBox="0 0 24 24">
+                <path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/>
+            </svg>
+            Merge Duplicates
         </button>
     </div>
 

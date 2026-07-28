@@ -17,11 +17,20 @@
       ]
     },
     {
-      "source": "/(fonts|icons)/(.*)",
+      "source": "/(fonts|icons|vendor)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/vendor/(.*).wasm",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
         }
       ]
     },

@@ -1,15 +1,13 @@
 @font-face {
     font-family: 'JetBrains Mono';
-    src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'),
-         url('fonts/JetBrainsMono-Regular.woff') format('woff');
+    src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
   }
   @font-face {
     font-family: 'JetBrains Mono';
-    src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'),
-         url('fonts/JetBrainsMono-Bold.woff') format('woff');
+    src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -247,14 +245,14 @@ body.modal-open {
       }
   
       .btn-add {
-          background: #4C566A;
-          color: #E5E9F0;
+          background: var(--nord10);
+          color: var(--nord6);
         
       }
   
       .btn-add:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
+          background: var(--nord9);
+          color: var(--nord6);
         
       }
   
@@ -463,9 +461,9 @@ body.modal-open {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 8px 8px;
+          padding: 8px 8px 8px 12px;
           border-bottom: 1px solid #4C566A;
-        
+          border-left: 1px solid transparent;
           transition: background-color 0.2s ease;
           font-size: 8px;
           gap: 10px;
@@ -473,6 +471,18 @@ body.modal-open {
           /* Prevent cursor flickering */
           position: relative;
           z-index: 1;
+      }
+
+      .inventory-item.stock-ok {
+          border-left-color: var(--nord14);
+      }
+
+      .inventory-item.stock-low {
+          border-left-color: var(--nord13);
+      }
+
+      .inventory-item.stock-out {
+          border-left-color: var(--nord11);
       }
   
       .inventory-item:hover {
@@ -498,10 +508,10 @@ body.modal-open {
       .item-name {
           flex: 1 1 auto;
           min-width: 0;
-          font-weight: 300;
-          color: #F8F8F2;
+          font-weight: 400;
+          color: var(--nord6);
           font-size: 14px;
-          font-family: 'JetBrains Mono Light', 'JetBrains Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           margin-right: 8px;
           display: inline-flex;
           align-items: center;
@@ -526,14 +536,15 @@ body.modal-open {
   
       .item-quantity {
           display: flex;
-          width: 100px;
+          width: 120px;
           min-width: 0;
           align-items: center;
-          gap: 8px;
-          background: #5E81AC;
-          color: #E5E9F0;
-          padding: 2px 8px;
-          border-radius: 12px;
+          gap: 6px;
+          background: transparent;
+          color: var(--nord6);
+          padding: 2px 6px;
+          border: 1px solid var(--nord4);
+          border-radius: 4px;
           font-size: 12px;
           font-weight: 600;
           justify-content: center;
@@ -541,11 +552,28 @@ body.modal-open {
       }
   
       .item-quantity.low {
-          background: #BF616A;
-          width: 100px;
+          border-color: var(--nord13);
+          color: var(--nord13);
+          width: 120px;
           min-width: 0;
           justify-content: center;
           box-sizing: border-box;
+      }
+
+      .quantity-value {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          flex: 1 1 auto;
+          min-width: 0;
+      }
+
+      .stock-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          color: inherit;
       }
   
       .quantity-number {
@@ -567,43 +595,45 @@ body.modal-open {
       .quantity-btn {
           background: none;
           border: none;
-          color: #E5E9F0;
-        
+          color: inherit;
           padding: 2px 6px;
           font-size: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s ease;
+          transition: background-color 0.2s ease, color 0.2s ease;
           /* Prevent cursor flickering */
           position: relative;
           z-index: 2;
+          min-width: var(--touch-target-min);
+          min-height: var(--touch-target-min);
+          width: var(--touch-target-min);
+          height: var(--touch-target-min);
+          border-radius: 4px;
       }
   
       .quantity-btn:hover {
-          color: #ECEFF4;
+          color: var(--nord6);
           background: rgba(236, 239, 244, 0.1);
-          border-radius: 4px;
-        
       }
   
       .quantity-btn:active {
           transform: scale(0.95);
-        
       }
   
       .item-actions {
           display: flex;
-          gap: 8px;
+          gap: 12px;
           min-width: 96px;
           justify-content: flex-end;
+          margin-left: 8px;
       }
   
       .action-icon {
           background: none;
           border: none;
           padding: 10px;
-          border-radius: 50%;
+          border-radius: 4px;
           min-width: var(--touch-target-min);
           min-height: var(--touch-target-min);
           width: var(--touch-target-min);
@@ -611,7 +641,7 @@ body.modal-open {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s ease;
+          transition: background-color 0.2s ease, color 0.2s ease;
           position: relative;
           z-index: 2;
       }
@@ -688,9 +718,48 @@ body.modal-open {
       }
   
       .sync-buttons {
-          display: flow;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
           position: relative;
           z-index: 2;
+      }
+
+      .sync-group {
+          border: 1px solid var(--nord4);
+          background: var(--nord2);
+      }
+
+      .sync-group-summary {
+          list-style: none;
+          cursor: pointer;
+          padding: 12px 14px;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--nord8);
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.02em;
+      }
+
+      .sync-group-summary::-webkit-details-marker {
+          display: none;
+      }
+
+      .sync-group-summary::after {
+          content: '+';
+          float: right;
+          color: var(--nord4);
+      }
+
+      .sync-group[open] .sync-group-summary::after {
+          content: '−';
+      }
+
+      .sync-group-body {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+          border-top: 1px solid var(--nord4);
       }
   
       .sync-icon {
@@ -711,20 +780,19 @@ body.modal-open {
           border: none;
           font-size: 14px;
           font-weight: 600;
-        
-          transition: all 0.2s ease;
-          background: #4C566A;
-          color: #E5E9F0;
+          transition: background-color 0.2s ease, color 0.2s ease;
+          background: var(--nord4);
+          color: var(--nord6);
           font-family: 'JetBrains Mono', monospace;
           /* Prevent cursor flickering */
           position: relative;
           z-index: 1;
+          border-radius: 0;
       }
   
       .sync-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-        
+          background: var(--nord10);
+          color: var(--nord6);
       }
   
       .add-part-btn {
@@ -732,48 +800,75 @@ body.modal-open {
           align-items: center;
           justify-content: flex-start;
           width: 100%;
-          background: #4C566A;
-          color: #E5E9F0;
+          background: var(--nord10);
+          color: var(--nord6);
           border: none;
           padding: 15px;
           font-size: 14px;
           font-weight: 600;
-        
-          transition: all 0.2s ease;
+          transition: background-color 0.2s ease, color 0.2s ease;
           font-family: 'JetBrains Mono', monospace;
           /* Prevent cursor flickering */
           position: relative;
           z-index: 1;
+          border-radius: 0;
       }
   
       .add-part-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-        
+          background: var(--nord9);
+          color: var(--nord6);
       }
   
       .export-btn {
-          background: #4C566A;
-          color: #E5E9F0;
-        
+          background: var(--nord14);
+          color: var(--nord1);
       }
   
       .export-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-        
+          background: #97b87d;
+          color: var(--nord1);
       }
   
       .import-btn {
-          background: #4C566A;
-          color: #E5E9F0;
-        
+          background: var(--nord9);
+          color: var(--nord1);
       }
   
       .import-btn:hover {
-          background: #5E81AC;
-          color: #ECEFF4;
-        
+          background: var(--nord8);
+          color: var(--nord1);
+      }
+
+      .sync-btn-secondary {
+          background: var(--nord9);
+          color: var(--nord1);
+      }
+
+      .sync-btn-secondary:hover {
+          background: var(--nord8);
+          color: var(--nord1);
+      }
+
+      .sync-group .sync-btn {
+          background: var(--nord3);
+          color: var(--nord6);
+      }
+
+      .sync-group .import-btn {
+          background: var(--nord3);
+          color: var(--nord6);
+      }
+
+      .sync-group .export-btn {
+          background: var(--nord3);
+          color: var(--nord6);
+      }
+
+      .sync-group .sync-btn:hover,
+      .sync-group .import-btn:hover,
+      .sync-group .export-btn:hover {
+          background: var(--nord4);
+          color: var(--nord6);
       }
   
       #importFile {
@@ -910,6 +1005,9 @@ body.modal-open {
           font-weight: 500;
           backface-visibility: hidden;
           border: 2px solid var(--success);
+          display: flex;
+          align-items: center;
+          gap: 12px;
       }
   
       .notification.show {
@@ -918,6 +1016,36 @@ body.modal-open {
   
       .notification.error {
           border-color: var(--danger);
+      }
+
+      .notification-message {
+          flex: 1 1 auto;
+          min-width: 0;
+      }
+
+      .notification-undo {
+          flex-shrink: 0;
+          background: transparent;
+          border: 1px solid var(--nord8);
+          color: var(--nord8);
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 6px 10px;
+          min-height: var(--touch-target-min);
+          cursor: pointer;
+          border-radius: 4px;
+      }
+
+      .notification-undo.hidden {
+          display: none;
+      }
+
+      .notification-undo:hover {
+          background: var(--nord8);
+          color: var(--nord1);
       }
   
       @media (max-width: 1024px) {
@@ -1039,7 +1167,7 @@ body.modal-open {
               display: block;
               font-size: 14px;
               font-weight: 500;
-              color: #F8F8F2;
+              color: var(--nord6);
               margin-bottom: 2px;
           }
           .type-pill {
@@ -1077,10 +1205,10 @@ body.modal-open {
   
           .quantity-btn {
               flex-shrink: 0;
-              min-width: 36px;
-              min-height: 36px;
-              width: 36px;
-              height: 36px;
+              min-width: var(--touch-target-min);
+              min-height: var(--touch-target-min);
+              width: var(--touch-target-min);
+              height: var(--touch-target-min);
               padding: 0;
           }
   
@@ -2546,10 +2674,10 @@ body.modal-open {
         }
         .inventory-list .item-quantity .quantity-btn {
           flex-shrink: 0;
-          min-width: 36px;
-          min-height: 36px;
-          width: 36px;
-          height: 36px;
+          min-width: var(--touch-target-min);
+          min-height: var(--touch-target-min);
+          width: var(--touch-target-min);
+          height: var(--touch-target-min);
           padding: 0;
           font-size: 18px;
           line-height: 1;
@@ -3365,7 +3493,7 @@ body.modal-open {
         display: block;
         font-size: 14px;
         font-weight: 500;
-        color: #F8F8F2;
+        color: var(--nord6);
         margin-bottom: 2px;
     }
 
@@ -3404,10 +3532,10 @@ body.modal-open {
 
     .quantity-btn {
         flex-shrink: 0;
-        min-width: 36px;
-        min-height: 36px;
-        width: 36px;
-        height: 36px;
+        min-width: var(--touch-target-min);
+        min-height: var(--touch-target-min);
+        width: var(--touch-target-min);
+        height: var(--touch-target-min);
         padding: 0;
     }
 
@@ -3514,10 +3642,10 @@ body.modal-open {
 
   .inventory-list .item-quantity .quantity-btn {
     padding: 0;
-    min-width: 36px;
-    min-height: 36px;
-    width: 36px;
-    height: 36px;
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
     font-size: 18px;
     line-height: 1;
     border-radius: 4px;
@@ -4017,7 +4145,11 @@ button[onclick*="Modal"], .btn[onclick*="Modal"], [onclick*="showModal"] {
     }
 
     .header.header-compact .wordmark-svg {
-        display: none;
+        display: block;
+        height: 22px;
+        width: auto;
+        max-width: 160px;
+        margin: 0 auto 2px;
     }
 
     .header.header-compact .header-tagline {
@@ -4051,8 +4183,86 @@ button:focus-visible,
 .action-icon:focus-visible,
 .quantity-btn:focus-visible,
 .mobile-backup-btn:focus-visible,
-.empty-state-btn:focus-visible {
+.empty-state-btn:focus-visible,
+.notification-undo:focus-visible,
+.skip-link:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
 }
-  
+
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 12px;
+    z-index: 3000;
+    background: var(--nord8);
+    color: var(--nord1);
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.skip-link:focus {
+    top: 12px;
+}
+
+.modal-body-text {
+    color: var(--nord5);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 10px;
+}
+
+.empty-state-more {
+    width: 100%;
+    border: 1px solid var(--nord4);
+    background: var(--nord2);
+    text-align: left;
+}
+
+.empty-state-more summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--nord8);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.empty-state-more summary::-webkit-details-marker {
+    display: none;
+}
+
+.empty-state-more-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 10px 10px;
+}
+
+.empty-state-primary {
+    font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+    #swUpdateBanner {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .notification {
+        top: auto;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        right: 12px;
+        left: 12px;
+        max-width: none;
+        transform: translateY(120%);
+    }
+
+    .notification.show {
+        transform: translateY(0);
+    }
+}

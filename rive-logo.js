@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+        // Local WASM — CSP blocks unpkg/jsdelivr fetches used by the default runtime URL
+        if (rive.RuntimeLoader && typeof rive.RuntimeLoader.setWasmUrl === 'function') {
+            rive.RuntimeLoader.setWasmUrl(new URL('vendor/rive.wasm', window.location.href).href);
+        }
+
         const riveInstance = new rive.Rive({
             src: 'gpi.riv',
             canvas: canvas,

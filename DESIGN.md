@@ -94,7 +94,7 @@ Status indicators use **1px left-border accents** on list items — never thicke
 
 ## Layout
 
-- **Desktop:** Two-column flex — left action panel (~1fr), right inventory (~5fr). Max container 1920px.
+- **Desktop (≥1025px):** Full-viewport app shell — fixed left action rail (~280px), inventory column fills remaining width and height. No centered card inset; list scrolls inside the right pane (`max-height` is viewport-driven via flex, not a fixed 600px).
 - **Mobile (≤1024px):** Single column; sidebar actions move to bottom nav + slide-up menus. Safe-area insets on bottom nav.
 - **Touch targets:** Minimum 44×44px on all interactive controls (`--touch-target-min`).
 - **Modals:** Centered, max-width 500px (600px for wide BOM/About). Full-viewport overlay at 80% opacity.

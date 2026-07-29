@@ -734,6 +734,10 @@ export function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
 
+    // Toasts sit above modals in z-index; dismiss so they don't persist over dialogs
+    // (esp. mobile after backup import, where the success toast outlives opening another modal).
+    clearStuckNotifications();
+
     if (!modalStack.includes(modalId)) {
         if (modalStack.length === 0) {
             modalPreviousFocus = document.activeElement;

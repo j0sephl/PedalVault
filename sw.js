@@ -1,6 +1,6 @@
 // Bump this version on every release so clients pick up new caches.
 // The old cache is deleted on activate.
-const SW_VERSION = 'v2.2.0';
+const SW_VERSION = 'v2.0.0';
 const APP_SHELL_CACHE = `pedalvault-shell-${SW_VERSION}`;
 const STATIC_CACHE = `pedalvault-static-${SW_VERSION}`;
 
@@ -22,6 +22,7 @@ const APP_SHELL_URLS = [
     './js/inventory-ui.js',
     './js/projects.js',
     './js/matching.js',
+    './js/shortcuts.js',
     './rive-logo.js',
     './manifest.json',
     './offline.html',

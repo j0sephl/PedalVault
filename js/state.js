@@ -18,6 +18,7 @@ let currentSearchQuery = '';
 let backupExportPending = false;
 let inventoryDirty = false;
 let projectsDirty = false;
+let selectedPartId = null;
 
 export const LOW_STOCK_THRESHOLD = 10;
 
@@ -65,3 +66,6 @@ export function setInventoryDirty(value) { inventoryDirty = value; }
 
 export function getProjectsDirty() { return projectsDirty; }
 export function setProjectsDirty(value) { projectsDirty = value; }
+
+export function getSelectedPartId() { return selectedPartId; }
+export function setSelectedPartId(id) { selectedPartId = id; }

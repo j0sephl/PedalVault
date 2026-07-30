@@ -16,6 +16,8 @@ import {
     getInventory,
     setInventory,
     getProjects,
+    getSelectedPartId,
+    setSelectedPartId,
     LOW_STOCK_THRESHOLD
 } from './state.js';
 import { DOM } from './dom-cache.js';
@@ -58,10 +60,14 @@ export function displayInventory() {
         } else {
             renderEmptyState(inventoryItems, 'no-results');
         }
+        inventoryItems.removeAttribute('role');
+        inventoryItems.removeAttribute('aria-label');
         updateHeaderCompactMode();
         return;
     }
 
+    inventoryItems.setAttribute('role', 'listbox');
+    inventoryItems.setAttribute('aria-label', 'Inventory');
     renderFullInventory(sortedEntries, inventoryItems);
     updateHeaderCompactMode();
 }
@@ -140,6 +146,42 @@ export function renderFullInventory(entries, container) {
     });
     
     container.appendChild(fragment);
+
+    const selectedId = getSelectedPartId();
+    if (selectedId && !entries.some(([id]) => id === selectedId)) {
+        setSelectedPartId(null);
+    }
+    applyInventorySelection({ focus: false });
+}
+
+/**
+ * Sync .is-selected / aria-selected / tabindex with getSelectedPartId().
+ */
+export function applyInventorySelection({ focus = false } = {}) {
+    const selectedId = getSelectedPartId();
+    const items = document.querySelectorAll('#inventoryItems .inventory-item');
+    let selectedEl = null;
+
+    items.forEach((el) => {
+        const id = el.getAttribute('data-part-id');
+        const isSelected = Boolean(selectedId) && id === selectedId;
+        el.classList.toggle('is-selected', isSelected);
+        el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        el.tabIndex = isSelected ? 0 : -1;
+        if (isSelected) selectedEl = el;
+    });
+
+    if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest' });
+        if (focus) {
+            selectedEl.focus({ preventScroll: true });
+        }
+    }
+}
+
+export function selectInventoryPart(partId, { focus = true } = {}) {
+    setSelectedPartId(partId);
+    applyInventorySelection({ focus });
 }
 
 export function createInventoryItemElement(id, part) {
@@ -151,6 +193,9 @@ export function createInventoryItemElement(id, part) {
     const stockClass = qty <= 0 ? 'stock-out' : (qty < LOW_STOCK_THRESHOLD ? 'stock-low' : 'stock-ok');
     item.className = `inventory-item ${stockClass}`;
     item.setAttribute('data-part-id', id);
+    item.setAttribute('role', 'option');
+    item.setAttribute('aria-selected', 'false');
+    item.tabIndex = -1;
 
     const projectEntries = part.projects ? Object.entries(part.projects) : [];
     let projectTagsHtml = '';
@@ -257,8 +302,14 @@ export function createInventoryItemElement(id, part) {
     const decreaseBtn = item.querySelector('[data-action="decrease"]');
     const increaseBtn = item.querySelector('[data-action="increase"]');
     
-    if (decreaseBtn) decreaseBtn.addEventListener('click', () => adjustStockInline(id, 'remove'));
-    if (increaseBtn) increaseBtn.addEventListener('click', () => adjustStockInline(id, 'add'));
+    if (decreaseBtn) decreaseBtn.addEventListener('click', () => {
+        selectInventoryPart(id, { focus: false });
+        adjustStockInline(id, 'remove');
+    });
+    if (increaseBtn) increaseBtn.addEventListener('click', () => {
+        selectInventoryPart(id, { focus: false });
+        adjustStockInline(id, 'add');
+    });
 
     // Action buttons (previously inline onclick handlers, which allowed
     // JS injection via crafted part IDs)
@@ -268,6 +319,12 @@ export function createInventoryItemElement(id, part) {
     if (editBtn) editBtn.addEventListener('click', () => showEditPartModal(id));
     if (deleteBtn) deleteBtn.addEventListener('click', () => showDeletePartModal(id));
     if (shopBtn) shopBtn.addEventListener('click', () => handlePurchaseClick(id));
+
+    // Row click selects for keyboard follow-up (↑↓←→)
+    item.addEventListener('click', (e) => {
+        if (e.target.closest('button, a, .project-tag, .set-type-pill')) return;
+        selectInventoryPart(id, { focus: true });
+    });
 
     // Add project tag click handlers
     const projectTags = item.querySelectorAll('.project-tag');

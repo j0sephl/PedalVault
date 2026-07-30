@@ -64,6 +64,7 @@ import {
     confirmDeletePart,
     hideDeletePartModal
 } from './inventory-ui.js';
+import { initShortcuts } from './shortcuts.js';
 
 /**
  * Initialize the application by setting up event listeners and loading data
@@ -108,6 +109,7 @@ export function initializeApp() {
     updateBackupReminderUI();
 
     document.addEventListener('keydown', handleModalKeydown);
+    initShortcuts();
 }
 
 // Inline onclick= handlers in index.html and generated markup expect globals.

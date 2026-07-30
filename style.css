@@ -572,6 +572,15 @@ body.modal-open {
           background-color: #434C5E;
         
       }
+
+      .inventory-item.is-selected {
+          background-color: var(--nord3);
+          box-shadow: inset 0 0 0 1px var(--nord8);
+      }
+
+      .inventory-item.is-selected:focus-visible {
+          box-shadow: var(--focus-ring);
+      }
   
       .inventory-item:last-child {
           border-bottom: none;
@@ -2865,6 +2874,25 @@ body.modal-open {
     height: 20px;
     fill: var(--nord8);
     flex-shrink: 0;
+}
+
+.shortcuts-list .feature-item {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+}
+
+kbd {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 6px;
+    color: var(--nord6);
+    background: var(--nord2);
+    border: 1px solid var(--nord4);
+    border-bottom-width: 2px;
+    border-radius: 3px;
 }
 
 .heart-icon {
